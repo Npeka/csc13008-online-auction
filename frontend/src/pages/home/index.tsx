@@ -21,7 +21,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-linear-to-br from-emerald-800 via-emerald-700 to-slate-800">
+      <section className="relative overflow-hidden bg-linear-to-br from-teal-500 via-emerald-400 to-cyan-500 dark:from-emerald-800 dark:via-emerald-700 dark:to-slate-800">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
 
         <div className="container-app relative py-16 lg:py-24">
@@ -207,7 +207,7 @@ export function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-linear-to-r from-emerald-800 to-emerald-600 py-20">
+      <section className="bg-linear-to-r from-teal-500 to-emerald-400 py-20 dark:from-emerald-800 dark:to-emerald-600">
         <div className="container-app text-center">
           <h2 className="mb-6 text-3xl font-bold text-white">
             Ready to Start Breeding?
