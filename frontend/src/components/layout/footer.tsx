@@ -1,12 +1,5 @@
 import { Link } from "react-router";
-import {
-  Gavel,
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Mail,
-} from "lucide-react";
+import { Facebook, Twitter, Instagram, Youtube, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Footer() {
@@ -48,9 +41,9 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <Link to="/" className="mb-4 flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-cta">
-                <Gavel className="h-6 w-6 text-white" />
+            <Link to="/" className="mb-4 flex items-center">
+              <div className="size-20">
+                <img src="src/assets/logo.avif" alt="logo" />
               </div>
               <span className="text-xl font-bold text-text">Morphee</span>
             </Link>

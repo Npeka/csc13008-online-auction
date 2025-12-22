@@ -10,7 +10,6 @@ import {
   LogOut,
   Settings,
   Package,
-  Gavel,
   LayoutDashboard,
   ChevronDown,
 } from "lucide-react";
@@ -75,9 +74,9 @@ export function Header() {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex shrink-0 items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-cta">
-                <Gavel className="h-6 w-6 text-white" />
+            <Link to="/" className="flex shrink-0 items-center">
+              <div className="size-20">
+                <img src="src/assets/logo.avif" alt="logo" />
               </div>
               <span className="hidden text-xl font-bold text-text sm:block">
                 Morphee

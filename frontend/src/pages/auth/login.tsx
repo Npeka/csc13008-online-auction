@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Gavel, Mail, Lock, Github } from "lucide-react";
+import { Mail, Lock, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/stores/auth-store";
@@ -57,9 +57,9 @@ export function LoginPage() {
     <div className="w-full px-4" style={{ maxWidth: "32rem" }}>
       {/* Logo */}
       <div className="mb-8 text-center">
-        <Link to="/" className="inline-flex items-center gap-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-cta">
-            <Gavel className="h-7 w-7 text-white" />
+        <Link to="/" className="inline-flex items-center">
+          <div className="size-24">
+            <img src="src/assets/logo.avif" alt="logo" />
           </div>
           <span className="text-2xl font-bold text-text">Morphee</span>
         </Link>
