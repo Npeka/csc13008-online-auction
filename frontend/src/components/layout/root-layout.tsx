@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import { Toaster } from "react-hot-toast";
+import { Footer } from "./footer";
 
 export function RootLayout() {
   return (
@@ -7,6 +8,7 @@ export function RootLayout() {
       <main className="flex-1 pb-16">
         <Outlet />
       </main>
+      <Footer />
       <Toaster
         position="top-right"
         toastOptions={{
@@ -30,6 +32,15 @@ export function RootLayout() {
           },
         }}
       />
+    </div>
+  );
+}
+
+export function AuthLayout() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-bg p-4">
+      <Outlet />
+      <Toaster position="top-center" />
     </div>
   );
 }
