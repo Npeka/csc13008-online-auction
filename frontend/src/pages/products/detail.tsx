@@ -42,7 +42,7 @@ export function ProductDetailPage() {
   const [isBidding, setIsBidding] = useState(false);
 
   const { user, isAuthenticated } = useAuthStore();
-  const { isInWatchlist, toggleWatchlist } = useWatchlistStore();
+  const { productIds, toggleWatchlist } = useWatchlistStore();
 
   const product = getProductById(id || "");
   const bids = getBidsForProduct(id || "");
@@ -67,7 +67,7 @@ export function ProductDetailPage() {
     );
   }
 
-  const inWatchlist = isInWatchlist(product.id);
+  const inWatchlist = product ? productIds.includes(product.id) : false;
   const minimumBid = product.currentPrice + product.bidStep;
 
   const handlePlaceBid = async (amount: number) => {

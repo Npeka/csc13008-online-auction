@@ -18,8 +18,8 @@ export function ProductCard({
   variant = "default",
   className,
 }: ProductCardProps) {
-  const { isInWatchlist, toggleWatchlist } = useWatchlistStore();
-  const inWatchlist = isInWatchlist(product.id);
+  const { productIds, toggleWatchlist } = useWatchlistStore();
+  const inWatchlist = productIds.includes(product.id);
   const isNew = product.isNew || isNewProduct(product.createdAt);
 
   const handleWatchlistClick = (e: React.MouseEvent) => {
