@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Facebook, Twitter, Instagram, Youtube, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logoImage from "@/assets/logo.avif";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -43,7 +44,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
             <Link to="/" className="mb-4 flex items-center">
               <div className="size-20">
-                <img src="src/assets/logo.avif" alt="logo" />
+                <img src={logoImage} alt="logo" />
               </div>
               <span className="text-xl font-bold text-text">Morphee</span>
             </Link>
@@ -80,7 +81,7 @@ export function Footer() {
             <h4 className="mb-4 font-semibold text-text">Marketplace</h4>
             <ul className="space-y-2">
               {footerLinks.marketplace.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     to={link.href}
                     className="text-sm text-text-muted transition-colors hover:text-primary"
@@ -97,7 +98,7 @@ export function Footer() {
             <h4 className="mb-4 font-semibold text-text">Account</h4>
             <ul className="space-y-2">
               {footerLinks.account.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     to={link.href}
                     className="text-sm text-text-muted transition-colors hover:text-primary"
@@ -114,7 +115,7 @@ export function Footer() {
             <h4 className="mb-4 font-semibold text-text">Sellers</h4>
             <ul className="space-y-2">
               {footerLinks.seller.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     to={link.href}
                     className="text-sm text-text-muted transition-colors hover:text-primary"
@@ -131,7 +132,7 @@ export function Footer() {
             <h4 className="mb-4 font-semibold text-text">Support</h4>
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     to={link.href}
                     className="text-sm text-text-muted transition-colors hover:text-primary"

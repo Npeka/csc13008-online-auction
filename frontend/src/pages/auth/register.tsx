@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/stores/auth-store";
+import logoImage from "@/assets/logo.avif";
 import toast from "react-hot-toast";
 
 export function RegisterPage() {
@@ -111,7 +112,7 @@ export function RegisterPage() {
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center">
             <div className="size-24">
-              <img src="src/assets/logo.avif" alt="logo" />
+              <img src={logoImage} alt="logo" />
             </div>
             <span className="text-2xl font-bold text-text">Morphee</span>
           </Link>
@@ -174,7 +175,7 @@ export function RegisterPage() {
       <div className="mb-8 text-center">
         <Link to="/" className="inline-flex items-center">
           <div className="size-24">
-            <img src="src/assets/logo.avif" alt="logo" />
+            <img src={logoImage} alt="logo" />
           </div>
           <span className="text-2xl font-bold text-text">Morphee</span>
         </Link>

@@ -20,6 +20,7 @@ import { MegaMenu, MobileMenu } from "./mega-menu";
 import { useAuthStore } from "@/stores/auth-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { useWatchlistCount } from "@/stores/watchlist-store";
+import logoImage from "@/assets/logo.avif";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -76,7 +77,7 @@ export function Header() {
             {/* Logo */}
             <Link to="/" className="flex shrink-0 items-center">
               <div className="size-20">
-                <img src="src/assets/logo.avif" alt="logo" />
+                <img src={logoImage} alt="logo" />
               </div>
               <span className="hidden text-xl font-bold text-text sm:block">
                 Morphee
