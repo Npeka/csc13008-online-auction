@@ -111,7 +111,7 @@ export function RegisterPage() {
       <div className="w-full px-4" style={{ maxWidth: "32rem" }}>
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center">
-            <div className="size-24">
+            <div className="size-12">
               <img src={logoImage} alt="logo" />
             </div>
             <span className="text-2xl font-bold text-text">Morphee</span>
@@ -174,7 +174,7 @@ export function RegisterPage() {
     <div className="w-full px-4" style={{ maxWidth: "32rem" }}>
       <div className="mb-8 text-center">
         <Link to="/" className="inline-flex items-center">
-          <div className="size-24">
+          <div className="size-12">
             <img src={logoImage} alt="logo" />
           </div>
           <span className="text-2xl font-bold text-text">Morphee</span>

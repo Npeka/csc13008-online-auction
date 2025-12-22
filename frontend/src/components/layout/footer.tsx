@@ -43,7 +43,7 @@ export function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
             <Link to="/" className="mb-4 flex items-center">
-              <div className="size-20">
+              <div className="size-10">
                 <img src={logoImage} alt="logo" />
               </div>
               <span className="text-xl font-bold text-text">Morphee</span>

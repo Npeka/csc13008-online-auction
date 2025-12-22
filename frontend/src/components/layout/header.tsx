@@ -76,7 +76,7 @@ export function Header() {
 
             {/* Logo */}
             <Link to="/" className="flex shrink-0 items-center">
-              <div className="size-20">
+              <div className="size-10">
                 <img src={logoImage} alt="logo" />
               </div>
               <span className="hidden text-xl font-bold text-text sm:block">

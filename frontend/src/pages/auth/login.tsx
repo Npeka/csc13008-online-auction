@@ -59,7 +59,7 @@ export function LoginPage() {
       {/* Logo */}
       <div className="mb-8 text-center">
         <Link to="/" className="inline-flex items-center">
-          <div className="size-24">
+          <div className="size-12">
             <img src={logoImage} alt="logo" />
           </div>
           <span className="text-2xl font-bold text-text">Morphee</span>
