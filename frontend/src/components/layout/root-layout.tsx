@@ -46,3 +46,16 @@ export function AuthLayout() {
     </div>
   );
 }
+
+export function DashboardLayout() {
+  return (
+    <div className="flex min-h-screen flex-col bg-bg">
+      <Header />
+      <main className="container-app flex-1 py-6">
+        <Outlet />
+      </main>
+      <Footer />
+      <Toaster position="top-right" />
+    </div>
+  );
+}
