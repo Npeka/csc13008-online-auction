@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import {
   Heart,
@@ -12,10 +13,12 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { RoleBadge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/shared/rating";
+import { UpgradeRequestModal } from "@/components/shared/upgrade-request-modal";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function ProfilePage() {
   const { user, isAuthenticated } = useAuthStore();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   if (!isAuthenticated || !user) {
     return (
@@ -176,13 +179,22 @@ export function ProfilePage() {
                 Start selling your items and reach thousands of buyers.
               </p>
             </div>
-            <Button className="bg-white text-primary hover:bg-white/90">
+            <Button
+              className="bg-white text-primary! hover:bg-white/90"
+              onClick={() => setShowUpgradeModal(true)}
+            >
               <TrendingUp className="mr-2 h-4 w-4" />
               Request Upgrade
             </Button>
           </div>
         </div>
       )}
+
+      {/* Upgrade Request Modal */}
+      <UpgradeRequestModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+      />
     </div>
   );
 }

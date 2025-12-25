@@ -1,4 +1,4 @@
-import type { User, Category, Product, Bid, Question } from "@/types";
+import type { User, Category, Product, Bid, Question, Rating } from "@/types";
 
 // Mock Users
 export const mockUsers: User[] = [
@@ -562,6 +562,67 @@ export const mockQuestions: Question[] = [
   },
 ];
 
+// Mock Ratings (feedback received by users)
+export const mockRatings: Rating[] = [
+  {
+    id: "rating-1",
+    fromUserId: "user-2",
+    fromUser: mockUsers[1], // John Reptiles (seller)
+    toUserId: "user-3",
+    toUser: mockUsers[2], // Sarah Chen (buyer)
+    orderId: "order-1",
+    score: 1,
+    comment:
+      "Great buyer! Fast payment and excellent communication. Would definitely sell to again.",
+    createdAt: getPastDate(15),
+  },
+  {
+    id: "rating-2",
+    fromUserId: "user-1",
+    fromUser: mockUsers[0], // Admin
+    toUserId: "user-3",
+    toUser: mockUsers[2],
+    orderId: "order-2",
+    score: 1,
+    comment: "Smooth transaction, highly recommended buyer.",
+    createdAt: getPastDate(30),
+  },
+  {
+    id: "rating-3",
+    fromUserId: "user-3",
+    fromUser: mockUsers[2], // Sarah Chen
+    toUserId: "user-2",
+    toUser: mockUsers[1], // John Reptiles
+    orderId: "order-3",
+    score: 1,
+    comment:
+      "Amazing seller! The Ball Python arrived healthy and exactly as described. Packaging was excellent.",
+    createdAt: getPastDate(10),
+  },
+  {
+    id: "rating-4",
+    fromUserId: "user-3",
+    fromUser: mockUsers[2],
+    toUserId: "user-2",
+    toUser: mockUsers[1],
+    orderId: "order-4",
+    score: 1,
+    comment: "Very responsive to questions. Fast shipping!",
+    createdAt: getPastDate(25),
+  },
+  {
+    id: "rating-5",
+    fromUserId: "user-3",
+    fromUser: mockUsers[2],
+    toUserId: "user-2",
+    toUser: mockUsers[1],
+    orderId: "order-5",
+    score: -1,
+    comment: "Shipping took longer than expected, but animal arrived healthy.",
+    createdAt: getPastDate(45),
+  },
+];
+
 // Helper functions
 export const getProductById = (id: string): Product | undefined =>
   mockProducts.find((p) => p.id === id);
@@ -611,3 +672,6 @@ export const getCategoryById = (id: string): Category | undefined => {
   }
   return undefined;
 };
+
+export const getRatingsForUser = (userId: string): Rating[] =>
+  mockRatings.filter((r) => r.toUserId === userId);
