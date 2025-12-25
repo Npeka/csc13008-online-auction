@@ -16,7 +16,7 @@ export function SettingsPage() {
     <div className="container-app py-10">
       <h1 className="mb-8 text-2xl font-bold text-text">Account Settings</h1>
 
-      <div className="space-y-8" style={{ maxWidth: "42rem" }}>
+      <div className="grid gap-8 md:grid-cols-2">
         {/* Profile Info */}
         <div className="rounded-xl border border-border bg-bg-card p-6">
           <h2 className="mb-4 font-semibold text-text">Profile Information</h2>
