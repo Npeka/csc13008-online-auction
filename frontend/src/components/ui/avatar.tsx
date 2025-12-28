@@ -62,7 +62,6 @@ export function Avatar({
   );
 }
 
-// Avatar Group Component
 export interface AvatarGroupProps {
   avatars: Array<{ src?: string; alt: string }>;
   max?: number;
