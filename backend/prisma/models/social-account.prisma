@@ -1,0 +1,28 @@
+enum SocialProvider {
+  GOOGLE
+  FACEBOOK
+  GITHUB
+}
+
+// Social account linking - supports multiple OAuth providers per user
+model SocialAccount {
+  id           String          @id @default(cuid())
+  userId       String
+  provider     SocialProvider
+  providerId   String          // Firebase UID or provider-specific ID
+  email        String?
+  displayName  String?
+  photoUrl     String?
+
+  // Metadata
+  lastLoginAt DateTime @default(now())
+  linkedAt    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("social_accounts")
+}

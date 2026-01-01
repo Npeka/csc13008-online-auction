@@ -52,6 +52,7 @@ model User {
   ordersAsBuyer    Order[]          @relation("OrderBuyer")
   ordersAsSeller   Order[]          @relation("OrderSeller")
   chatMessages     ChatMessage[]
+  socialAccounts   SocialAccount[]  // OAuth providers
 
   @@map("users")
 }
