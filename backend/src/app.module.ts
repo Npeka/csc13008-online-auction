@@ -1,0 +1,65 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { PrismaService } from './prisma/prisma.service';
+import { EmailModule } from './modules/email/email.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { ProductsModule } from './modules/products/products.module';
+import { BidsModule } from './modules/bids/bids.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000, // 1 second
+        limit: 3,
+      },
+      {
+        name: 'medium',
+        ttl: 10000, // 10 seconds
+        limit: 20,
+      },
+      {
+        name: 'long',
+        ttl: 60000, // 1 minute
+        limit: 100,
+      },
+    ]),
+    EmailModule,
+    AuthModule,
+    UsersModule,
+    CategoriesModule,
+    ProductsModule,
+    BidsModule,
+  ],
+  controllers: [AppController],
+  providers: [
+    AppService,
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
+})
+export class AppModule {}
