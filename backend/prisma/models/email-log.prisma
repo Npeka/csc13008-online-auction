@@ -1,0 +1,16 @@
+// Email templates and logs
+model EmailLog {
+  id       String    @id @default(cuid())
+  to       String
+  subject  String
+  template String
+  data     Json?
+  sent     Boolean   @default(false)
+  sentAt   DateTime?
+  error    String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("email_logs")
+}

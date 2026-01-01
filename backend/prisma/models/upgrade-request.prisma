@@ -1,0 +1,26 @@
+enum UpgradeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model UpgradeRequest {
+  id     String                @id @default(cuid())
+  reason String?
+  status UpgradeRequestStatus @default(PENDING)
+
+  // Admin response
+  adminComment String?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("upgrade_requests")
+}

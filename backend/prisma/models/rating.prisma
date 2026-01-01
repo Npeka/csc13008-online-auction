@@ -1,0 +1,22 @@
+model Rating {
+  id      String  @id @default(cuid())
+  rating  Int // +1 or -1
+  comment String?
+
+  // Relations
+  giverId    String
+  giver      User   @relation("RatingGiver", fields: [giverId], references: [id])
+  receiverId String
+  receiver   User   @relation("RatingReceiver", fields: [receiverId], references: [id])
+
+  // Link to order
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([giverId, receiverId, orderId])
+  @@map("ratings")
+}

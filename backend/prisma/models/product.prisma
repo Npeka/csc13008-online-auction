@@ -1,0 +1,60 @@
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  images      String[] // Array of image URLs
+
+  // Pricing
+  startPrice   Float
+  currentPrice Float
+  bidStep      Float
+  buyNowPrice  Float?
+
+  // Timing
+  startTime DateTime @default(now())
+  endTime   DateTime
+
+  // Auto-extension settings
+  autoExtend           Boolean @default(false)
+  extensionTriggerTime Int     @default(5) // minutes before end
+  extensionDuration    Int     @default(10) // minutes to extend
+
+  // Status
+  status   ProductStatus @default(ACTIVE)
+  isActive Boolean       @default(true)
+
+  // Seller settings
+  allowNewBidders Boolean @default(true)
+
+  // Metadata
+  viewCount Int @default(0)
+
+  // Relations
+  sellerId   String
+  seller     User     @relation(fields: [sellerId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  bids           Bid[]
+  watchlist      Watchlist[]
+  questions      Question[]
+  blockedBidders BidderBlock[]
+  order          Order?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, endTime])
+  @@index([categoryId, status])
+  @@index([sellerId])
+  @@map("products")
+}

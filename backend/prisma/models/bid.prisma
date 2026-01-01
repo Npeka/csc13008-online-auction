@@ -1,0 +1,19 @@
+model Bid {
+  id        String  @id @default(cuid())
+  amount    Float
+  isValid   Boolean @default(true) // Can be invalidated by seller
+  isAutoBid Boolean @default(false) // For future auto-bidding feature
+
+  // Relations
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  bidderId  String
+  bidder    User    @relation(fields: [bidderId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([productId, amount])
+  @@index([bidderId])
+  @@map("bids")
+}

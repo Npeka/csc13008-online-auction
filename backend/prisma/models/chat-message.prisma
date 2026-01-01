@@ -1,0 +1,18 @@
+// Chat messages between buyer and seller during order fulfillment
+model ChatMessage {
+  id      String  @id @default(cuid())
+  content String
+  isRead  Boolean @default(false)
+
+  // Relations
+  orderId  String
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@map("chat_messages")
+}

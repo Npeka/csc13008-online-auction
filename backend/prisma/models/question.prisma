@@ -1,0 +1,33 @@
+model Question {
+  id       String @id @default(cuid())
+  question String
+
+  // Relations
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  askerId   String
+  asker     User    @relation(fields: [askerId], references: [id])
+
+  answers Answer[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("questions")
+}
+
+model Answer {
+  id     String @id @default(cuid())
+  answer String
+
+  // Relations
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerId   String
+  answerer   User     @relation(fields: [answerId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@map("answers")
+}

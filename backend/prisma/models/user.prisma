@@ -1,0 +1,57 @@
+enum UserRole {
+  GUEST
+  BIDDER
+  SELLER
+  ADMIN
+}
+
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String? // Optional for OAuth users
+  name        String
+  address     String?
+  phone       String?
+  avatar      String?
+  dateOfBirth DateTime?
+  role        UserRole  @default(BIDDER)
+
+  // Rating system
+  rating      Float @default(0)
+  ratingCount Int   @default(0)
+
+  // Email verification
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  otpCode           String?
+  otpExpiry         DateTime?
+
+  // Password reset
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  // Seller settings
+  allowNewBidders Boolean @default(true) // Allow new bidders to bid
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  products         Product[]
+  bids             Bid[]
+  watchlist        Watchlist[]
+  questions        Question[]
+  answers          Answer[]
+  ratingsGiven     Rating[]         @relation("RatingGiver")
+  ratingsReceived  Rating[]         @relation("RatingReceiver")
+  upgradeRequests  UpgradeRequest[]
+  refreshTokens    RefreshToken[]
+  blockedBidders   BidderBlock[]    @relation("SellerBlocks")
+  blockedBy        BidderBlock[]    @relation("BidderBlocked")
+  ordersAsBuyer    Order[]          @relation("OrderBuyer")
+  ordersAsSeller   Order[]          @relation("OrderSeller")
+  chatMessages     ChatMessage[]
+
+  @@map("users")
+}
