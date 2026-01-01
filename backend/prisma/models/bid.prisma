@@ -13,7 +13,8 @@ model Bid {
   // Timestamps
   createdAt DateTime @default(now())
 
-  @@index([productId, amount])
-  @@index([bidderId])
+  @@index([productId, isValid, amount])
+  @@index([bidderId, isValid])
+  @@index([productId, createdAt])
   @@map("bids")
 }

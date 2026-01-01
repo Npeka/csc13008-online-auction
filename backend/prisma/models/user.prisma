@@ -54,5 +54,10 @@ model User {
   chatMessages     ChatMessage[]
   socialAccounts   SocialAccount[]  // OAuth providers
 
+  @@index([email])
+  @@index([resetToken])
+  @@index([otpCode])
+  @@index([role])
+  @@index([emailVerified])
   @@map("users")
 }

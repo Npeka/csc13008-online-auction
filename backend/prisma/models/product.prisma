@@ -56,5 +56,7 @@ model Product {
   @@index([status, endTime])
   @@index([categoryId, status])
   @@index([sellerId])
+  @@index([status, currentPrice])
+  @@index([status, createdAt])
   @@map("products")
 }

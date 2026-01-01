@@ -18,5 +18,7 @@ model Rating {
   updatedAt DateTime @updatedAt
 
   @@unique([giverId, receiverId, orderId])
+  @@index([receiverId])
+  @@index([orderId])
   @@map("ratings")
 }

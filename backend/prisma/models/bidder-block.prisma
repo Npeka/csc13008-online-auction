@@ -14,5 +14,7 @@ model BidderBlock {
   createdAt DateTime @default(now())
 
   @@unique([sellerId, bidderId, productId])
+  @@index([sellerId, bidderId])
+  @@index([productId])
   @@map("bidder_blocks")
 }
