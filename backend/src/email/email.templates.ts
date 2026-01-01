@@ -6,7 +6,6 @@ export class EmailTemplates {
   private static readonly TEMPLATES_DIR = join(
     process.cwd(),
     'src',
-    'modules',
     'email',
     'templates',
   );

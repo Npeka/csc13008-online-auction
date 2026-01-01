@@ -17,6 +17,7 @@ import {
   RefreshTokenDto,
   ChangePasswordDto,
   ForgotPasswordDto,
+  VerifyResetOTPDto,
   ResetPasswordDto,
 } from './dto/auth.dto';
 import { GoogleOAuthLoginDto } from './dto/oauth.dto';
@@ -74,7 +75,15 @@ export class AuthController {
   }
 
   @Public()
+  @Post('verify-reset-otp')
+  @HttpCode(HttpStatus.OK)
+  verifyResetOTP(@Body() dto: VerifyResetOTPDto) {
+    return this.authService.verifyResetOTP(dto);
+  }
+
+  @Public()
   @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
@@ -86,12 +95,6 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
   ) {
     return this.authService.changePassword(userId, dto);
-  }
-
-  @Get('profile')
-  @UseGuards(JwtAuthGuard)
-  getProfile(@GetUser('id') userId: string) {
-    return this.authService.getProfile(userId);
   }
 
   @Public()

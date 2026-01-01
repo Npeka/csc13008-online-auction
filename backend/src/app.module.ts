@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { FirebaseModule } from './firebase/firebase.module';
 import { EmailModule } from './email/email.module';
+import { RedisModule } from './redis/redis.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
@@ -40,6 +41,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     ]),
     FirebaseModule,
     EmailModule,
+    RedisModule,
     AuthModule,
     UsersModule,
     CategoriesModule,

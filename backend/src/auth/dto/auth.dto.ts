@@ -73,13 +73,21 @@ export class ForgotPasswordDto {
   email: string;
 }
 
-export class ResetPasswordDto {
+export class VerifyResetOTPDto {
   @IsEmail()
   email: string;
 
   @IsString()
   @Length(6, 6)
   otpCode: string;
+}
+
+export class ResetPasswordDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  resetToken: string;
 
   @IsString()
   @MinLength(6)

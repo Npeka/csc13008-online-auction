@@ -16,10 +16,13 @@ import {
   LoginDto,
   ChangePasswordDto,
   ForgotPasswordDto,
+  VerifyResetOTPDto,
   ResetPasswordDto,
 } from './dto/auth.dto';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { UserRole } from '@prisma/client';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class AuthService {
@@ -38,6 +41,7 @@ export class AuthService {
     private firebaseService: FirebaseService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private redisService: RedisService,
   ) {
     // Initialize constants from environment
     this.JWT_SECRET = process.env.JWT_SECRET!;
@@ -45,7 +49,7 @@ export class AuthService {
     this.JWT_ACCESS_EXPIRES_IN = 60 * 15; // 15 minutes
     this.JWT_REFRESH_EXPIRES_IN = 60 * 60 * 24 * 7; // 7 days
     this.OTP_EXPIRY_HOURS = 24;
-    this.PASSWORD_RESET_OTP_EXPIRY_HOURS = 1;
+    this.PASSWORD_RESET_OTP_EXPIRY_HOURS = 5 / 60; // 5 minutes (converted to hours)
     this.BCRYPT_SALT_ROUNDS = 12;
   }
 
@@ -273,12 +277,10 @@ export class AuthService {
 
     // Generate OTP for password reset
     const otpCode = this.generateOTP();
-    const otpExpiry = new Date(
-      Date.now() + this.PASSWORD_RESET_OTP_EXPIRY_HOURS * 60 * 60 * 1000,
-    );
 
-    // Update OTP
-    await this.usersRepository.updateOtp(user.id, otpCode, otpExpiry);
+    // Cache OTP in Redis (5 minutes = 300 seconds)
+    const otpKey = `pwd_reset_otp:${dto.email}`;
+    await this.redisService.set(otpKey, otpCode, 300);
 
     // Send password reset email
     await this.emailService.sendPasswordResetEmail(
@@ -293,14 +295,42 @@ export class AuthService {
     };
   }
 
+  async verifyResetOTP(dto: VerifyResetOTPDto) {
+    const otpKey = `pwd_reset_otp:${dto.email}`;
+    const cachedOTP = await this.redisService.get(otpKey);
+
+    if (!cachedOTP || cachedOTP !== dto.otpCode) {
+      throw new BadRequestException('Invalid or expired OTP code');
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const tokenKey = `pwd_reset_token:${dto.email}`;
+
+    // Cache reset token (5 minutes = 300 seconds)
+    await this.redisService.set(tokenKey, resetToken, 300);
+
+    // Delete OTP (single use)
+    await this.redisService.del(otpKey);
+
+    return {
+      message: 'OTP verified. You can now reset your password.',
+      resetToken,
+    };
+  }
+
   async resetPassword(dto: ResetPasswordDto) {
-    const user = await this.usersRepository.findByEmailAndOtp(
-      dto.email,
-      dto.otpCode,
-    );
+    const tokenKey = `pwd_reset_token:${dto.email}`;
+    const cachedToken = await this.redisService.get(tokenKey);
+
+    if (!cachedToken || cachedToken !== dto.resetToken) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const user = await this.usersRepository.findByEmail(dto.email);
 
     if (!user) {
-      throw new BadRequestException('Invalid or expired OTP code');
+      throw new BadRequestException('User not found');
     }
 
     // Hash new password
@@ -309,16 +339,14 @@ export class AuthService {
       this.BCRYPT_SALT_ROUNDS,
     );
 
-    // Update password, clear OTP, and invalidate all refresh tokens
+    // Update password and invalidate all refresh tokens
     await this.usersRepository.updatePassword(user.id, hashedPassword);
-    await this.usersRepository.clearOtp(user.id);
     await this.usersRepository.deleteAllRefreshTokens(user.id);
 
-    return { message: 'Password reset successfully' };
-  }
+    // Delete reset token (single use)
+    await this.redisService.del(tokenKey);
 
-  async getProfile(userId: string) {
-    return this.usersRepository.findById(userId);
+    return { message: 'Password reset successfully' };
   }
 
   private generateOTP(): string {
