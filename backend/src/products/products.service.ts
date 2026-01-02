@@ -66,7 +66,14 @@ export class ProductsService {
     };
 
     if (categoryId) {
-      where.categoryId = categoryId;
+      // Get child categories to include products from subcategories
+      const childCategoryIds =
+        await this.productsRepository.getChildCategoryIds(categoryId);
+
+      // Include both the parent category and all child categories
+      where.categoryId = {
+        in: [categoryId, ...childCategoryIds],
+      };
     }
 
     if (search) {

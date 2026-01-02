@@ -177,4 +177,12 @@ export class ProductsRepository {
   async countBid(where: Prisma.BidWhereInput) {
     return this.prisma.bid.count({ where });
   }
+
+  async getChildCategoryIds(parentId: string): Promise<string[]> {
+    const children = await this.prisma.category.findMany({
+      where: { parentId },
+      select: { id: true },
+    });
+    return children.map((c) => c.id);
+  }
 }
