@@ -37,7 +37,7 @@ export function CategoryCard({
   if (variant === "compact") {
     return (
       <Link
-        to={`/category/${category.id}`}
+        to={`/products?category=${category.slug}`}
         className={cn(
           "flex items-center gap-3 rounded-lg p-3",
           "border border-border bg-bg-card",
@@ -61,7 +61,7 @@ export function CategoryCard({
   if (variant === "large") {
     return (
       <Link
-        to={`/category/${category.id}`}
+        to={`/products?category=${category.slug}`}
         className={cn(
           "block rounded-xl border border-border bg-bg-card p-6",
           "group cursor-pointer transition-all hover:border-primary hover:shadow-lg",
@@ -103,7 +103,7 @@ export function CategoryCard({
   // Default variant
   return (
     <Link
-      to={`/category/${category.id}`}
+      to={`/products?category=${category.slug}`}
       className={cn(
         "flex flex-col items-center rounded-xl p-4",
         "border border-border bg-bg-card",

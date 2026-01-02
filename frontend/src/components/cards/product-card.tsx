@@ -72,7 +72,7 @@ export function ProductCard({
           </h3>
 
           <div className="mb-2 flex items-center gap-2 text-sm text-text-muted">
-            <span>{product.category.name}</span>
+            <span>{product.category?.name}</span>
             <span>•</span>
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" />
@@ -172,7 +172,7 @@ export function ProductCard({
       <div className="p-4">
         {/* Category */}
         <p className="mb-1 text-xs font-medium text-primary">
-          {product.category.name}
+          {product.category?.name}
         </p>
 
         {/* Title */}
@@ -210,10 +210,10 @@ export function ProductCard({
             <div className="flex items-center gap-1">
               <Avatar
                 src={product.highestBidder.avatar}
-                fallback={product.highestBidder.fullName}
+                fallback={product.highestBidder.name}
                 size="xs"
               />
-              <span>{maskName(product.highestBidder.fullName)}</span>
+              <span>{maskName(product.highestBidder.name)}</span>
             </div>
           )}
         </div>
