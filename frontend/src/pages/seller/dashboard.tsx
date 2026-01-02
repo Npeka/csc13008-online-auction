@@ -1,14 +1,14 @@
 import { Link } from "react-router";
-import { useAuthStore } from "@/stores/auth-store";
+import {
+  DollarSign,
+  Package,
+  Plus,
+  ShoppingBag,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Package,
-  DollarSign,
-  TrendingUp,
-  ShoppingBag,
-  Plus,
-} from "lucide-react";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function SellerDashboard() {
   const { user } = useAuthStore();

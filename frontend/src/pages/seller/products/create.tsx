@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
+import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
-import { ArrowLeft, X, Plus } from "lucide-react";
+import { ArrowLeft, Plus,X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCategoryStore } from "@/stores/category-store";
 import { productsApi } from "@/lib";
-import toast from "react-hot-toast";
+import { useCategoryStore } from "@/stores/category-store";
 
 // Fallback if Textarea component doesn't exist yet
 const TextAreaFallback = (

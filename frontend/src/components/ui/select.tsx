@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Check, ChevronDown } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 
 // Since we might not have radix-ui installed, implementing a custom Select that mimics the API

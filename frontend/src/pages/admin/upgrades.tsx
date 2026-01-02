@@ -53,7 +53,7 @@ export function UpgradeRequests() {
   const handleReject = (request: UpgradeRequest) => {
     const reason = window.prompt("Reason for rejection (optional):");
     // TODO: Call API to reject with reason
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     console.log(reason);
     setRequests(
       requests.map((r) =>

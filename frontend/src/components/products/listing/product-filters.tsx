@@ -1,8 +1,8 @@
 import { memo, useEffect, useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/types";
 import { useCategoryStore } from "@/stores/category-store";
+import type { Category } from "@/types";
 
 interface ProductFiltersProps {
   currentCategory: Category | null;

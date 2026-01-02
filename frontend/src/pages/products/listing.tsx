@@ -2,12 +2,12 @@ import { useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   ProductFilters,
-  ProductListHeader,
   ProductListContent,
+  ProductListHeader,
   ProductSortControls,
 } from "@/components/products/listing";
-import type { Category } from "@/types";
 import { ProductListBreadcrumb } from "@/components/products/listing/product-list-breadcrumb";
+import type { Category } from "@/types";
 
 export function ProductListingPage() {
   const navigate = useNavigate();

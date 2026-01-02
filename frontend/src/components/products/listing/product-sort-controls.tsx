@@ -1,8 +1,8 @@
 import { memo } from "react";
 import { Grid, List, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/dropdown";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const sortOptions = [
   { label: "Ending Soon", value: "ending_asc" },

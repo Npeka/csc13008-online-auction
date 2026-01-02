@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown } from "lucide-react";
-import { useCategoryStore } from "@/stores/category-store";
 import { cn } from "@/lib/utils";
+import { useCategoryStore } from "@/stores/category-store";
 import type { Category } from "@/types";
 
 export interface MegaMenuProps {

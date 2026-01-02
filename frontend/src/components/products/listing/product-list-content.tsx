@@ -1,10 +1,10 @@
 import { memo, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { ProductCard, ProductGrid } from "@/components/cards/product-card";
-import { ProductPagination } from "./product-pagination";
 import { productsApi } from "@/lib";
 import { useCategoryStore } from "@/stores/category-store";
 import type { Product, ProductFilters as ProductFiltersType } from "@/types";
+import { ProductPagination } from "./product-pagination";
 
 const ITEMS_PER_PAGE = 6;
 

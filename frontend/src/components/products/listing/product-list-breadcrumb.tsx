@@ -1,6 +1,6 @@
 import { memo } from "react";
-import type { Category } from "@/types";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
+import type { Category } from "@/types";
 
 interface ProductListBreadcrumbProps {
   currentCategory: Category | null;

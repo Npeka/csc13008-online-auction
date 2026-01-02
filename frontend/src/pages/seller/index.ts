@@ -1,6 +1,6 @@
 export { SellerDashboard } from "./dashboard";
 export {
-  SellerProductsPage,
-  CreateProductPage,
   AppendDescriptionPage,
+  CreateProductPage,
+  SellerProductsPage,
 } from "./products/exports";

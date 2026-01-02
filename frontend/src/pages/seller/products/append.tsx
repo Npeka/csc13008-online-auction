@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useNavigate, useParams, Link } from "react-router";
+import toast from "react-hot-toast";
+import { Link,useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { productsApi } from "@/lib";
-import toast from "react-hot-toast";
 
 // Simple container page for appending description
 export function AppendDescriptionPage() {

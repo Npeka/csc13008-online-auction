@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown } from "lucide-react";
-import { useCategoryStore } from "@/stores/category-store";
 import { cn } from "@/lib/utils";
+import { useCategoryStore } from "@/stores/category-store";
 
 // Mobile Menu
 export function MobileMenu({

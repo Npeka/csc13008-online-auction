@@ -1,8 +1,8 @@
 import { memo } from "react";
 import { Heart, Share2, Shield } from "lucide-react";
+import { Countdown } from "@/components/shared/countdown";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Countdown } from "@/components/shared/countdown";
 import { cn, formatUSD, maskName } from "@/lib/utils";
 
 interface ProductBiddingPanelProps {

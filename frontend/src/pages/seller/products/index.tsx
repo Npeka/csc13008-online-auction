@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { formatDistanceToNow } from "date-fns";
 import {
+  Edit,
+  Eye,
+  FileText,
+  MoreHorizontal,
   Plus,
   Search,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  FileText,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -18,19 +28,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { productsApi } from "@/lib";
-import type { Product } from "@/types";
 import { formatCurrency } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import type { Product } from "@/types";
 
 export function SellerProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
