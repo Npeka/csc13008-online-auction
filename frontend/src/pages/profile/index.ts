@@ -1,6 +1,5 @@
-export { ProfilePage } from "./profile";
-export { WatchlistPage } from "./watchlist";
 export { BidsPage } from "./bids";
-export { WonPage } from "./won";
+export { ProfilePage } from "./profile";
 export { RatingsPage } from "./ratings";
-export { SettingsPage } from "./settings";
+export { WatchlistPage } from "./watchlist";
+export { WonPage } from "./won";

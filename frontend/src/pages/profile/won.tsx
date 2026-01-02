@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Trophy, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star, Trophy } from "lucide-react";
 import { RatingModal } from "@/components/shared/rating-modal";
+import { Button } from "@/components/ui/button";
 import { mockProducts } from "@/data/mock";
 import { formatUSD } from "@/lib/utils";
 import type { Product } from "@/types";
@@ -37,7 +37,7 @@ export function WonPage() {
           <p className="mb-6 text-text-muted">
             You haven't won any auctions yet.
           </p>
-          <Link to="/search">
+          <Link to="/products">
             <Button>Browse Auctions</Button>
           </Link>
         </div>
@@ -54,7 +54,11 @@ export function WonPage() {
                 {/* Product Image */}
                 <Link to={`/products/${product.id}`} className="shrink-0">
                   <img
-                    src={product.images[0]?.url}
+                    src={
+                      typeof product.images[0] === "string"
+                        ? product.images[0]
+                        : product.images[0]?.url
+                    }
                     alt={product.name}
                     className="h-24 w-24 rounded-lg object-cover sm:h-20 sm:w-20"
                   />
@@ -75,7 +79,7 @@ export function WonPage() {
                         {formatUSD(product.currentPrice)}
                       </strong>
                     </span>
-                    <span>Seller: {product.seller.fullName}</span>
+                    <span>Seller: {product.seller?.name}</span>
                   </div>
                 </div>
 
@@ -113,7 +117,7 @@ export function WonPage() {
         <RatingModal
           isOpen={!!selectedProduct}
           onClose={() => setSelectedProduct(null)}
-          seller={selectedProduct.seller}
+          seller={selectedProduct.seller as any}
           product={selectedProduct}
           onSubmit={handleRatingSubmit}
         />

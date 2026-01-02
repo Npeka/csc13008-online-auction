@@ -1,11 +1,38 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Gavel } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/cards/product-card";
-import { mockProducts } from "@/data/mock";
+import { Button } from "@/components/ui/button";
+import { bidsApi } from "@/lib";
+import type { Product } from "@/types";
 
 export function BidsPage() {
-  const activeBids = mockProducts.slice(0, 3);
+  const [activeBids, setActiveBids] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBids = async () => {
+      try {
+        setIsLoading(true);
+        const data = await bidsApi.getMyBiddingProducts();
+        setActiveBids(data);
+      } catch (error) {
+        console.error("Failed to fetch bids:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBids();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="container-app flex min-h-screen items-center justify-center py-20">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="container-app py-10">
@@ -20,7 +47,7 @@ export function BidsPage() {
           <p className="mb-6 text-text-muted">
             You haven't placed any bids yet.
           </p>
-          <Link to="/search">
+          <Link to="/products">
             <Button>Start Bidding</Button>
           </Link>
         </div>

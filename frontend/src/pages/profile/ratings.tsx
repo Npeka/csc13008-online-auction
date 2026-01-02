@@ -1,13 +1,36 @@
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
+import { MessageSquare, ThumbsDown, ThumbsUp } from "lucide-react";
 import { RatingStats } from "@/components/shared/rating";
 import { Avatar } from "@/components/ui/avatar";
-import { useAuthStore } from "@/stores/auth-store";
-import { getRatingsForUser } from "@/data/mock";
+import { usersApi } from "@/lib";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function RatingsPage() {
   const { user } = useAuthStore();
+  const [ratings, setRatings] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any>(null);
+  const [_isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        setIsLoading(true);
+        const data = await usersApi.getRatings();
+        setRatings(data.ratings);
+        setSummary(data.summary);
+      } catch (error) {
+        console.error("Failed to fetch ratings:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchRatings();
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -17,8 +40,6 @@ export function RatingsPage() {
     );
   }
 
-  const ratings = getRatingsForUser(user.id);
-
   return (
     <div className="container-app py-10">
       <h1 className="mb-8 text-2xl font-bold text-text">My Ratings</h1>
@@ -27,10 +48,9 @@ export function RatingsPage() {
         {/* Rating Overview */}
         <div className="rounded-xl border border-border bg-bg-card p-6">
           <h2 className="mb-4 font-semibold text-text">Rating Overview</h2>
-          <RatingStats
-            positive={user.rating.positive}
-            total={user.rating.total}
-          />
+          {summary && (
+            <RatingStats positive={summary.positive} total={summary.total} />
+          )}
         </div>
 
         {/* Summary Stats */}
