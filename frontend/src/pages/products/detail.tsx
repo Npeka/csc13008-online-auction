@@ -1,57 +1,173 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router";
-import {
-  Heart,
-  Share2,
-  Shield,
-  Users,
-  Eye,
-  ChevronLeft,
-  ChevronRight,
-  MessageCircle,
-} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { Link, useNavigate, useParams } from "react-router";
 import { format } from "date-fns";
-import { cn, formatUSD, maskName } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
-import { Tabs, TabPanel } from "@/components/ui/tabs";
-import { Modal } from "@/components/ui/modal";
-import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { Countdown } from "@/components/shared/countdown";
-import { BidInput } from "@/components/shared/bid-input";
-import { BidHistoryTable } from "@/components/shared/bid-history";
-import { RatingBadge } from "@/components/shared/rating";
 import { ProductGrid } from "@/components/cards/product-card";
 import { SellerInfoCard } from "@/components/cards/user-card";
-import { useWatchlistStore } from "@/stores/watchlist-store";
-import { useAuthStore } from "@/stores/auth-store";
 import {
-  getProductById,
-  getBidsForProduct,
-  getQuestionsForProduct,
-  getProductsByCategory,
-} from "@/data/mock";
-import toast from "react-hot-toast";
+  ProductBiddingPanel,
+  ProductImageGallery,
+  ProductInfoSection,
+  ProductStats,
+} from "@/components/products/detail";
+import { BidInput } from "@/components/shared/bid-input";
+import { Breadcrumb } from "@/components/shared/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { bidsApi, productsApi } from "@/lib";
+import { formatUSD } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
+import { useWatchlistStore } from "@/stores/watchlist-store";
+import type { Product } from "@/types";
+
+// Helper to convert user rating to BidInput expected format
+function getUserRatingForBid(
+  user: any,
+): { positive: number; total: number } | undefined {
+  if (!user?.rating) return undefined;
+
+  if (typeof user.rating === "number") {
+    // New structure: rating is a number (0-5), use ratingCount
+    const ratingCount = user.ratingCount || 0;
+    const positive =
+      ratingCount > 0 ? Math.round((user.rating / 5) * ratingCount) : 0;
+    return { positive, total: ratingCount };
+  }
+
+  // Old structure: rating is already an object
+  return { positive: user.rating.positive, total: user.rating.total };
+}
 
 export function ProductDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("description");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showBidModal, setShowBidModal] = useState(false);
   const [isBidding, setIsBidding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [product, setProduct] = useState<any>(null);
+  const [bids, setBids] = useState<any[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   const { user, isAuthenticated } = useAuthStore();
-  const { productIds, toggleWatchlist } = useWatchlistStore();
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } =
+    useWatchlistStore();
 
-  const product = getProductById(id || "");
-  const bids = getBidsForProduct(id || "");
-  const questions = getQuestionsForProduct(id || "");
-  const relatedProducts = product
-    ? getProductsByCategory(product.categoryId)
-        .filter((p) => p.id !== product.id)
-        .slice(0, 5)
-    : [];
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (!slug) return;
+
+      try {
+        setIsLoading(true);
+
+        // Fetch product details by slug
+        const productData = await productsApi.getProductBySlug(slug);
+        setProduct(productData);
+        setRelatedProducts(productData.relatedProducts || []);
+
+        // Fetch bid history
+        const bidHistory = await bidsApi.getBidHistory(productData.id);
+        setBids(bidHistory);
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+        toast.error("Product not found");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [slug]);
+
+  const handlePlaceBid = useCallback(
+    async (amount: number) => {
+      if (!isAuthenticated) {
+        toast.error("Please login to place a bid");
+        navigate("/login");
+        return;
+      }
+
+      try {
+        setIsBidding(true);
+        await bidsApi.placeBid(product.id, amount);
+
+        toast.success(`Bid of ${formatUSD(amount)} placed successfully!`);
+
+        // Refresh product and bids
+        const [updatedProduct, updatedBids] = await Promise.all([
+          productsApi.getProductBySlug(slug!),
+          bidsApi.getBidHistory(product.id),
+        ]);
+
+        setProduct(updatedProduct);
+        setBids(updatedBids);
+        setShowBidModal(false);
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to place bid");
+      } finally {
+        setIsBidding(false);
+      }
+    },
+    [isAuthenticated, navigate, product?.id, slug],
+  );
+
+  const handleWatchlistToggle = useCallback(async () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to add to watchlist");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const inWatchlist = isInWatchlist(product.id);
+      if (inWatchlist) {
+        await removeFromWatchlist(product.id);
+        toast.success("Removed from watchlist");
+      } else {
+        await addToWatchlist(product);
+        toast.success("Added to watchlist");
+      }
+    } catch (error) {
+      toast.error("Failed to update watchlist");
+    }
+  }, [
+    isAuthenticated,
+    navigate,
+    product,
+    isInWatchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+  ]);
+
+  const handleBuyNow = useCallback(() => {
+    if (!isAuthenticated) {
+      toast.error("Please login to buy now");
+      navigate("/login");
+      return;
+    }
+    toast.success("Buy Now successful! Redirecting to checkout...");
+  }, [isAuthenticated, navigate]);
+
+  const nextImage = useCallback(() => {
+    setSelectedImageIndex((prev) => (prev + 1) % product.images.length);
+  }, [product?.images.length]);
+
+  const prevImage = useCallback(() => {
+    setSelectedImageIndex((prev) =>
+      prev === 0 ? product.images.length - 1 : prev - 1,
+    );
+  }, [product?.images.length]);
+
+  if (isLoading) {
+    return (
+      <div className="container-app flex min-h-screen items-center justify-center py-20">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -67,40 +183,8 @@ export function ProductDetailPage() {
     );
   }
 
-  const inWatchlist = product ? productIds.includes(product.id) : false;
+  const inWatchlist = isInWatchlist(product.id);
   const minimumBid = product.currentPrice + product.bidStep;
-
-  const handlePlaceBid = async (amount: number) => {
-    if (!isAuthenticated) {
-      toast.error("Please login to place a bid");
-      return;
-    }
-
-    setIsBidding(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsBidding(false);
-    setShowBidModal(false);
-    toast.success(`Bid of ${formatUSD(amount)} placed successfully!`);
-  };
-
-  const handleBuyNow = () => {
-    if (!isAuthenticated) {
-      toast.error("Please login to buy now");
-      return;
-    }
-    toast.success("Buy Now successful! Redirecting to checkout...");
-  };
-
-  const nextImage = () => {
-    setSelectedImageIndex((prev) => (prev + 1) % product.images.length);
-  };
-
-  const prevImage = () => {
-    setSelectedImageIndex((prev) =>
-      prev === 0 ? product.images.length - 1 : prev - 1,
-    );
-  };
 
   return (
     <div className="container-app py-10">
@@ -108,200 +192,59 @@ export function ProductDetailPage() {
       <Breadcrumb
         items={[
           {
-            label: product.category.name,
-            href: `/category/${product.categoryId}`,
+            label: product.category?.name || "Products",
+            href: `/products?category=${product.category?.slug}`,
           },
-          { label: product.name },
+          { label: product.title },
         ]}
         className="mb-6"
       />
 
       <div className="grid gap-10 lg:grid-cols-2">
         {/* Image Gallery */}
-        <div>
-          <div className="relative mb-4 aspect-square overflow-hidden rounded-xl bg-bg-secondary">
-            <img
-              src={product.images[selectedImageIndex]?.url}
-              alt={product.images[selectedImageIndex]?.alt}
-              className="h-full w-full object-cover"
-            />
-
-            {/* Navigation arrows */}
-            {product.images.length > 1 && (
-              <>
-                <button
-                  onClick={prevImage}
-                  className="absolute top-1/2 left-3 -translate-y-1/2 cursor-pointer rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </>
-            )}
-
-            {/* Badges */}
-            <div className="absolute top-3 left-3 flex gap-2">
-              {product.isFeatured && <Badge variant="warning">Featured</Badge>}
-              {product.status === "active" && (
-                <Badge variant="success">Active</Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Thumbnails */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {product.images.map((image, index) => (
-              <button
-                key={image.id}
-                onClick={() => setSelectedImageIndex(index)}
-                className={cn(
-                  "h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all",
-                  index === selectedImageIndex
-                    ? "border-primary"
-                    : "border-transparent hover:border-border",
-                )}
-              >
-                <img
-                  src={image.url}
-                  alt={image.alt}
-                  className="h-full w-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
+        <ProductImageGallery
+          images={product.images}
+          title={product.title}
+          status={product.status}
+          selectedIndex={selectedImageIndex}
+          onSelectIndex={setSelectedImageIndex}
+          onNext={nextImage}
+          onPrev={prevImage}
+        />
 
         {/* Product Info */}
         <div>
           {/* Category & Title */}
           <Link
-            to={`/category/${product.categoryId}`}
+            to={`/products?category=${product.category?.slug}`}
             className="text-sm font-medium text-primary hover:underline"
           >
-            {product.category.name}
+            {product.category?.name}
           </Link>
           <h1 className="mt-2 mb-4 text-2xl font-bold text-text lg:text-3xl">
-            {product.name}
+            {product.title}
           </h1>
 
           {/* Stats */}
-          <div className="mb-6 flex items-center gap-4 text-sm text-text-muted">
-            <span className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {product.bidCount} bids
-            </span>
-            <span className="flex items-center gap-1">
-              <Eye className="h-4 w-4" />
-              {product.viewCount} views
-            </span>
-            <span className="flex items-center gap-1">
-              <Heart className="h-4 w-4" />
-              {product.watchCount} watching
-            </span>
-          </div>
+          <ProductStats
+            bidCount={product.bidCount}
+            viewCount={product.viewCount}
+          />
 
-          {/* Price & Countdown */}
-          <div className="mb-6 rounded-xl border border-border bg-bg-card p-6">
-            <div className="mb-4 flex items-start justify-between">
-              <div>
-                <p className="mb-1 text-sm text-text-muted">Current Bid</p>
-                <p className="text-3xl font-bold text-text">
-                  {formatUSD(product.currentPrice)}
-                </p>
-              </div>
-              <Countdown endTime={product.endTime} size="lg" />
-            </div>
-
-            {/* Highest Bidder */}
-            {product.highestBidder && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg bg-bg-secondary p-3">
-                <Avatar
-                  src={product.highestBidder.avatar}
-                  fallback={product.highestBidder.fullName}
-                  size="sm"
-                />
-                <div className="flex-1">
-                  <p className="text-sm text-text-muted">Highest Bidder</p>
-                  <p className="font-medium text-text">
-                    {maskName(product.highestBidder.fullName)}
-                  </p>
-                </div>
-                <RatingBadge
-                  positive={product.highestBidder.rating.positive}
-                  total={product.highestBidder.rating.total}
-                  size="sm"
-                />
-              </div>
-            )}
-
-            {/* Bid Info */}
-            <div className="mb-6 grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-text-muted">Minimum Bid</p>
-                <p className="font-semibold text-text">
-                  {formatUSD(minimumBid)}
-                </p>
-              </div>
-              <div>
-                <p className="text-text-muted">Bid Increment</p>
-                <p className="font-semibold text-text">
-                  +{formatUSD(product.bidStep)}
-                </p>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              <Button
-                onClick={() => setShowBidModal(true)}
-                className="w-full"
-                size="lg"
-              >
-                Place Bid
-              </Button>
-
-              {product.buyNowPrice && (
-                <Button
-                  onClick={handleBuyNow}
-                  variant="outline"
-                  className="w-full border-cta text-cta hover:bg-cta hover:text-white"
-                  size="lg"
-                >
-                  Buy Now - {formatUSD(product.buyNowPrice)}
-                </Button>
-              )}
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => toggleWatchlist(product.id)}
-                  variant={inWatchlist ? "secondary" : "ghost"}
-                  className="flex-1"
-                >
-                  <Heart
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      inWatchlist && "fill-current",
-                    )}
-                  />
-                  {inWatchlist ? "Watching" : "Add to Watchlist"}
-                </Button>
-                <Button variant="ghost" className="px-4">
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Trust indicators */}
-            <div className="mt-4 flex items-center gap-2 border-t border-border pt-4 text-xs text-text-muted">
-              <Shield className="h-4 w-4 text-success" />
-              Buyer Protection Guarantee
-            </div>
-          </div>
+          {/* Bidding Panel */}
+          <ProductBiddingPanel
+            currentPrice={product.currentPrice}
+            endTime={product.endTime}
+            highestBidder={product.highestBidder}
+            minimumBid={minimumBid}
+            bidStep={product.bidStep}
+            buyNowPrice={product.buyNowPrice}
+            status={product.status}
+            inWatchlist={inWatchlist}
+            onPlaceBid={() => setShowBidModal(true)}
+            onBuyNow={handleBuyNow}
+            onWatchlistToggle={handleWatchlistToggle}
+          />
 
           {/* Seller Info */}
           <SellerInfoCard seller={product.seller} />
@@ -319,100 +262,13 @@ export function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Tabs Section */}
-      <div className="mt-16">
-        <Tabs
-          tabs={[
-            { id: "description", label: "Description" },
-            { id: "bids", label: `Bid History (${bids.length})` },
-            { id: "questions", label: `Q&A (${questions.length})` },
-          ]}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-          variant="underline"
-        />
-
-        <div className="mt-6">
-          <TabPanel value="description" activeTab={activeTab}>
-            <div
-              className="prose prose-slate dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
-          </TabPanel>
-
-          <TabPanel value="bids" activeTab={activeTab}>
-            <BidHistoryTable bids={bids} />
-          </TabPanel>
-
-          <TabPanel value="questions" activeTab={activeTab}>
-            {questions.length === 0 ? (
-              <p className="py-8 text-center text-text-muted">
-                No questions yet. Be the first to ask!
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {questions.map((q) => (
-                  <div
-                    key={q.id}
-                    className="rounded-xl border border-border bg-bg-card p-4"
-                  >
-                    <div className="mb-3 flex items-start gap-3">
-                      <Avatar
-                        src={q.asker.avatar}
-                        fallback={q.asker.fullName}
-                        size="sm"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-text">
-                          {q.asker.fullName}
-                        </p>
-                        <p className="text-xs text-text-muted">
-                          {format(new Date(q.createdAt), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="mb-3 text-text">{q.content}</p>
-
-                    {q.answer ? (
-                      <div className="ml-4 border-l-2 border-primary pl-4">
-                        <p className="mb-1 text-sm font-medium text-primary">
-                          Seller Response
-                        </p>
-                        <p className="text-text">{q.answer.content}</p>
-                        <p className="mt-1 text-xs text-text-muted">
-                          {format(new Date(q.answer.createdAt), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-text-muted italic">
-                        Awaiting seller response...
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Ask Question Form */}
-            {isAuthenticated && (
-              <div className="mt-6 rounded-xl bg-bg-secondary p-4">
-                <h4 className="mb-3 flex items-center gap-2 font-medium text-text">
-                  <MessageCircle className="h-4 w-4" />
-                  Ask a Question
-                </h4>
-                <textarea
-                  placeholder="Type your question here..."
-                  className="w-full resize-none rounded-lg border border-border bg-bg-card p-3 text-text placeholder:text-text-muted"
-                  rows={3}
-                />
-                <div className="mt-3 flex justify-end">
-                  <Button size="sm">Submit Question</Button>
-                </div>
-              </div>
-            )}
-          </TabPanel>
-        </div>
-      </div>
+      {/* Info Section */}
+      <ProductInfoSection
+        description={product.description}
+        bids={bids}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
@@ -435,7 +291,7 @@ export function ProductDetailPage() {
           minimumBid={minimumBid}
           onPlaceBid={handlePlaceBid}
           isLoading={isBidding}
-          userRating={user?.rating}
+          userRating={getUserRatingForBid(user)}
         />
       </Modal>
     </div>
