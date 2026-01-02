@@ -23,14 +23,14 @@ export function ProductListingPage() {
 
   // Get filter values from URL
   const sortBy = searchParams.get("sort") || "ending_asc";
+  const categorySlug = searchParams.get("category") || "";
+  const searchQuery = searchParams.get("search") || "";
   const minPrice = searchParams.get("minPrice")
     ? Number(searchParams.get("minPrice"))
     : undefined;
   const maxPrice = searchParams.get("maxPrice")
     ? Number(searchParams.get("maxPrice"))
     : undefined;
-  const categorySlug = searchParams.get("category") || "";
-  const searchQuery = searchParams.get("search") || "";
 
   // Callback to receive selected category from ProductFilters
   const handleCategorySelect = useCallback((category: Category | null) => {
@@ -130,8 +130,12 @@ export function ProductListingPage() {
 
         {/* Products Grid/List */}
         <ProductListContent
+          sortBy={sortBy}
+          categorySlug={categorySlug}
+          searchQuery={searchQuery}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
           viewMode={viewMode}
-          categoryId={selectedCategory?.id}
           onPageChange={handlePageChange}
           onTotalCountChange={handleTotalCountChange}
         />
