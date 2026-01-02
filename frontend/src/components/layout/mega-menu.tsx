@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { mockCategories } from "@/data/mock";
+import { cn } from "@/lib/utils";
 import type { Category } from "@/types";
 
 export interface MegaMenuProps {

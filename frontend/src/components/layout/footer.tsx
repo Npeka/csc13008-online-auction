@@ -1,7 +1,7 @@
 import { Link } from "react-router";
-import { Facebook, Twitter, Instagram, Youtube, Mail } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Facebook, Instagram, Mail, Twitter, Youtube } from "lucide-react";
 import logoImage from "@/assets/logo.avif";
+import { cn } from "@/lib/utils";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();

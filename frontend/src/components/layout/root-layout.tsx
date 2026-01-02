@@ -1,8 +1,8 @@
-import { Outlet } from "react-router";
 import { Toaster } from "react-hot-toast";
-import { Header } from "./header";
-import { Footer } from "./footer";
+import { Outlet } from "react-router";
 import { ScrollRestoration } from "@/components/shared/scroll-restoration";
+import { Footer } from "./footer";
+import { Header } from "./header";
 
 export function RootLayout() {
   return (
