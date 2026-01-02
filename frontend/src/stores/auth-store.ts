@@ -1,59 +1,30 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { authApi, usersApi } from "@/lib";
 import type { User } from "@/types";
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  pendingVerification: { email: string; name: string } | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: {
     fullName: string;
     email: string;
     password: string;
     address?: string;
-  }) => Promise<boolean>;
-  logout: () => void;
+    phone?: string;
+    dateOfBirth?: string;
+  }) => Promise<{ success: boolean; message?: string }>;
+  verifyEmail: (email: string, otpCode: string) => Promise<boolean>;
+  resendOtp: (email: string) => Promise<{ success: boolean; message?: string }>;
+  logout: () => Promise<void>;
+  googleLogin: (firebaseToken: string) => Promise<boolean>;
   updateProfile: (data: Partial<User>) => void;
   setUser: (user: User | null) => void;
+  fetchProfile: () => Promise<void>;
 }
-
-// Mock users for development
-const mockUsers: Record<string, User & { password: string }> = {
-  "admin@morphee.com": {
-    id: "user-1",
-    fullName: "Morphee Admin",
-    email: "admin@morphee.com",
-    password: "admin123",
-    role: "admin",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
-    address: "123 Reptile Way, Miami, FL 33101",
-    rating: { positive: 150, negative: 2, total: 152 },
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  "breeder@morphee.com": {
-    id: "user-2",
-    fullName: "John Reptiles",
-    email: "breeder@morphee.com",
-    password: "breeder123",
-    role: "seller",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=seller",
-    address: "456 Python Lane, Tampa, FL 33602",
-    rating: { positive: 89, negative: 3, total: 92 },
-    createdAt: "2023-03-15T00:00:00Z",
-  },
-  "buyer@morphee.com": {
-    id: "user-3",
-    fullName: "Sarah Chen",
-    email: "buyer@morphee.com",
-    password: "buyer123",
-    role: "bidder",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=bidder",
-    address: "789 Gecko Street, Orlando, FL 32801",
-    rating: { positive: 25, negative: 1, total: 26 },
-    createdAt: "2024-01-10T00:00:00Z",
-  },
-};
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -61,59 +32,143 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      pendingVerification: null,
+
+      register: async (data) => {
+        set({ isLoading: true });
+        try {
+          const response = await authApi.register({
+            email: data.email,
+            password: data.password,
+            name: data.fullName,
+            address: data.address,
+            phone: data.phone,
+            dateOfBirth: data.dateOfBirth,
+          });
+
+          set({
+            isLoading: false,
+            pendingVerification: {
+              email: data.email,
+              name: data.fullName,
+            },
+          });
+
+          return {
+            success: true,
+            message: response.message,
+          };
+        } catch (error: any) {
+          set({ isLoading: false });
+          return {
+            success: false,
+            message: error.response?.data?.message || "Registration failed",
+          };
+        }
+      },
+
+      verifyEmail: async (email, otpCode) => {
+        set({ isLoading: true });
+        try {
+          const response = await authApi.verifyEmail(email, otpCode);
+
+          set({
+            user: response.user,
+            isAuthenticated: true,
+            isLoading: false,
+            pendingVerification: null,
+          });
+
+          return true;
+        } catch (error) {
+          set({ isLoading: false });
+          return false;
+        }
+      },
+
+      resendOtp: async (email) => {
+        set({ isLoading: true });
+        try {
+          const response = await authApi.resendOtp(email);
+          set({ isLoading: false });
+          return {
+            success: true,
+            message: response.message,
+          };
+        } catch (error: any) {
+          set({ isLoading: false });
+          return {
+            success: false,
+            message: error.response?.data?.message || "Failed to resend OTP",
+          };
+        }
+      },
 
       login: async (email: string, password: string) => {
         set({ isLoading: true });
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        try {
+          const response = await authApi.login({ email, password });
 
-        const mockUser = mockUsers[email];
-        if (mockUser && mockUser.password === password) {
-          const { password: _, ...userWithoutPassword } = mockUser;
           set({
-            user: userWithoutPassword,
+            user: response.user,
             isAuthenticated: true,
             isLoading: false,
           });
+
           return true;
+        } catch (error: any) {
+          set({ isLoading: false });
+
+          // Check if email not verified
+          if (error.response?.data?.message?.includes("verify")) {
+            set({
+              pendingVerification: { email, name: "" },
+            });
+          }
+
+          return false;
+        }
+      },
+
+      logout: async () => {
+        const refreshToken = localStorage.getItem("refreshToken");
+
+        if (refreshToken) {
+          try {
+            await authApi.logout(refreshToken);
+          } catch (error) {
+            // Ignore logout errors
+          }
         }
 
-        set({ isLoading: false });
-        return false;
-      },
-
-      register: async (data) => {
-        set({ isLoading: true });
-
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        // Create new user
-        const newUser: User = {
-          id: `user-${Date.now()}`,
-          fullName: data.fullName,
-          email: data.email,
-          role: "bidder",
-          address: data.address,
-          rating: { positive: 0, total: 0 },
-          createdAt: new Date().toISOString(),
-        };
-
-        set({
-          user: newUser,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-
-        return true;
-      },
-
-      logout: () => {
         set({
           user: null,
           isAuthenticated: false,
+          pendingVerification: null,
         });
+      },
+
+      googleLogin: async (firebaseToken: string) => {
+        set({ isLoading: true });
+
+        try {
+          const response = await authApi.googleLogin(firebaseToken);
+
+          set({
+            user: response.user,
+            isAuthenticated: true,
+            isLoading: false,
+            pendingVerification: null,
+          });
+
+          return true;
+        } catch (error: any) {
+          set({ isLoading: false });
+          throw new Error(
+            error.response?.data?.error?.message || "Google login failed",
+          );
+        }
       },
 
       updateProfile: (data) => {
@@ -130,6 +185,21 @@ export const useAuthStore = create<AuthState>()(
           user,
           isAuthenticated: !!user,
         });
+      },
+
+      fetchProfile: async () => {
+        try {
+          const user = await usersApi.getProfile();
+          set({
+            user,
+            isAuthenticated: true,
+          });
+        } catch (error) {
+          set({
+            user: null,
+            isAuthenticated: false,
+          });
+        }
       },
     }),
     {
