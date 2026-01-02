@@ -5,45 +5,18 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import { CategoriesRepository } from './categories.repository';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private categoriesRepository: CategoriesRepository) {}
 
   async findAll(includeProducts = false) {
-    return this.prisma.category.findMany({
-      where: { parentId: null }, // Only root categories
-      include: {
-        children: {
-          include: {
-            ...(includeProducts && {
-              _count: {
-                select: { products: true },
-              },
-            }),
-          },
-        },
-        ...(includeProducts && {
-          _count: {
-            select: { products: true },
-          },
-        }),
-      },
-      orderBy: { name: 'asc' },
-    });
+    return this.categoriesRepository.findAll(includeProducts);
   }
 
   async findBySlug(slug: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { slug },
-      include: {
-        parent: true,
-        children: true,
-        _count: {
-          select: { products: true },
-        },
-      },
-    });
+    const category = await this.categoriesRepository.findBySlug(slug);
 
     if (!category) {
       throw new NotFoundException('Category not found');
@@ -53,16 +26,7 @@ export class CategoriesService {
   }
 
   async findOne(id: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
-      include: {
-        parent: true,
-        children: true,
-        _count: {
-          select: { products: true },
-        },
-      },
-    });
+    const category = await this.categoriesRepository.findUnique({ id });
 
     if (!category) {
       throw new NotFoundException('Category not found');
@@ -73,8 +37,8 @@ export class CategoriesService {
 
   async create(dto: CreateCategoryDto) {
     // Check if slug is unique
-    const existingCategory = await this.prisma.category.findUnique({
-      where: { slug: dto.slug },
+    const existingCategory = await this.categoriesRepository.findUnique({
+      slug: dto.slug,
     });
 
     if (existingCategory) {
@@ -83,8 +47,8 @@ export class CategoriesService {
 
     // If parentId is provided, check if parent exists
     if (dto.parentId) {
-      const parent = await this.prisma.category.findUnique({
-        where: { id: dto.parentId },
+      const parent = await this.categoriesRepository.findUnique({
+        id: dto.parentId,
       });
 
       if (!parent) {
@@ -92,19 +56,11 @@ export class CategoriesService {
       }
     }
 
-    return this.prisma.category.create({
-      data: dto,
-      include: {
-        parent: true,
-        children: true,
-      },
-    });
+    return this.categoriesRepository.create(dto);
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
-    });
+    const category = await this.categoriesRepository.findUnique({ id });
 
     if (!category) {
       throw new NotFoundException('Category not found');
@@ -112,11 +68,9 @@ export class CategoriesService {
 
     // Check if slug is unique (excluding current category)
     if (dto.slug) {
-      const existingCategory = await this.prisma.category.findFirst({
-        where: {
-          slug: dto.slug,
-          NOT: { id },
-        },
+      const existingCategory = await this.categoriesRepository.findFirst({
+        slug: dto.slug,
+        NOT: { id },
       });
 
       if (existingCategory) {
@@ -130,8 +84,8 @@ export class CategoriesService {
         throw new BadRequestException('Category cannot be its own parent');
       }
 
-      const parent = await this.prisma.category.findUnique({
-        where: { id: dto.parentId },
+      const parent = await this.categoriesRepository.findUnique({
+        id: dto.parentId,
       });
 
       if (!parent) {
@@ -145,25 +99,18 @@ export class CategoriesService {
       }
     }
 
-    return this.prisma.category.update({
-      where: { id },
-      data: dto,
-      include: {
-        parent: true,
-        children: true,
-      },
-    });
+    return this.categoriesRepository.update(id, dto);
   }
 
   async remove(id: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
-      include: {
+    const category = await this.categoriesRepository.findUnique(
+      { id },
+      {
         _count: {
           select: { products: true },
         },
       },
-    });
+    );
 
     if (!category) {
       throw new NotFoundException('Category not found');
@@ -175,8 +122,8 @@ export class CategoriesService {
     }
 
     // Check if category has children
-    const childrenCount = await this.prisma.category.count({
-      where: { parentId: id },
+    const childrenCount = await this.categoriesRepository.count({
+      parentId: id,
     });
 
     if (childrenCount > 0) {
@@ -185,9 +132,7 @@ export class CategoriesService {
       );
     }
 
-    await this.prisma.category.delete({
-      where: { id },
-    });
+    await this.categoriesRepository.delete(id);
 
     return { message: 'Category deleted successfully' };
   }
@@ -196,19 +141,17 @@ export class CategoriesService {
     potentialParentId: string,
     categoryId: string,
   ): Promise<boolean> {
-    const category = await this.prisma.category.findUnique({
-      where: { id: potentialParentId },
-      select: { parentId: true },
-    });
+    const parentId =
+      await this.categoriesRepository.getParentId(potentialParentId);
 
-    if (!category || !category.parentId) {
+    if (!parentId) {
       return false;
     }
 
-    if (category.parentId === categoryId) {
+    if (parentId === categoryId) {
       return true;
     }
 
-    return this.isDescendant(category.parentId, categoryId);
+    return this.isDescendant(parentId, categoryId);
   }
 }
