@@ -1,10 +1,4 @@
-export type UserRole =
-  | "guest"
-  | "bidder"
-  | "seller"
-  | "admin"
-  | "ADMIN"
-  | "USER";
+export type UserRole = "GUEST" | "BIDDER" | "SELLER" | "ADMIN";
 
 export interface User {
   id: string;

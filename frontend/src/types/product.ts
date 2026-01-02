@@ -1,5 +1,4 @@
 import type { Category } from "./category";
-import type { User } from "./user";
 
 export interface ProductImage {
   id: string;
@@ -10,41 +9,51 @@ export interface ProductImage {
 export interface Product {
   id: string;
   name: string;
+  title: string; // API uses title
   slug: string;
   description: string; // Rich text HTML
-  images: ProductImage[];
-  categoryId: string;
-  category: Category;
-  sellerId?: string;
-  seller: User;
+  images: (string | ProductImage)[];
+  category?: Category;
+  seller?: {
+    id: string;
+    name: string;
+    avatar?: string;
+    rating: number;
+    ratingCount: number;
+  };
 
   // Pricing
-  startingPrice: number;
+  startPrice: number;
   currentPrice: number;
   bidStep: number;
   buyNowPrice?: number;
 
   // Timing
   createdAt: string;
+  startTime: string;
   endTime: string;
   autoExtend?: boolean;
-
-  // Stats
-  bidCount: number;
-  viewCount: number;
-  watchCount: number;
+  extensionTriggerTime?: number;
+  extensionDuration?: number;
 
   // Status
-  status: "active" | "ended" | "sold" | "cancelled";
+  status: "ACTIVE" | "ENDED";
+  isActive?: boolean;
+  allowNewBidders?: boolean;
 
-  // Current winner
-  highestBidderId?: string;
-  highestBidder?: User;
+  // Stats
+  viewCount?: number;
+  bidCount?: number;
+  watchCount?: number;
+  highestBidder?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
 
   // Flags
   isNew?: boolean;
   isFeatured?: boolean;
-  startTime?: string;
 }
 
 import type { PaginationParams } from "./common";

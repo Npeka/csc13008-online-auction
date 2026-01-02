@@ -8,11 +8,13 @@ export type ButtonVariant =
   | "secondary"
   | "outline"
   | "ghost"
-  | "danger";
-export type ButtonSize = "sm" | "md" | "lg";
+  | "danger"
+  | "default"; // Added for compatibility
+export type ButtonSize = "sm" | "md" | "lg" | "icon"; // Added icon size
 
 export type BadgeVariant =
   | "default"
+  | "secondary" // Added
   | "success"
   | "warning"
   | "error"
