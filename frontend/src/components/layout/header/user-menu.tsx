@@ -95,7 +95,7 @@ export function UserMenu() {
               Profile
             </Link>
 
-            {user.role === "seller" && (
+            {user.role === "SELLER" && (
               <Link
                 to="/seller/dashboard"
                 onClick={() => setIsUserMenuOpen(false)}
@@ -106,7 +106,7 @@ export function UserMenu() {
               </Link>
             )}
 
-            {user.role === "admin" && (
+            {user.role === "ADMIN" && (
               <Link
                 to="/admin"
                 onClick={() => setIsUserMenuOpen(false)}

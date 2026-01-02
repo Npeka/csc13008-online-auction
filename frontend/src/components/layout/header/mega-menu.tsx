@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown } from "lucide-react";
-import { categoriesApi } from "@/lib";
+import { useCategoryStore } from "@/stores/category-store";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types";
 
@@ -11,27 +11,13 @@ export interface MegaMenuProps {
 
 export function MegaMenu({ className }: MegaMenuProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { categories, isLoading, fetchCategories } = useCategoryStore();
   const menuRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await categoriesApi.getCategories(true);
-        // Filter to get only parent categories (those without parentId)
-        const parentCategories = data.filter((cat) => !cat.parentId);
-        setCategories(parentCategories);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   const handleMouseEnter = (categoryId: string) => {
     if (timeoutRef.current) {

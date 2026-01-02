@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown } from "lucide-react";
-import { categoriesApi } from "@/lib";
+import { useCategoryStore } from "@/stores/category-store";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/types";
 
 // Mobile Menu
 export function MobileMenu({
@@ -14,27 +13,13 @@ export function MobileMenu({
   onClose: () => void;
 }) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { categories, isLoading, fetchCategories } = useCategoryStore();
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await categoriesApi.getCategories(true);
-        // Filter to get only parent categories (those without parentId)
-        const parentCategories = data.filter((cat) => !cat.parentId);
-        setCategories(parentCategories);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (isOpen) {
       fetchCategories();
     }
-  }, [isOpen]);
+  }, [isOpen, fetchCategories]);
 
   if (!isOpen) return null;
 
