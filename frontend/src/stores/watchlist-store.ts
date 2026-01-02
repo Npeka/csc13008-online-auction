@@ -1,57 +1,69 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { bidsApi } from "@/lib";
+import type { Product } from "@/types";
 
 interface WatchlistState {
-  productIds: string[];
+  items: Product[];
+  isLoading: boolean;
+  addToWatchlist: (product: Product) => Promise<void>;
+  removeFromWatchlist: (productId: string) => Promise<void>;
+  fetchWatchlist: () => Promise<void>;
   isInWatchlist: (productId: string) => boolean;
-  addToWatchlist: (productId: string) => void;
-  removeFromWatchlist: (productId: string) => void;
-  toggleWatchlist: (productId: string) => void;
-  clearWatchlist: () => void;
 }
 
 export const useWatchlistStore = create<WatchlistState>()(
   persist(
     (set, get) => ({
-      productIds: [],
+      items: [],
+      isLoading: false,
 
-      isInWatchlist: (productId: string) => {
-        return get().productIds.includes(productId);
-      },
-
-      addToWatchlist: (productId: string) => {
-        set((state) => ({
-          productIds: state.productIds.includes(productId)
-            ? state.productIds
-            : [...state.productIds, productId],
-        }));
-      },
-
-      removeFromWatchlist: (productId: string) => {
-        set((state) => ({
-          productIds: state.productIds.filter((id) => id !== productId),
-        }));
-      },
-
-      toggleWatchlist: (productId: string) => {
-        const { isInWatchlist, addToWatchlist, removeFromWatchlist } = get();
-        if (isInWatchlist(productId)) {
-          removeFromWatchlist(productId);
-        } else {
-          addToWatchlist(productId);
+      addToWatchlist: async (product) => {
+        try {
+          await bidsApi.addToWatchlist(product.id);
+          set((state) => ({
+            items: [...state.items, product],
+          }));
+        } catch (error) {
+          console.error("Failed to add to watchlist:", error);
+          throw error;
         }
       },
 
-      clearWatchlist: () => {
-        set({ productIds: [] });
+      removeFromWatchlist: async (productId) => {
+        try {
+          await bidsApi.removeFromWatchlist(productId);
+          set((state) => ({
+            items: state.items.filter((item) => item.id !== productId),
+          }));
+        } catch (error) {
+          console.error("Failed to remove from watchlist:", error);
+          throw error;
+        }
+      },
+
+      fetchWatchlist: async () => {
+        set({ isLoading: true });
+        try {
+          const items = await bidsApi.getWatchlist();
+          set({ items, isLoading: false });
+        } catch (error) {
+          console.error("Failed to fetch watchlist:", error);
+          set({ isLoading: false });
+        }
+      },
+
+      isInWatchlist: (productId) => {
+        return get().items.some((item) => item.id === productId);
       },
     }),
     {
-      name: "watchlist-storage",
+      name: "morphee-watchlist-storage",
     },
   ),
 );
 
-// Selector for watchlist count
-export const useWatchlistCount = () =>
-  useWatchlistStore((state) => state.productIds.length);
+// Helper hook to get watchlist count
+export const useWatchlistCount = () => {
+  return useWatchlistStore((state) => state.items.length);
+};
