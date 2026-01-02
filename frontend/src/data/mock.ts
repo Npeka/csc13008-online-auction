@@ -1,4 +1,4 @@
-import type { User, Category, Product, Bid, Question, Rating } from "@/types";
+import type { Bid, Category, Product, Question, Rating, User } from "@/types";
 
 // Mock Users
 export const mockUsers: User[] = [
@@ -6,7 +6,7 @@ export const mockUsers: User[] = [
     id: "user-1",
     email: "admin@morphee.com",
     fullName: "Morphee Admin",
-    role: "admin",
+    role: "ADMIN",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
     address: "123 Reptile Way, Miami, FL 33101",
     rating: { positive: 150, negative: 2, total: 152 },
@@ -16,7 +16,7 @@ export const mockUsers: User[] = [
     id: "user-2",
     email: "breeder@morphee.com",
     fullName: "John Reptiles",
-    role: "seller",
+    role: "SELLER",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=seller",
     address: "456 Python Lane, Tampa, FL 33602",
     rating: { positive: 89, negative: 3, total: 92 },
@@ -26,7 +26,7 @@ export const mockUsers: User[] = [
     id: "user-3",
     email: "buyer@morphee.com",
     fullName: "Sarah Chen",
-    role: "bidder",
+    role: "BIDDER",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=bidder",
     address: "789 Gecko Street, Orlando, FL 32801",
     rating: { positive: 25, negative: 1, total: 26 },
@@ -180,6 +180,7 @@ export const mockProducts: Product[] = [
   {
     id: "prod-1",
     name: "Banana Pied Ball Python - Male, 450g",
+    title: "Banana Pied Ball Python - Male, 450g",
     slug: "banana-pied-ball-python-male",
     description: `
       <h3>Stunning Banana Piebald Ball Python</h3>
@@ -194,17 +195,23 @@ export const mockProducts: Product[] = [
       </ul>
       <p>Parents are on-site and can provide lineage photos upon request. Shipping available via FedEx Priority Overnight.</p>
     `,
-    categoryId: "bp-banana",
     category: { id: "bp-banana", name: "Banana Ball Pythons", slug: "banana" },
-    seller: mockUsers[1],
-    startingPrice: 800,
+    seller: {
+      id: mockUsers[1].id,
+      name: mockUsers[1].fullName,
+      avatar: mockUsers[1].avatar,
+      rating:
+        typeof mockUsers[1].rating === "number" ? mockUsers[1].rating : 4.8,
+      ratingCount: mockUsers[1].ratingCount || 92,
+    },
+    startPrice: 800,
     currentPrice: 1250,
     bidStep: 50,
     buyNowPrice: 1800,
     bidCount: 12,
     viewCount: 342,
     watchCount: 28,
-    status: "active",
+    status: "ACTIVE" as const,
     startTime: getPastDate(5),
     endTime: getFutureDate(2),
     createdAt: getPastDate(5),
@@ -220,13 +227,18 @@ export const mockProducts: Product[] = [
         alt: "Ball Python closeup",
       },
     ],
-    highestBidder: mockUsers[2],
+    highestBidder: {
+      id: mockUsers[2].id,
+      name: mockUsers[2].fullName,
+      avatar: mockUsers[2].avatar,
+    },
     isFeatured: true,
     isNew: true,
   },
   {
     id: "prod-2",
     name: "Super Giant Tremper Leopard Gecko - Female",
+    title: "Super Giant Tremper Leopard Gecko - Female",
     slug: "super-giant-tremper-leopard-gecko",
     description: `
       <h3>Breeding Quality Super Giant Leopard Gecko</h3>
@@ -239,21 +251,27 @@ export const mockProducts: Product[] = [
         <li><strong>Proven:</strong> Yes, produced 2 clutches</li>
       </ul>
     `,
-    categoryId: "lg-super-giant",
     category: {
       id: "lg-super-giant",
       name: "Super Giant",
       slug: "super-giant",
     },
-    seller: mockUsers[1],
-    startingPrice: 250,
+    seller: {
+      id: mockUsers[1].id,
+      name: mockUsers[1].fullName,
+      avatar: mockUsers[1].avatar,
+      rating:
+        typeof mockUsers[1].rating === "number" ? mockUsers[1].rating : 4.8,
+      ratingCount: mockUsers[1].ratingCount || 92,
+    },
+    startPrice: 250,
     currentPrice: 380,
     bidStep: 25,
     buyNowPrice: 500,
     bidCount: 8,
     viewCount: 156,
     watchCount: 15,
-    status: "active",
+    status: "ACTIVE" as const,
     startTime: getPastDate(3),
     endTime: getFutureDate(1),
     createdAt: getPastDate(3),
@@ -264,13 +282,18 @@ export const mockProducts: Product[] = [
         alt: "Leopard Gecko",
       },
     ],
-    highestBidder: mockUsers[2],
+    highestBidder: {
+      id: mockUsers[2].id,
+      name: mockUsers[2].fullName,
+      avatar: mockUsers[2].avatar,
+    },
     isFeatured: false,
     isNew: true,
   },
   {
     id: "prod-3",
     name: "Lilly White Crested Gecko - Extreme Harlequin",
+    title: "Lilly White Crested Gecko - Extreme Harlequin",
     slug: "lilly-white-crested-gecko-extreme",
     description: `
       <h3>Rare Lilly White Crested Gecko</h3>
@@ -283,21 +306,27 @@ export const mockProducts: Product[] = [
         <li><strong>Feeding:</strong> Pangea, excellent eater</li>
       </ul>
     `,
-    categoryId: "cg-lilly-white",
     category: {
       id: "cg-lilly-white",
       name: "Lilly White",
       slug: "lilly-white",
     },
-    seller: mockUsers[1],
-    startingPrice: 400,
+    seller: {
+      id: mockUsers[1].id,
+      name: mockUsers[1].fullName,
+      avatar: mockUsers[1].avatar,
+      rating:
+        typeof mockUsers[1].rating === "number" ? mockUsers[1].rating : 4.8,
+      ratingCount: mockUsers[1].ratingCount || 92,
+    },
+    startPrice: 400,
     currentPrice: 650,
     bidStep: 25,
     buyNowPrice: 900,
     bidCount: 15,
     viewCount: 423,
     watchCount: 45,
-    status: "active",
+    status: "ACTIVE" as const,
     startTime: getPastDate(4),
     endTime: getFutureDate(0.5),
     createdAt: getPastDate(4),
@@ -308,13 +337,18 @@ export const mockProducts: Product[] = [
         alt: "Crested Gecko",
       },
     ],
-    highestBidder: mockUsers[2],
+    highestBidder: {
+      id: mockUsers[2].id,
+      name: mockUsers[2].fullName,
+      avatar: mockUsers[2].avatar,
+    },
     isFeatured: true,
     isNew: false,
   },
   {
     id: "prod-4",
     name: "Red/Orange Hypo Bearded Dragon - Adult Male",
+    title: "Red/Orange Hypo Bearded Dragon - Adult Male",
     slug: "red-orange-hypo-bearded-dragon",
     description: `
       <h3>Vibrant Red Hypo Bearded Dragon</h3>
@@ -327,16 +361,22 @@ export const mockProducts: Product[] = [
         <li><strong>Temperament:</strong> Extremely docile</li>
       </ul>
     `,
-    categoryId: "bd-red",
     category: { id: "bd-red", name: "Red/Orange", slug: "red-orange" },
-    seller: mockUsers[1],
-    startingPrice: 300,
+    seller: {
+      id: mockUsers[1].id,
+      name: mockUsers[1].fullName,
+      avatar: mockUsers[1].avatar,
+      rating:
+        typeof mockUsers[1].rating === "number" ? mockUsers[1].rating : 4.8,
+      ratingCount: mockUsers[1].ratingCount || 92,
+    },
+    startPrice: 300,
     currentPrice: 450,
     bidStep: 25,
     bidCount: 6,
     viewCount: 198,
     watchCount: 22,
-    status: "active",
+    status: "ACTIVE" as const,
     startTime: getPastDate(2),
     endTime: getFutureDate(3),
     createdAt: getPastDate(2),
@@ -353,6 +393,7 @@ export const mockProducts: Product[] = [
   {
     id: "prod-5",
     name: "Clown Ball Python - Female, 1200g Breeder",
+    title: "Clown Ball Python - Female, 1200g Breeder",
     slug: "clown-ball-python-female-breeder",
     description: `
       <h3>Proven Clown Ball Python Female</h3>
@@ -365,17 +406,23 @@ export const mockProducts: Product[] = [
         <li><strong>Proven:</strong> 3 successful clutches</li>
       </ul>
     `,
-    categoryId: "bp-clown",
     category: { id: "bp-clown", name: "Clown", slug: "clown" },
-    seller: mockUsers[1],
-    startingPrice: 1500,
+    seller: {
+      id: mockUsers[1].id,
+      name: mockUsers[1].fullName,
+      avatar: mockUsers[1].avatar,
+      rating:
+        typeof mockUsers[1].rating === "number" ? mockUsers[1].rating : 4.8,
+      ratingCount: mockUsers[1].ratingCount || 92,
+    },
+    startPrice: 1500,
     currentPrice: 2100,
     bidStep: 100,
     buyNowPrice: 2800,
     bidCount: 9,
     viewCount: 287,
     watchCount: 31,
-    status: "active",
+    status: "ACTIVE" as const,
     startTime: getPastDate(6),
     endTime: getFutureDate(4),
     createdAt: getPastDate(6),
@@ -386,13 +433,18 @@ export const mockProducts: Product[] = [
         alt: "Clown Ball Python",
       },
     ],
-    highestBidder: mockUsers[2],
+    highestBidder: {
+      id: mockUsers[2].id,
+      name: mockUsers[2].fullName,
+      avatar: mockUsers[2].avatar,
+    },
     isFeatured: true,
     isNew: false,
   },
   {
     id: "prod-6",
     name: "Central American Boa - BCI Het Albino",
+    title: "Central American Boa - BCI Het Albino",
     slug: "central-american-boa-bci-het-albino",
     description: `
       <h3>Beautiful BCI Boa with Albino Genetics</h3>
@@ -405,16 +457,22 @@ export const mockProducts: Product[] = [
         <li><strong>Feeding:</strong> F/T medium rats</li>
       </ul>
     `,
-    categoryId: "boa-bci",
     category: { id: "boa-bci", name: "BCI", slug: "bci" },
-    seller: mockUsers[1],
-    startingPrice: 350,
+    seller: {
+      id: mockUsers[1].id,
+      name: mockUsers[1].fullName,
+      avatar: mockUsers[1].avatar,
+      rating:
+        typeof mockUsers[1].rating === "number" ? mockUsers[1].rating : 4.8,
+      ratingCount: mockUsers[1].ratingCount || 92,
+    },
+    startPrice: 350,
     currentPrice: 480,
     bidStep: 25,
     bidCount: 7,
     viewCount: 145,
     watchCount: 18,
-    status: "active",
+    status: "ACTIVE" as const,
     startTime: getPastDate(1),
     endTime: getFutureDate(5),
     createdAt: getPastDate(1),
@@ -431,6 +489,7 @@ export const mockProducts: Product[] = [
   {
     id: "prod-7",
     name: "Scaleless Corn Snake - Tessera Pattern",
+    title: "Scaleless Corn Snake - Tessera Pattern",
     slug: "scaleless-corn-snake-tessera",
     description: `
       <h3>Unique Scaleless Corn Snake</h3>
@@ -443,16 +502,22 @@ export const mockProducts: Product[] = [
         <li><strong>Feeding:</strong> F/T mice</li>
       </ul>
     `,
-    categoryId: "cs-normal",
     category: { id: "cs-normal", name: "Corn Snakes", slug: "corn-snakes" },
-    seller: mockUsers[1],
-    startingPrice: 200,
+    seller: {
+      id: mockUsers[1].id,
+      name: mockUsers[1].fullName,
+      avatar: mockUsers[1].avatar,
+      rating:
+        typeof mockUsers[1].rating === "number" ? mockUsers[1].rating : 4.8,
+      ratingCount: mockUsers[1].ratingCount || 92,
+    },
+    startPrice: 200,
     currentPrice: 320,
     bidStep: 20,
     bidCount: 11,
     viewCount: 267,
     watchCount: 33,
-    status: "active",
+    status: "ACTIVE" as const,
     startTime: getPastDate(3),
     endTime: getFutureDate(1.5),
     createdAt: getPastDate(3),
@@ -463,13 +528,18 @@ export const mockProducts: Product[] = [
         alt: "Corn Snake",
       },
     ],
-    highestBidder: mockUsers[2],
+    highestBidder: {
+      id: mockUsers[2].id,
+      name: mockUsers[2].fullName,
+      avatar: mockUsers[2].avatar,
+    },
     isFeatured: false,
     isNew: false,
   },
   {
     id: "prod-8",
     name: "Piebald Ball Python - High White 80%",
+    title: "Piebald Ball Python - High White 80%",
     slug: "piebald-ball-python-high-white",
     description: `
       <h3>High White Piebald Ball Python</h3>
@@ -482,17 +552,23 @@ export const mockProducts: Product[] = [
         <li><strong>Feeding:</strong> F/T rats</li>
       </ul>
     `,
-    categoryId: "bp-piebald",
     category: { id: "bp-piebald", name: "Piebald", slug: "piebald" },
-    seller: mockUsers[1],
-    startingPrice: 2000,
+    seller: {
+      id: mockUsers[1].id,
+      name: mockUsers[1].fullName,
+      avatar: mockUsers[1].avatar,
+      rating:
+        typeof mockUsers[1].rating === "number" ? mockUsers[1].rating : 4.8,
+      ratingCount: mockUsers[1].ratingCount || 92,
+    },
+    startPrice: 2000,
     currentPrice: 3200,
     bidStep: 100,
     buyNowPrice: 4500,
     bidCount: 18,
     viewCount: 512,
     watchCount: 67,
-    status: "active",
+    status: "ACTIVE" as const,
     startTime: getPastDate(7),
     endTime: getFutureDate(0.25),
     createdAt: getPastDate(7),
@@ -503,7 +579,11 @@ export const mockProducts: Product[] = [
         alt: "Piebald Ball Python",
       },
     ],
-    highestBidder: mockUsers[2],
+    highestBidder: {
+      id: mockUsers[2].id,
+      name: mockUsers[2].fullName,
+      avatar: mockUsers[2].avatar,
+    },
     isFeatured: true,
     isNew: false,
   },
@@ -628,9 +708,7 @@ export const getProductById = (id: string): Product | undefined =>
   mockProducts.find((p) => p.id === id);
 
 export const getProductsByCategory = (categoryId: string): Product[] =>
-  mockProducts.filter(
-    (p) => p.categoryId === categoryId || p.category.id === categoryId,
-  );
+  mockProducts.filter((p) => p.category?.id === categoryId);
 
 export const getBidsForProduct = (productId: string): Bid[] =>
   mockBids.filter((b) => b.productId === productId);
@@ -643,7 +721,7 @@ export const getFeaturedProducts = (): Product[] =>
 
 export const getEndingSoonProducts = (limit?: number): Product[] => {
   const sorted = [...mockProducts]
-    .filter((p) => p.status === "active")
+    .filter((p) => p.status === "ACTIVE")
     .sort(
       (a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime(),
     );
@@ -651,7 +729,9 @@ export const getEndingSoonProducts = (limit?: number): Product[] => {
 };
 
 export const getMostBidProducts = (limit?: number): Product[] => {
-  const sorted = [...mockProducts].sort((a, b) => b.bidCount - a.bidCount);
+  const sorted = [...mockProducts].sort(
+    (a, b) => (b.bidCount || 0) - (a.bidCount || 0),
+  );
   return limit ? sorted.slice(0, limit) : sorted;
 };
 
