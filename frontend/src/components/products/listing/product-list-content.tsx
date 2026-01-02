@@ -3,44 +3,54 @@ import { useSearchParams } from "react-router";
 import { ProductCard, ProductGrid } from "@/components/cards/product-card";
 import { ProductPagination } from "./product-pagination";
 import { productsApi } from "@/lib";
+import { useCategoryStore } from "@/stores/category-store";
 import type { Product, ProductFilters as ProductFiltersType } from "@/types";
 
 const ITEMS_PER_PAGE = 6;
 
 interface ProductListContentProps {
   viewMode: "grid" | "list";
-  categoryId?: string;
+  sortBy: string;
+  minPrice?: number;
+  maxPrice?: number;
+  categorySlug?: string;
+  searchQuery?: string;
   onPageChange: (page: number) => void;
   onTotalCountChange?: (count: number) => void;
 }
 
 export const ProductListContent = memo(function ProductListContent({
   viewMode,
-  categoryId,
+  sortBy,
+  minPrice,
+  maxPrice,
+  categorySlug,
+  searchQuery,
   onPageChange,
   onTotalCountChange,
 }: ProductListContentProps) {
   const [searchParams] = useSearchParams();
+  const { findBySlug } = useCategoryStore();
 
+  const { isLoaded: isLoadedCategories } = useCategoryStore();
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isLoadedCategories);
   const [totalCount, setTotalCount] = useState(0);
 
   // Get filter values from URL
   const currentPage = Number(searchParams.get("page")) || 1;
-  const sortBy = searchParams.get("sort") || "ending_asc";
-  const minPrice = searchParams.get("minPrice")
-    ? Number(searchParams.get("minPrice"))
-    : undefined;
-  const maxPrice = searchParams.get("maxPrice")
-    ? Number(searchParams.get("maxPrice"))
-    : undefined;
-  const searchQuery = searchParams.get("search") || "";
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+
+        // Resolve category slug to ID using store
+        let categoryId: string | undefined;
+        if (categorySlug) {
+          const category = findBySlug(categorySlug);
+          categoryId = category?.id;
+        }
 
         // Build filter params
         const filters: ProductFiltersType = {
@@ -71,7 +81,16 @@ export const ProductListContent = memo(function ProductListContent({
     };
 
     fetchData();
-  }, [categoryId, currentPage, sortBy, minPrice, maxPrice, searchQuery]);
+  }, [
+    categorySlug,
+    currentPage,
+    sortBy,
+    minPrice,
+    maxPrice,
+    searchQuery,
+    findBySlug,
+    isLoadedCategories,
+  ]);
 
   // Notify parent of total count changes
   useEffect(() => {
@@ -79,14 +98,6 @@ export const ProductListContent = memo(function ProductListContent({
   }, [totalCount, onTotalCountChange]);
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-
-  // Debug pagination
-  console.log("[ProductListContent] Pagination Debug:", {
-    totalCount,
-    totalPages,
-    currentPage,
-    itemsPerPage: ITEMS_PER_PAGE,
-  });
 
   if (isLoading) {
     return (

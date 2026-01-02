@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types";
-import { categoriesApi } from "@/lib";
+import { useCategoryStore } from "@/stores/category-store";
 
 interface ProductFiltersProps {
   currentCategory: Category | null;
@@ -27,50 +27,32 @@ export const ProductFilters = memo(function ProductFilters({
   onPriceChange,
   onClose,
 }: ProductFiltersProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { categories, findBySlug, isLoaded } = useCategoryStore();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(),
   );
 
-  // Fetch categories with product counts
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await categoriesApi.getCategories(true);
-        setCategories(data.filter((c) => !c.parentId));
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  // Find and notify parent of current category when categorySlug or categories change
+  // Find and notify parent of current category when categorySlug changes
   useEffect(() => {
     if (!categorySlug) {
       onCategorySelect(null);
       return;
     }
 
-    // Helper to find category recursively
-    const findCategoryBySlug = (
-      cats: Category[],
-      slug: string,
-    ): Category | null => {
-      for (const cat of cats) {
-        if (cat.slug === slug) return cat;
-        if (cat.children) {
-          const found = findCategoryBySlug(cat.children, slug);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
+    const category = findBySlug(categorySlug);
+    if (category) {
+      onCategorySelect(category);
 
-    const found = findCategoryBySlug(categories, categorySlug);
-    onCategorySelect(found);
-  }, [categorySlug, categories, onCategorySelect]);
+      // If this is a child category, expand its parent
+      if (category.parentId) {
+        setExpandedCategories((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(category.parentId!);
+          return newSet;
+        });
+      }
+    }
+  }, [categorySlug, findBySlug, onCategorySelect, isLoaded]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) => {
