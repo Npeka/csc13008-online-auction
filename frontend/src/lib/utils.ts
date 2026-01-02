@@ -8,6 +8,7 @@ export function cn(...inputs: ClassValue[]) {
  * Mask a name for privacy (e.g., "Nguyen Khoa" -> "****Khoa")
  */
 export function maskName(name: string): string {
+  if (!name) return "****";
   const parts = name.trim().split(" ");
   if (parts.length === 1) {
     return "****" + (parts[0].length > 2 ? parts[0].slice(-2) : parts[0]);
