@@ -1,75 +1,99 @@
-# React + TypeScript + Vite
+# Online Auction Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend application for the Online Auction platform, built with modern web technologies.
 
-Currently, two official plugins are available:
+## 🚀 Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Core:** [React](https://react.dev/) 18+, [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
+- **Routing:** [React Router v7](https://reactrouter.com/) (Data API)
+- **State Management:** [Zustand](https://github.com/pmndrs/zustand) (Auth, Theme, Category caching)
+- **UI Components:** [Shadcn/ui](https://ui.shadcn.com/) (built on Radix UI)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **API Client:** Axios (with interceptors for auth)
+- **Forms:** React Hook Form + Zod validation
 
-## React Compiler
+## 📂 Project Structure
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+frontend/src/
+├── components/          # Reusable UI components
+│   ├── cards/           # Product, Category, User cards
+│   ├── layout/          # Layout components (Header, Footer, Sidebar)
+│   ├── shared/          # Shared specific components (BidInput, Countdown)
+│   └── ui/              # Shadcn primitive components (Button, Input, Card...)
+├── layouts/             # Page layouts (RootLayout, AuthLayout)
+├── lib/                 # Utilities and API clients
+│   ├── api/             # API definition (auth, products, users...)
+│   └── utils.ts         # Helper functions
+├── pages/               # Application pages
+│   ├── admin/           # Admin dashboard & management
+│   ├── auth/            # Login, Register, Reset Password
+│   ├── home/            # Landing page
+│   ├── products/        # Product listing & details
+│   ├── profile/         # User profile, wallet, watchlist
+│   └── seller/          # Seller dashboard & product management
+├── routes/              # Route definitions
+├── stores/              # Global state stores (Zustand)
+└── types/               # TypeScript interfaces (User, Product, etc.)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ✨ Key Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 1. Authentication
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- JWT-based authentication (Access & Refresh Tokens).
+- Roles: GUEST, BIDDER, SELLER, ADMIN.
+- Registration with Email OTP verification.
+- Re-implementation of `Users` service.
+
+### 2. Product Browsing
+
+- **Home Page:** Featured auctions, categories, top listings.
+- **Product Listing:** Filter by category, price, sort (Ending Soon, Price, etc.).
+- **Search:** Full-text search support.
+- **Real-time:** Auto-update status on transition.
+
+### 3. Bidding System
+
+- Real-time bid updates.
+- Automatic price extension (extend 10 mins if bid in last 5 mins).
+- Bid validation (step price, max price).
+
+### 4. Seller Dashboard
+
+- **Dashboard:** Revenue stats, active listings overview.
+- **Management:** Create/Edit products.
+
+### 5. Routing & Error Handling
+
+- Lazy loading for Admin & Seller routes.
+- Global `ErrorBoundary` for 404 and crashes.
+
+## 🛠️ Setup & Run
+
+1. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+2. **Start development server:**
+
+   ```bash
+   npm run dev
+   ```
+
+3. **Build for production:**
+   ```bash
+   npm run build
+   ```
+
+## 📝 Conventions
+
+- **Components:** PascalCase (e.g., `ProductCard.tsx`).
+- **Files:** kebab-case (e.g., `product-card.tsx`).
+- **Imports:** Use absolute imports `@/` (e.g., `import { Button } from "@/components/ui/button"`).
+
+---
+
+> This project is part of the CSC13008 course final project.
