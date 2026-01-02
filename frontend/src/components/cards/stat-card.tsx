@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingDown,TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface StatCardProps {

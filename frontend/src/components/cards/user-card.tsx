@@ -1,8 +1,21 @@
-import { cn } from "@/lib/utils";
-import { Avatar } from "@/components/ui/avatar";
 import { RatingBadge } from "@/components/shared/rating";
+import { Avatar } from "@/components/ui/avatar";
 import { RoleBadge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import type { User } from "@/types";
+
+// Helper to extract rating info from both old and new structures
+function getRatingInfo(user: User): { positive: number; total: number } {
+  if (typeof user.rating === "number") {
+    // New structure: rating is a number (0-5), use ratingCount
+    const ratingCount = user.ratingCount || 0;
+    const positive =
+      ratingCount > 0 ? Math.round((user.rating / 5) * ratingCount) : 0;
+    return { positive, total: ratingCount };
+  }
+  // Old structure: rating is an object
+  return { positive: user.rating.positive, total: user.rating.total };
+}
 
 export interface UserCardProps {
   user: User;
@@ -30,12 +43,12 @@ export function UserCard({
         />
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-text">
-            {user.fullName}
+            {user.fullName || user.name}
           </p>
           {showRating && (
             <RatingBadge
-              positive={user.rating.positive}
-              total={user.rating.total}
+              positive={getRatingInfo(user).positive}
+              total={getRatingInfo(user).total}
               size="sm"
             />
           )}
@@ -55,20 +68,22 @@ export function UserCard({
         <div className="flex items-start gap-4">
           <Avatar
             src={user.avatar}
-            alt={user.fullName}
-            fallback={user.fullName}
+            alt={user.fullName || user.name}
+            fallback={user.fullName || user.name}
             size="lg"
           />
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-center gap-2">
-              <h4 className="font-semibold text-text">{user.fullName}</h4>
-              {showRole && <RoleBadge role={user.role} />}
+              <h4 className="font-semibold text-text">
+                {user.fullName || user.name}
+              </h4>
+              {showRole && user.role && <RoleBadge role={user.role as any} />}
             </div>
             <p className="mb-2 text-sm text-text-muted">{user.email}</p>
             {showRating && (
               <RatingBadge
-                positive={user.rating.positive}
-                total={user.rating.total}
+                positive={getRatingInfo(user).positive}
+                total={getRatingInfo(user).total}
                 showDetails
               />
             )}
@@ -95,19 +110,21 @@ export function UserCard({
     >
       <Avatar
         src={user.avatar}
-        alt={user.fullName}
-        fallback={user.fullName}
+        alt={user.fullName || user.name}
+        fallback={user.fullName || user.name}
         size="md"
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <h4 className="truncate font-medium text-text">{user.fullName}</h4>
-          {showRole && <RoleBadge role={user.role} />}
+          <h4 className="truncate font-medium text-text">
+            {user.fullName || user.name}
+          </h4>
+          {showRole && user.role && <RoleBadge role={user.role as any} />}
         </div>
         {showRating && (
           <RatingBadge
-            positive={user.rating.positive}
-            total={user.rating.total}
+            positive={getRatingInfo(user).positive}
+            total={getRatingInfo(user).total}
             size="sm"
           />
         )}
@@ -121,9 +138,15 @@ export function SellerInfoCard({
   seller,
   className,
 }: {
-  seller: User;
+  seller: any; // Seller from product API has different structure than User
   className?: string;
 }) {
+  const displayName = seller.name || seller.fullName || "Unknown Seller";
+  const avatarUrl = seller.avatar || null;
+
+  // Calculate percentage from rating (0-5) and ratingCount
+  const totalRatings = seller.ratingCount || 0;
+
   return (
     <div
       className={cn(
@@ -136,18 +159,21 @@ export function SellerInfoCard({
       </p>
       <div className="flex items-center gap-3">
         <Avatar
-          src={seller.avatar}
-          alt={seller.fullName}
-          fallback={seller.fullName}
+          src={avatarUrl}
+          alt={displayName}
+          fallback={displayName}
           size="lg"
         />
         <div>
-          <h4 className="font-semibold text-text">{seller.fullName}</h4>
-          <RatingBadge
-            positive={seller.rating.positive}
-            total={seller.rating.total}
-            showDetails
-          />
+          <h4 className="font-semibold text-text">{displayName}</h4>
+          {totalRatings > 0 ? (
+            <p className="text-sm text-text-muted">
+              {seller.rating?.toFixed(1)}/5 ({totalRatings}{" "}
+              {totalRatings === 1 ? "rating" : "ratings"})
+            </p>
+          ) : (
+            <p className="text-sm text-text-muted">No ratings yet</p>
+          )}
         </div>
       </div>
     </div>

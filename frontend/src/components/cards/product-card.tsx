@@ -1,9 +1,9 @@
 import { Link } from "react-router";
 import { Heart, Users } from "lucide-react";
-import { cn, formatUSD, maskName, isNewProduct } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
 import { CountdownBadge } from "@/components/shared/countdown";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { cn, formatUSD, isNewProduct, maskName } from "@/lib/utils";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { Product } from "@/types";
 
@@ -18,20 +18,33 @@ export function ProductCard({
   variant = "default",
   className,
 }: ProductCardProps) {
-  const { productIds, toggleWatchlist } = useWatchlistStore();
-  const inWatchlist = productIds.includes(product.id);
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } =
+    useWatchlistStore();
+  const inWatchlist = isInWatchlist(product.id);
   const isNew = product.isNew || isNewProduct(product.createdAt);
 
-  const handleWatchlistClick = (e: React.MouseEvent) => {
+  const handleWatchlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleWatchlist(product.id);
+    if (inWatchlist) {
+      await removeFromWatchlist(product.id);
+    } else {
+      await addToWatchlist(product);
+    }
   };
+
+  const getImageUrl = (image: string | { url: string } | undefined) => {
+    if (!image) return "";
+    if (typeof image === "string") return image;
+    return image.url;
+  };
+
+  const imageUrl = getImageUrl(product.images[0]);
 
   if (variant === "horizontal") {
     return (
       <Link
-        to={`/product/${product.id}`}
+        to={`/products/${product.slug}`}
         className={cn(
           "flex gap-4 rounded-xl border border-border bg-bg-card p-4",
           "cursor-pointer transition-all hover:border-primary/30 hover:shadow-md",
@@ -41,7 +54,7 @@ export function ProductCard({
         {/* Image */}
         <div className="relative h-32 w-32 shrink-0">
           <img
-            src={product.images[0]?.url}
+            src={imageUrl}
             alt={product.name}
             className="h-full w-full rounded-lg object-cover"
           />
@@ -84,7 +97,7 @@ export function ProductCard({
   if (variant === "compact") {
     return (
       <Link
-        to={`/product/${product.id}`}
+        to={`/products/${product.slug}`}
         className={cn(
           "block rounded-lg border border-border bg-bg-card p-3",
           "cursor-pointer transition-all hover:border-primary/30",
@@ -93,7 +106,7 @@ export function ProductCard({
       >
         <div className="flex items-center gap-3">
           <img
-            src={product.images[0]?.url}
+            src={imageUrl}
             alt={product.name}
             className="h-16 w-16 rounded-lg object-cover"
           />
@@ -114,7 +127,7 @@ export function ProductCard({
   // Default variant
   return (
     <Link
-      to={`/product/${product.id}`}
+      to={`/products/${product.id}`}
       className={cn(
         "group block overflow-hidden rounded-xl border border-border bg-bg-card",
         "cursor-pointer transition-all hover:border-primary/30 hover:shadow-lg",
@@ -125,7 +138,7 @@ export function ProductCard({
       {/* Image Container */}
       <div className="relative aspect-4/3 overflow-hidden">
         <img
-          src={product.images[0]?.url}
+          src={imageUrl}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />

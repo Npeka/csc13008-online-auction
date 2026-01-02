@@ -1,12 +1,12 @@
 import { Link } from "react-router";
 import {
+  Car,
+  Home,
   Laptop,
+  Package,
+  Palette,
   Shirt,
   Trophy,
-  Palette,
-  Home,
-  Car,
-  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types";
