@@ -1,5 +1,5 @@
-import { cn, formatUSD } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
+import { cn, formatUSD } from "@/lib/utils";
 
 export interface PriceDisplayProps {
   amount: number;

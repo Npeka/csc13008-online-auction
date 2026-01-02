@@ -1,6 +1,6 @@
 import { format } from "date-fns";
-import { cn, maskName, formatUSD } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
+import { cn, formatUSD, maskName } from "@/lib/utils";
 import type { Bid } from "@/types";
 
 export interface BidHistoryProps {
@@ -42,14 +42,14 @@ export function BidHistory({
             {showAvatar && (
               <Avatar
                 src={bid.bidder.avatar}
-                alt={bid.bidder.fullName}
-                fallback={bid.bidder.fullName}
+                alt={bid.bidder.name}
+                fallback={bid.bidder.name}
                 size="sm"
               />
             )}
             <div>
               <div className="font-medium text-text">
-                {maskName(bid.bidder.fullName)}
+                {maskName(bid.bidder.name || "Anonymous")}
                 {index === 0 && (
                   <span className="ml-2 text-xs font-normal text-primary">
                     Highest
@@ -118,11 +118,11 @@ export function BidHistoryTable({
                 <div className="flex items-center gap-2">
                   <Avatar
                     src={bid.bidder.avatar}
-                    fallback={bid.bidder.fullName}
+                    fallback={bid.bidder.name}
                     size="xs"
                   />
                   <span className="font-medium">
-                    {maskName(bid.bidder.fullName)}
+                    {maskName(bid.bidder.name || "Anonymous")}
                   </span>
                 </div>
               </td>

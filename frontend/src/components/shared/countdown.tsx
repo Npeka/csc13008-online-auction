@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
+import { AlertTriangle,Clock } from "lucide-react";
 import { cn, getTimeRemaining } from "@/lib/utils";
-import { Clock, AlertTriangle } from "lucide-react";
 
 export interface CountdownProps {
   endTime: string | Date;

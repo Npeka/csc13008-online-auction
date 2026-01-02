@@ -1,5 +1,5 @@
-import { cn, calculateRatingPercentage, formatRating } from "@/lib/utils";
-import { Star, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Star, ThumbsDown,ThumbsUp } from "lucide-react";
+import { calculateRatingPercentage, cn, formatRating } from "@/lib/utils";
 
 // Rating Badge - Shows rating score with percentage
 export interface RatingBadgeProps {

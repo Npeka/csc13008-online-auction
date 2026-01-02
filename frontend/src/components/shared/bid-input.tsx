@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
-import { cn, formatUSD, hasGoodRating } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { cn, formatUSD, hasGoodRating } from "@/lib/utils";
 
 export interface BidInputProps {
   currentPrice: number;

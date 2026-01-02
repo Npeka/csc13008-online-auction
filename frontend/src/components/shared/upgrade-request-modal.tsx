@@ -1,15 +1,15 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import {
-  TrendingUp,
   Check,
   Clock,
-  ShieldCheck,
   DollarSign,
+  ShieldCheck,
+  TrendingUp,
   Users,
 } from "lucide-react";
-import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import toast from "react-hot-toast";
+import { Modal } from "@/components/ui/modal";
 
 export interface UpgradeRequestModalProps {
   isOpen: boolean;

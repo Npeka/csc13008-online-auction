@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { ThumbsUp, ThumbsDown, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Modal } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
-import type { User, Product } from "@/types";
 import toast from "react-hot-toast";
+import { Star, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { cn } from "@/lib/utils";
+import type { Product, User } from "@/types";
 
 export interface RatingModalProps {
   isOpen: boolean;
@@ -72,7 +72,11 @@ export function RatingModal({
         {/* Product Info */}
         <div className="flex items-center gap-3 rounded-lg bg-bg-secondary p-3">
           <img
-            src={product.images[0]?.url}
+            src={
+              typeof product.images[0] === "string"
+                ? product.images[0]
+                : product.images[0]?.url
+            }
             alt={product.name}
             className="h-16 w-16 rounded-lg object-cover"
           />
@@ -92,7 +96,7 @@ export function RatingModal({
             <div className="flex items-center gap-1 text-sm text-text-muted">
               <Star className="h-3.5 w-3.5 fill-warning text-warning" />
               <span>
-                {seller.rating.total > 0
+                {typeof seller.rating === "object" && seller.rating.total > 0
                   ? `${Math.round((seller.rating.positive / seller.rating.total) * 100)}% positive`
                   : "No ratings yet"}
               </span>
