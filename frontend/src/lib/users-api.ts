@@ -1,4 +1,4 @@
-import type { User, UserRole } from "@/types";
+import type { User } from "@/types";
 import apiClient from "./api-client";
 
 export interface UpdateProfileData {
@@ -15,7 +15,7 @@ const transformUser = (backendUser: any): User => {
     fullName: backendUser.name,
     email: backendUser.email,
     avatar: backendUser.avatar,
-    role: backendUser.role.toLowerCase() as UserRole,
+    role: backendUser.role,
     address: backendUser.address,
     dateOfBirth: backendUser.dateOfBirth,
     createdAt: backendUser.createdAt,
