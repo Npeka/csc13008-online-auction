@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ButtonVariant, ButtonSize } from "@/types";
+import type { ButtonSize, ButtonVariant } from "@/types";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
