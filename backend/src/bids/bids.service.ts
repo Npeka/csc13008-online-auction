@@ -4,26 +4,17 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { BidsRepository } from './bids.repository';
 import { PlaceBidDto } from './dto/bid.dto';
 import { ProductStatus } from '@prisma/client';
 
 @Injectable()
 export class BidsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private bidsRepository: BidsRepository) {}
 
   async placeBid(productId: string, bidderId: string, dto: PlaceBidDto) {
     // Get product with seller info
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        seller: true,
-        bids: {
-          orderBy: { amount: 'desc' },
-          take: 1,
-        },
-      },
-    });
+    const product = await this.bidsRepository.findProductWithBids(productId);
 
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -44,12 +35,10 @@ export class BidsService {
     }
 
     // Check if bidder is blocked
-    const isBlocked = await this.prisma.bidderBlock.findFirst({
-      where: {
-        productId,
-        bidderId,
-        sellerId: product.sellerId,
-      },
+    const isBlocked = await this.bidsRepository.findBidderBlock({
+      productId,
+      bidderId,
+      sellerId: product.sellerId,
     });
 
     if (isBlocked) {
@@ -59,9 +48,7 @@ export class BidsService {
     }
 
     // Get bidder's rating
-    const bidder = await this.prisma.user.findUnique({
-      where: { id: bidderId },
-    });
+    const bidder = await this.bidsRepository.findUser(bidderId);
 
     if (!bidder) {
       throw new NotFoundException('Bidder not found');
@@ -96,32 +83,25 @@ export class BidsService {
     }
 
     // Create bid in transaction
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.bidsRepository.transaction(async (tx) => {
       // Create the bid
-      const bid = await tx.bid.create({
-        data: {
+      const bid = await this.bidsRepository.createBid(
+        {
           productId,
           bidderId,
           amount: dto.amount,
         },
-        include: {
-          bidder: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
-          },
-        },
-      });
+        tx,
+      );
 
       // Update product current price
-      await tx.product.update({
-        where: { id: productId },
-        data: {
+      await this.bidsRepository.updateProduct(
+        productId,
+        {
           currentPrice: dto.amount,
         },
-      });
+        tx,
+      );
 
       // Check auto-extend
       if (product.autoExtend) {
@@ -133,10 +113,11 @@ export class BidsService {
           const extensionMs = product.extensionDuration * 60 * 1000;
           const newEndTime = new Date(Date.now() + extensionMs);
 
-          await tx.product.update({
-            where: { id: productId },
-            data: { endTime: newEndTime },
-          });
+          await this.bidsRepository.updateProduct(
+            productId,
+            { endTime: newEndTime },
+            tx,
+          );
         }
       }
 
@@ -152,22 +133,12 @@ export class BidsService {
   }
 
   async getBidHistory(productId: string) {
-    const bids = await this.prisma.bid.findMany({
+    const bids = await this.bidsRepository.findManyBids({
       where: {
         productId,
         isValid: true,
       },
       orderBy: { createdAt: 'desc' },
-      include: {
-        bidder: {
-          select: {
-            id: true,
-            name: true,
-            rating: true,
-            ratingCount: true,
-          },
-        },
-      },
     });
 
     // Mask bidder names
@@ -183,15 +154,10 @@ export class BidsService {
   }
 
   async rejectBidder(productId: string, sellerId: string, bidderId: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        bids: {
-          where: { bidderId, isValid: true },
-          orderBy: { amount: 'desc' },
-        },
-      },
-    });
+    const product = await this.bidsRepository.findProductWithValidBids(
+      productId,
+      bidderId,
+    );
 
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -202,49 +168,41 @@ export class BidsService {
     }
 
     // Create block record
-    await this.prisma.bidderBlock.create({
-      data: {
-        sellerId,
-        bidderId,
-        productId,
-      },
+    await this.bidsRepository.createBidderBlock({
+      sellerId,
+      bidderId,
+      productId,
     });
 
     // Invalidate all bids from this bidder
-    await this.prisma.bid.updateMany({
-      where: {
+    await this.bidsRepository.updateManyBids(
+      {
         productId,
         bidderId,
       },
-      data: {
+      {
         isValid: false,
       },
-    });
+    );
 
     // Check if rejected bidder was the highest bidder
-    const highestBid = await this.prisma.bid.findFirst({
-      where: {
+    const highestBid = await this.bidsRepository.findFirstBid(
+      {
         productId,
         isValid: true,
       },
-      orderBy: { amount: 'desc' },
-    });
+      { amount: 'desc' },
+    );
 
     if (highestBid) {
       // Update product with new highest bid
-      await this.prisma.product.update({
-        where: { id: productId },
-        data: {
-          currentPrice: highestBid.amount,
-        },
+      await this.bidsRepository.updateProduct(productId, {
+        currentPrice: highestBid.amount,
       });
     } else {
       // No valid bids left, reset to start price
-      await this.prisma.product.update({
-        where: { id: productId },
-        data: {
-          currentPrice: product.startPrice,
-        },
+      await this.bidsRepository.updateProduct(productId, {
+        currentPrice: product.startPrice,
       });
     }
 
@@ -254,68 +212,35 @@ export class BidsService {
   }
 
   async addToWatchlist(userId: string, productId: string) {
-    // Check if product exists
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-    });
+    // Check if product exists (can use findProductWithBids or simple findUnique via ProductRepo if exported,
+    // but better to use what we have or add checkExists to BidsRepo)
+    // Since BidsRepo is for Bidding context, adding to watchlist is kinda related.
+    // The previous implementation checked existing product.
+    // Let's use findProductWithBids for existence check as it returns null if not found.
+    const product = await this.bidsRepository.findProductWithBids(productId);
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
     // Add to watchlist (upsert to handle duplicates)
-    const watchlist = await this.prisma.watchlist.upsert({
-      where: {
-        userId_productId: {
-          userId,
-          productId,
-        },
-      },
-      create: {
-        userId,
-        productId,
-      },
-      update: {},
-    });
+    // IMPORTANT: userId_productId is a compound unique constraint.
+    const watchlist = await this.bidsRepository.upsertWatchlist(
+      userId,
+      productId,
+    );
 
     return watchlist;
   }
 
   async removeFromWatchlist(userId: string, productId: string) {
-    await this.prisma.watchlist.delete({
-      where: {
-        userId_productId: {
-          userId,
-          productId,
-        },
-      },
-    });
+    await this.bidsRepository.deleteWatchlist(userId, productId);
 
     return { message: 'Removed from watchlist' };
   }
 
   async getWatchlist(userId: string) {
-    const watchlist = await this.prisma.watchlist.findMany({
-      where: { userId },
-      include: {
-        product: {
-          include: {
-            category: true,
-            seller: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-            _count: {
-              select: { bids: true },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const watchlist = await this.bidsRepository.findWatchlist(userId);
 
     return watchlist.map((w) => ({
       ...w.product,
@@ -325,47 +250,10 @@ export class BidsService {
   }
 
   async getUserBiddingProducts(userId: string) {
-    const bids = await this.prisma.bid.findMany({
-      where: {
-        bidderId: userId,
-        isValid: true,
-      },
-      select: {
-        productId: true,
-      },
-      distinct: ['productId'],
-    });
+    const productIds =
+      await this.bidsRepository.findUserBiddingProductIds(userId);
 
-    const productIds = bids.map((b) => b.productId);
-
-    const products = await this.prisma.product.findMany({
-      where: {
-        id: { in: productIds },
-      },
-      include: {
-        category: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-        bids: {
-          where: { isValid: true },
-          orderBy: { amount: 'desc' },
-          take: 1,
-          include: {
-            bidder: {
-              select: { id: true, name: true },
-            },
-          },
-        },
-        _count: {
-          select: { bids: true },
-        },
-      },
-    });
+    const products = await this.bidsRepository.findProductsByIds(productIds);
 
     return products.map((p) => ({
       ...p,
@@ -376,33 +264,7 @@ export class BidsService {
   }
 
   async getUserWonProducts(userId: string) {
-    // Find ended products where user has highest valid bid
-    const products = await this.prisma.product.findMany({
-      where: {
-        status: ProductStatus.ENDED,
-        bids: {
-          some: {
-            bidderId: userId,
-            isValid: true,
-          },
-        },
-      },
-      include: {
-        bids: {
-          where: { isValid: true },
-          orderBy: { amount: 'desc' },
-          take: 1,
-        },
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-      },
-    });
-
+    const products = await this.bidsRepository.findUserWonProducts(userId);
     // Filter to only products where user is the winner
     return products.filter((p) => p.bids[0]?.bidderId === userId);
   }
