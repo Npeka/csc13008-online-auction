@@ -1,18 +1,30 @@
-export type UserRole = "guest" | "bidder" | "seller" | "admin";
+export type UserRole =
+  | "guest"
+  | "bidder"
+  | "seller"
+  | "admin"
+  | "ADMIN"
+  | "USER";
 
 export interface User {
   id: string;
   fullName: string;
+  name?: string; // Added for compatibility with new repository responses
   email: string;
   avatar?: string;
   role: UserRole;
   address?: string;
+  phone?: string;
   dateOfBirth?: string;
   createdAt: string;
-  rating: {
-    positive: number;
-    negative?: number;
-    total: number;
-  };
+  // Rating can be either the old object structure or the new flat structure
+  rating:
+    | number
+    | {
+        positive: number;
+        negative?: number;
+        total: number;
+      };
+  ratingCount?: number; // Added for new flat structure
   isVerified?: boolean;
 }

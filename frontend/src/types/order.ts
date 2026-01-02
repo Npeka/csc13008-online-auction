@@ -1,6 +1,6 @@
 import type { Product } from "./product";
-import type { User } from "./user";
 import type { Rating } from "./rating";
+import type { User } from "./user";
 
 export type OrderStatus =
   | "pending_payment"

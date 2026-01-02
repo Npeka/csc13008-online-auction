@@ -47,7 +47,9 @@ export interface Product {
   startTime?: string;
 }
 
-export interface ProductFilters {
+import type { PaginationParams } from "./common";
+
+export interface ProductFilters extends PaginationParams {
   categoryId?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -61,4 +63,5 @@ export interface ProductFilters {
     | "newest"
     | "most_bids";
   search?: string;
+  status?: "active" | "ended";
 }
