@@ -75,6 +75,8 @@ export class AppendDescriptionDto {
   additionalDescription: string;
 }
 
+import { Type } from 'class-transformer';
+
 export class ProductFilterDto {
   @IsOptional()
   @IsString()
@@ -100,9 +102,21 @@ export class ProductFilterDto {
 
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
+  minPrice?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  maxPrice?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
   page?: number;
 
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   limit?: number;
 }

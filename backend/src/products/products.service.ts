@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { ProductsRepository } from './products.repository';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -15,7 +15,7 @@ import { ProductStatus } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private productsRepository: ProductsRepository) {}
 
   private generateSlug(title: string): string {
     const slug = title
@@ -33,35 +33,21 @@ export class ProductsService {
   async create(sellerId: string, dto: CreateProductDto) {
     const slug = this.generateSlug(dto.title);
 
-    return this.prisma.product.create({
-      data: {
-        title: dto.title,
-        slug,
-        description: dto.description,
-        images: dto.images,
-        categoryId: dto.categoryId,
-        sellerId,
-        startPrice: dto.startPrice,
-        currentPrice: dto.startPrice,
-        bidStep: dto.bidStep,
-        buyNowPrice: dto.buyNowPrice,
-        endTime: new Date(dto.endTime),
-        autoExtend: dto.autoExtend ?? false,
-        allowNewBidders: dto.allowNewBidders ?? true,
-        status: ProductStatus.ACTIVE,
-      },
-      include: {
-        category: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-            rating: true,
-            ratingCount: true,
-          },
-        },
-      },
+    return this.productsRepository.create({
+      title: dto.title,
+      slug,
+      description: dto.description,
+      images: dto.images,
+      categoryId: dto.categoryId,
+      sellerId,
+      startPrice: dto.startPrice,
+      currentPrice: dto.startPrice,
+      bidStep: dto.bidStep,
+      buyNowPrice: dto.buyNowPrice,
+      endTime: new Date(dto.endTime),
+      autoExtend: dto.autoExtend ?? false,
+      allowNewBidders: dto.allowNewBidders ?? true,
+      status: ProductStatus.ACTIVE,
     });
   }
 
@@ -105,35 +91,16 @@ export class ProductsService {
         orderBy = { currentPrice: 'desc' };
         break;
       case 'most_bids':
-        // For most_bids, we'll fetch all and sort in memory
         orderBy = { createdAt: 'desc' };
         break;
     }
 
-    const [products, total] = await Promise.all([
-      this.prisma.product.findMany({
-        where,
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          category: true,
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-              rating: true,
-              ratingCount: true,
-            },
-          },
-          _count: {
-            select: { bids: true },
-          },
-        },
-      }),
-      this.prisma.product.count({ where }),
-    ]);
+    const { products, total } = await this.productsRepository.findAll(
+      where,
+      orderBy,
+      page,
+      limit,
+    );
 
     // Check which products are "new" (within configured threshold)
     const newThresholdMinutes = 60; // TODO: Get from system config
@@ -144,6 +111,10 @@ export class ProductsService {
       bidCount: product._count.bids,
       isNew: product.createdAt > newThreshold,
     }));
+
+    if (sortBy === 'most_bids') {
+      productsWithMeta.sort((a, b) => b.bidCount - a.bidCount);
+    }
 
     return {
       products: productsWithMeta,
@@ -157,36 +128,18 @@ export class ProductsService {
   }
 
   async findEndingSoon(limit = 5) {
-    const products = await this.prisma.product.findMany({
-      where: {
-        status: ProductStatus.ACTIVE,
-        endTime: { gt: new Date() },
-      },
-      orderBy: { endTime: 'asc' },
-      take: limit,
-      include: {
-        category: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-            rating: true,
-            ratingCount: true,
-          },
-        },
-        _count: { select: { bids: true } },
-      },
-    });
-
+    const products = await this.productsRepository.findManyEndingSoon(limit);
     return products.map((p) => ({ ...p, bidCount: p._count.bids }));
   }
 
   async findMostBids(limit = 5) {
-    const products = await this.prisma.product.findMany({
+    // Reusing repository logic - fetching active products sorted by creation
+    // But specific 'most bids' requires fetching more and sorting in memory if database doesn't support relation count sort easily in Prisma
+    // Using the same strategy as before, calling findMany via repository
+    const products = await this.productsRepository.findMany({
       where: { status: ProductStatus.ACTIVE },
       orderBy: { createdAt: 'desc' },
-      take: limit * 3, // Get more to sort by count
+      take: limit * 3,
       include: {
         category: true,
         seller: {
@@ -202,7 +155,6 @@ export class ProductsService {
       },
     });
 
-    // Sort by bid count in memory and return top limit
     return products
       .sort((a, b) => b._count.bids - a._count.bids)
       .slice(0, limit)
@@ -210,7 +162,7 @@ export class ProductsService {
   }
 
   async findHighestPrice(limit = 5) {
-    const products = await this.prisma.product.findMany({
+    const products = await this.productsRepository.findMany({
       where: { status: ProductStatus.ACTIVE },
       orderBy: { currentPrice: 'desc' },
       take: limit,
@@ -232,56 +184,20 @@ export class ProductsService {
     return products.map((p) => ({ ...p, bidCount: p._count.bids }));
   }
 
-  async findBySlug(slug: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { slug },
-      include: {
-        category: {
-          include: { parent: true },
-        },
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-            rating: true,
-            ratingCount: true,
-            allowNewBidders: true,
-          },
-        },
-        bids: {
-          take: 1,
-          orderBy: { amount: 'desc' },
-          include: {
-            bidder: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-                rating: true,
-                ratingCount: true,
-              },
-            },
-          },
-        },
-        _count: {
-          select: { bids: true, watchlist: true },
-        },
-      },
-    });
+  async findBySlug(idOrSlug: string) {
+    const product = await this.productsRepository.findByIdOrSlug(idOrSlug);
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    // Increment view count
-    await this.prisma.product.update({
-      where: { id: product.id },
-      data: { viewCount: { increment: 1 } },
+    // Increment view count via repository update
+    await this.productsRepository.update(product.id, {
+      viewCount: { increment: 1 },
     });
 
     // Get related products (same category)
-    const relatedProducts = await this.prisma.product.findMany({
+    const relatedProducts = await this.productsRepository.findMany({
       where: {
         categoryId: product.categoryId,
         NOT: { id: product.id },
@@ -313,8 +229,8 @@ export class ProductsService {
   }
 
   async update(productId: string, sellerId: string, dto: UpdateProductDto) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+    const product = await this.productsRepository.findUnique({
+      id: productId,
     });
 
     if (!product) {
@@ -326,8 +242,8 @@ export class ProductsService {
     }
 
     // Check if product has bids - restrict changes if it does
-    const bidCount = await this.prisma.bid.count({
-      where: { productId },
+    const bidCount = await this.productsRepository.countBid({
+      productId,
     });
 
     if (bidCount > 0) {
@@ -342,20 +258,7 @@ export class ProductsService {
       }
     }
 
-    return this.prisma.product.update({
-      where: { id: productId },
-      data: dto,
-      include: {
-        category: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-      },
-    });
+    return this.productsRepository.update(productId, dto);
   }
 
   async appendDescription(
@@ -363,8 +266,8 @@ export class ProductsService {
     sellerId: string,
     dto: AppendDescriptionDto,
   ) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+    const product = await this.productsRepository.findUnique({
+      id: productId,
     });
 
     if (!product) {
@@ -378,24 +281,21 @@ export class ProductsService {
     const timestamp = new Date().toLocaleDateString('vi-VN');
     const appendedDescription = `${product.description}\n\n✏️ ${timestamp}\n\n${dto.additionalDescription}`;
 
-    return this.prisma.product.update({
-      where: { id: productId },
-      data: { description: appendedDescription },
+    return this.productsRepository.update(productId, {
+      description: appendedDescription,
     });
   }
 
   async remove(productId: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+    const product = await this.productsRepository.findUnique({
+      id: productId,
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    await this.prisma.product.delete({
-      where: { id: productId },
-    });
+    await this.productsRepository.delete(productId);
 
     return { message: 'Product removed successfully' };
   }
@@ -408,7 +308,7 @@ export class ProductsService {
         status === 'active' ? ProductStatus.ACTIVE : ProductStatus.ENDED;
     }
 
-    return this.prisma.product.findMany({
+    return this.productsRepository.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
