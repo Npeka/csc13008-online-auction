@@ -18,12 +18,14 @@ const variantStyles: Record<ButtonVariant, string> = {
     "border-2 border-primary text-primary hover:bg-primary hover:text-white",
   ghost: "text-text hover:bg-bg-secondary",
   danger: "bg-error text-white hover:bg-error-hover shadow-sm",
+  default: "bg-primary text-white hover:bg-primary-hover shadow-sm", // Same as primary
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
   sm: "px-3 py-1.5 text-sm gap-1.5",
   md: "px-4 py-2 text-base gap-2",
   lg: "px-6 py-3 text-lg gap-2.5",
+  icon: "p-2", // Icon size - just padding, no text gap
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

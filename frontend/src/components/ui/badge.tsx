@@ -9,6 +9,7 @@ export interface BadgeProps {
 
 const variantStyles: Record<BadgeVariant, string> = {
   default: "bg-bg-tertiary text-text-secondary",
+  secondary: "bg-secondary/10 text-secondary hover:bg-secondary/20", // Added
   success: "bg-success-light text-success",
   warning: "bg-warning-light text-warning",
   error: "bg-error-light text-error",
@@ -38,15 +39,7 @@ export function Badge({
 export function RoleBadge({
   role,
 }: {
-  role:
-    | "guest"
-    | "bidder"
-    | "seller"
-    | "admin"
-    | "GUEST"
-    | "BIDDER"
-    | "SELLER"
-    | "ADMIN";
+  role: "GUEST" | "BIDDER" | "SELLER" | "ADMIN";
 }) {
   const roleConfig: Record<string, { label: string; variant: BadgeVariant }> = {
     guest: { label: "Guest", variant: "default" },
@@ -55,9 +48,7 @@ export function RoleBadge({
     admin: { label: "Admin", variant: "warning" },
   };
 
-  // Normalize role to lowercase to handle both backend enum (uppercase) and frontend format
-  const normalizedRole = role.toLowerCase();
-  const config = roleConfig[normalizedRole];
+  const config = roleConfig[role];
 
   // Fallback to default if role not found
   if (!config) {
