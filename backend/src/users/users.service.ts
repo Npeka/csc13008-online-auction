@@ -3,7 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { UsersRepository } from './users.repository';
 import {
   UpdateProfileDto,
   CreateUpgradeRequestDto,
@@ -13,28 +13,13 @@ import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private usersRepository: UsersRepository) {}
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        address: true,
-        phone: true,
-        dateOfBirth: true,
-        avatar: true,
-        role: true,
-        rating: true,
-        ratingCount: true,
-        emailVerified: true,
-        allowNewBidders: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const startTime = Date.now();
+    const user = await this.usersRepository.findProfile(userId);
+    const endTime = Date.now();
+    console.log(`Time taken to fetch user profile: ${endTime - startTime} ms`);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -44,48 +29,19 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(dto.name && { name: dto.name }),
-        ...(dto.address !== undefined && { address: dto.address }),
-        ...(dto.phone !== undefined && { phone: dto.phone }),
-        ...(dto.dateOfBirth && { dateOfBirth: new Date(dto.dateOfBirth) }),
-        ...(dto.avatar !== undefined && { avatar: dto.avatar }),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        address: true,
-        phone: true,
-        dateOfBirth: true,
-        avatar: true,
-        role: true,
-        rating: true,
-        ratingCount: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const user = await this.usersRepository.update(userId, {
+      ...(dto.name && { name: dto.name }),
+      ...(dto.address !== undefined && { address: dto.address }),
+      ...(dto.phone !== undefined && { phone: dto.phone }),
+      ...(dto.dateOfBirth && { dateOfBirth: new Date(dto.dateOfBirth) }),
+      ...(dto.avatar !== undefined && { avatar: dto.avatar }),
     });
 
     return user;
   }
 
   async getRatings(userId: string) {
-    const ratings = await this.prisma.rating.findMany({
-      where: { receiverId: userId },
-      include: {
-        giver: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const ratings = await this.usersRepository.findRatingsForUser(userId);
 
     const positiveCount = ratings.filter((r) => r.rating === 1).length;
     const negativeCount = ratings.filter((r) => r.rating === -1).length;
@@ -104,9 +60,7 @@ export class UsersService {
   }
 
   async createUpgradeRequest(userId: string, dto: CreateUpgradeRequestDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const user = await this.usersRepository.findById(userId);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -117,12 +71,8 @@ export class UsersService {
     }
 
     // Check if there's already a pending request
-    const existingRequest = await this.prisma.upgradeRequest.findFirst({
-      where: {
-        userId,
-        status: 'PENDING',
-      },
-    });
+    const existingRequest =
+      await this.usersRepository.findPendingUpgradeRequest(userId);
 
     if (existingRequest) {
       throw new BadRequestException(
@@ -130,32 +80,16 @@ export class UsersService {
       );
     }
 
-    const request = await this.prisma.upgradeRequest.create({
-      data: {
-        userId,
-        reason: dto.reason,
-      },
+    const request = await this.usersRepository.createUpgradeRequest({
+      userId,
+      reason: dto.reason,
     });
 
     return request;
   }
 
   async getUpgradeRequests() {
-    return this.prisma.upgradeRequest.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            rating: true,
-            ratingCount: true,
-            createdAt: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    return this.usersRepository.findAllUpgradeRequests();
   }
 
   async processUpgradeRequest(
@@ -163,10 +97,8 @@ export class UsersService {
     dto: ProcessUpgradeRequestDto,
     adminId: string,
   ) {
-    const request = await this.prisma.upgradeRequest.findUnique({
-      where: { id: requestId },
-      include: { user: true },
-    });
+    const request =
+      await this.usersRepository.findUpgradeRequestById(requestId);
 
     if (!request) {
       throw new NotFoundException('Upgrade request not found');
@@ -177,22 +109,22 @@ export class UsersService {
     }
 
     // Update request
-    const updatedRequest = await this.prisma.upgradeRequest.update({
-      where: { id: requestId },
-      data: {
+    const updatedRequest = await this.usersRepository.updateUpgradeRequest(
+      requestId,
+      {
         status: dto.status,
         adminComment: dto.adminComment,
         reviewedBy: adminId,
         reviewedAt: new Date(),
       },
-    });
+    );
 
     // If approved, upgrade user to seller
     if (dto.status === 'APPROVED') {
-      await this.prisma.user.update({
-        where: { id: request.userId },
-        data: { role: UserRole.SELLER },
-      });
+      await this.usersRepository.updateUserRole(
+        request.userId,
+        UserRole.SELLER,
+      );
     }
 
     return updatedRequest;

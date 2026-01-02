@@ -1,26 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserRole } from '@prisma/client';
-
-export interface CreateUserData {
-  email: string;
-  password: string | null; // Optional for OAuth users
-  name: string;
-  address?: string;
-  phone?: string;
-  dateOfBirth?: Date | null;
-  role: UserRole;
-  otpCode?: string;
-  otpExpiry?: Date;
-  emailVerified: boolean;
-}
-
-export interface UpdateUserData {
-  password?: string;
-  otpCode?: string | null;
-  otpExpiry?: Date | null;
-  emailVerified?: boolean;
-}
+import { Prisma, UserRole } from '@prisma/client';
 
 @Injectable()
 export class UsersRepository {
@@ -55,7 +35,29 @@ export class UsersRepository {
     });
   }
 
-  async create(data: CreateUserData) {
+  async findProfile(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        address: true,
+        phone: true,
+        dateOfBirth: true,
+        avatar: true,
+        role: true,
+        rating: true,
+        ratingCount: true,
+        emailVerified: true,
+        allowNewBidders: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async create(data: Prisma.UserUncheckedCreateInput) {
     return this.prisma.user.create({
       data,
       select: {
@@ -69,10 +71,24 @@ export class UsersRepository {
     });
   }
 
-  async update(id: string, data: UpdateUserData) {
+  async update(id: string, data: Prisma.UserUncheckedUpdateInput) {
     return this.prisma.user.update({
       where: { id },
       data,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        address: true,
+        phone: true,
+        dateOfBirth: true,
+        avatar: true,
+        role: true,
+        rating: true,
+        ratingCount: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
   }
 
@@ -121,6 +137,8 @@ export class UsersRepository {
     });
   }
 
+  // --- Refresh Token Methods ---
+
   async deleteAllRefreshTokens(userId: string) {
     return this.prisma.refreshToken.deleteMany({
       where: { userId },
@@ -153,6 +171,83 @@ export class UsersRepository {
   async deleteRefreshTokensByToken(token: string) {
     return this.prisma.refreshToken.deleteMany({
       where: { token },
+    });
+  }
+
+  // --- Rating Methods ---
+
+  async findRatingsForUser(userId: string) {
+    return this.prisma.rating.findMany({
+      where: { receiverId: userId },
+      include: {
+        giver: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // --- Upgrade Request Methods ---
+
+  async findPendingUpgradeRequest(userId: string) {
+    return this.prisma.upgradeRequest.findFirst({
+      where: {
+        userId,
+        status: 'PENDING',
+      },
+    });
+  }
+
+  async createUpgradeRequest(data: Prisma.UpgradeRequestUncheckedCreateInput) {
+    return this.prisma.upgradeRequest.create({
+      data,
+    });
+  }
+
+  async findAllUpgradeRequests() {
+    return this.prisma.upgradeRequest.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            rating: true,
+            ratingCount: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findUpgradeRequestById(id: string) {
+    return this.prisma.upgradeRequest.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+  }
+
+  async updateUpgradeRequest(
+    id: string,
+    data: Prisma.UpgradeRequestUncheckedUpdateInput,
+  ) {
+    return this.prisma.upgradeRequest.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async updateUserRole(id: string, role: UserRole) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { role },
     });
   }
 }
