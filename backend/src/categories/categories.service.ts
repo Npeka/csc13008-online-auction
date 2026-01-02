@@ -12,7 +12,23 @@ export class CategoriesService {
   constructor(private categoriesRepository: CategoriesRepository) {}
 
   async findAll(includeProducts = false) {
-    return this.categoriesRepository.findAll(includeProducts);
+    const categories = await this.categoriesRepository.findAll(includeProducts);
+
+    // Add productCount field that includes subcategories
+    if (includeProducts) {
+      return categories.map((category) => ({
+        ...category,
+        productCount:
+          this.categoriesRepository.calculateTotalProductCount(category),
+        children: category.children?.map((child) => ({
+          ...child,
+          productCount:
+            this.categoriesRepository.calculateTotalProductCount(child),
+        })),
+      }));
+    }
+
+    return categories;
   }
 
   async findBySlug(slug: string) {

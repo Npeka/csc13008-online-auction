@@ -101,4 +101,15 @@ export class CategoriesRepository {
     });
     return category?.parentId;
   }
+
+  calculateTotalProductCount(category: any): number {
+    const directCount = category._count?.products || 0;
+    const childrenCount =
+      category.children?.reduce(
+        (sum: number, child: any) =>
+          sum + this.calculateTotalProductCount(child),
+        0,
+      ) || 0;
+    return directCount + childrenCount;
+  }
 }
