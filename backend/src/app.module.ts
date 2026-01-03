@@ -13,6 +13,9 @@ import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { BidsModule } from './bids/bids.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { QuestionsModule } from './questions/questions.module';
+import { OrdersModule } from './orders/orders.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
@@ -47,6 +50,9 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     CategoriesModule,
     ProductsModule,
     BidsModule,
+    RatingsModule,
+    QuestionsModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [

@@ -14,9 +14,11 @@ model Order {
   finalPrice Float
   status     OrderStatus @default(PENDING_PAYMENT)
 
-  // Shipping information
-  shippingAddress String?
-  trackingNumber  String?
+  // Payment & Shipping information
+  paymentProof      String? // Payment proof URL or reference
+  shippingAddress   String?
+  trackingNumber    String? // Shipping tracking number
+  cancellationReason String? // Reason if cancelled
 
   // Relations
   productId String  @unique
@@ -36,6 +38,7 @@ model Order {
   shippedAt   DateTime?
   deliveredAt DateTime?
   completedAt DateTime?
+  cancelledAt DateTime? // When order was cancelled
   updatedAt   DateTime  @updatedAt
 
   @@index([buyerId, status])

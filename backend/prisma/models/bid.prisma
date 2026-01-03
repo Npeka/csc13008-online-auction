@@ -1,6 +1,7 @@
 model Bid {
   id        String  @id @default(cuid())
   amount    Float
+  maxAmount Float?  // For auto-bidding: max amount user is willing to pay
   isValid   Boolean @default(true) // Can be invalidated by seller
   isAutoBid Boolean @default(false) // For future auto-bidding feature
 

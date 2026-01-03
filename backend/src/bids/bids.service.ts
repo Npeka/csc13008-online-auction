@@ -7,10 +7,14 @@ import {
 import { BidsRepository } from './bids.repository';
 import { PlaceBidDto } from './dto/bid.dto';
 import { ProductStatus } from '@prisma/client';
+import { RatingsService } from '../ratings/ratings.service';
 
 @Injectable()
 export class BidsService {
-  constructor(private bidsRepository: BidsRepository) {}
+  constructor(
+    private bidsRepository: BidsRepository,
+    private ratingsService: RatingsService,
+  ) {}
 
   async placeBid(productId: string, bidderId: string, dto: PlaceBidDto) {
     // Get product with seller info
@@ -47,31 +51,26 @@ export class BidsService {
       );
     }
 
-    // Get bidder's rating
-    const bidder = await this.bidsRepository.findUser(bidderId);
+    // Check rating requirements using RatingsService
+    const allowNewBidders =
+      product.allowNewBidders || product.seller.allowNewBidders;
+    const canBid = await this.ratingsService.canUserBid(
+      bidderId,
+      allowNewBidders,
+    );
 
-    if (!bidder) {
-      throw new NotFoundException('Bidder not found');
-    }
+    if (!canBid) {
+      const summary = await this.ratingsService.getRatingSummary(bidderId);
 
-    // Calculate rating percentage
-    const ratingPercentage =
-      bidder.ratingCount > 0 ? bidder.rating / bidder.ratingCount : 0;
-
-    // Check rating requirements
-    const minRating = 0.8; // 80% - TODO: Get from system config
-
-    if (bidder.ratingCount === 0) {
-      // New bidder - check if seller allows
-      if (!product.allowNewBidders && !product.seller.allowNewBidders) {
+      if (summary.total === 0) {
         throw new ForbiddenException(
           'This seller does not allow new bidders without ratings',
         );
+      } else {
+        throw new ForbiddenException(
+          `Your rating (${Math.round(summary.percentage)}%) is below the required 80%`,
+        );
       }
-    } else if (ratingPercentage < minRating) {
-      throw new ForbiddenException(
-        `Your rating (${Math.round(ratingPercentage * 100)}%) is below the required ${Math.round(minRating * 100)}%`,
-      );
     }
 
     // Validate bid amount
