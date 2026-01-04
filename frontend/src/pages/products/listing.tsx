@@ -6,7 +6,6 @@ import {
   ProductListHeader,
   ProductSortControls,
 } from "@/components/products/listing";
-import { ProductListBreadcrumb } from "@/components/products/listing/product-list-breadcrumb";
 import type { Category } from "@/types";
 
 export function ProductListingPage() {
@@ -93,12 +92,7 @@ export function ProductListingPage() {
 
   return (
     <div className="container-app">
-      <ProductListBreadcrumb
-        currentCategory={selectedCategory}
-        searchQuery={searchQuery}
-      />
-
-      <div className="flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between">
         <ProductListHeader
           currentCategory={selectedCategory}
           searchQuery={searchQuery}

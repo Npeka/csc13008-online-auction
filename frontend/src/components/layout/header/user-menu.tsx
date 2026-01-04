@@ -79,7 +79,7 @@ export function UserMenu() {
 
       {/* User Dropdown */}
       {isUserMenuOpen && (
-        <div className="z-dropdown animate-in fade-in slide-in-from-top-2 absolute top-full right-0 mt-2 w-56 rounded-xl border border-border bg-bg-card shadow-xl duration-150">
+        <div className="animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-50 mt-2 w-56 rounded-xl border border-border bg-bg-card shadow-xl duration-150">
           <div className="border-b border-border p-3">
             <p className="font-medium text-text">{user.fullName}</p>
             <p className="truncate text-sm text-text-muted">{user.email}</p>
