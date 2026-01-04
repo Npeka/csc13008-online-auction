@@ -1,0 +1,305 @@
+[
+  {
+    "name": "Pythons",
+    "originalId": "pythons",
+    "slug": "pythons",
+    "children": [
+      {
+        "name": "Ball Pythons",
+        "originalId": "pythons/ball-pythons",
+        "slug": "pythons/ball-pythons"
+      },
+      {
+        "name": "Reticulated Pythons",
+        "originalId": "pythons/reticulated-pythons",
+        "slug": "pythons/reticulated-pythons"
+      },
+      {
+        "name": "Burmese Pythons",
+        "originalId": "pythons/burmese-pythons",
+        "slug": "pythons/burmese-pythons"
+      },
+      {
+        "name": "Green Tree Pythons",
+        "originalId": "pythons/green-tree-pythons",
+        "slug": "pythons/green-tree-pythons"
+      }
+    ]
+  },
+  {
+    "name": "Boas",
+    "originalId": "boas",
+    "slug": "boas",
+    "children": [
+      {
+        "name": "Rosy Boas",
+        "originalId": "boas/rosy-boas",
+        "slug": "boas/rosy-boas"
+      },
+      {
+        "name": "Dumeril's Boas",
+        "originalId": "boas/dumerils-boas",
+        "slug": "boas/dumerils-boas"
+      }
+    ]
+  },
+  {
+    "name": "Colubrids",
+    "originalId": "colubrids",
+    "slug": "colubrids",
+    "children": [
+      {
+        "name": "Corn Snakes",
+        "originalId": "colubrids/corn-snakes",
+        "slug": "colubrids/corn-snakes"
+      },
+      {
+        "name": "Garter Snakes",
+        "originalId": "colubrids/garter-snakes",
+        "slug": "colubrids/garter-snakes"
+      },
+      {
+        "name": "Bullsnakes",
+        "originalId": "colubrids/bullsnakes",
+        "slug": "colubrids/bullsnakes"
+      },
+      {
+        "name": "Gopher Snakes",
+        "originalId": "colubrids/gopher-snakes",
+        "slug": "colubrids/gopher-snakes"
+      },
+      {
+        "name": "House Snakes",
+        "originalId": "colubrids/house-snakes",
+        "slug": "colubrids/house-snakes"
+      },
+      {
+        "name": "Pine Snakes",
+        "originalId": "colubrids/pine-snakes",
+        "slug": "colubrids/pine-snakes"
+      }
+    ]
+  },
+  {
+    "name": "Lizards",
+    "originalId": "lizards",
+    "slug": "lizards",
+    "children": [
+      {
+        "name": "Anoles",
+        "originalId": "lizards/anoles",
+        "slug": "lizards/anoles"
+      },
+      {
+        "name": "Uromastyx",
+        "originalId": "lizards/uromastyx",
+        "slug": "lizards/uromastyx"
+      }
+    ]
+  },
+  {
+    "name": "Turtles",
+    "originalId": "turtles",
+    "slug": "turtles",
+    "children": [
+      {
+        "name": "African Dwarf Mud Turtles",
+        "originalId": "turtles/african-dwarf-mud-turtles",
+        "slug": "turtles/african-dwarf-mud-turtles"
+      },
+      {
+        "name": "Slider Turtles",
+        "originalId": "turtles/slider-turtles",
+        "slug": "turtles/slider-turtles"
+      },
+      {
+        "name": "Box Turtles",
+        "originalId": "turtles/box-turtles",
+        "slug": "turtles/box-turtles"
+      },
+      {
+        "name": "Mud & Musk Turtles",
+        "originalId": "turtles/mud-musk-turtles",
+        "slug": "turtles/mud-musk-turtles"
+      },
+      {
+        "name": "Side-Necked Turtles",
+        "originalId": "turtles/side-necked-turtles",
+        "slug": "turtles/side-necked-turtles"
+      },
+      {
+        "name": "Pond Turtles",
+        "originalId": "turtles/pond-turtles",
+        "slug": "turtles/pond-turtles"
+      },
+      {
+        "name": "Terrapins",
+        "originalId": "turtles/terrapins",
+        "slug": "turtles/terrapins"
+      },
+      {
+        "name": "Snake-Necked Turtles",
+        "originalId": "turtles/snake-necked-turtles",
+        "slug": "turtles/snake-necked-turtles"
+      },
+      {
+        "name": "Softshell Turtles",
+        "originalId": "turtles/softshell-turtles",
+        "slug": "turtles/softshell-turtles"
+      }
+    ]
+  },
+  {
+    "name": "Invertebrates",
+    "originalId": "invertebrates",
+    "slug": "invertebrates",
+    "children": [
+      {
+        "name": "Isopods",
+        "originalId": "invertebrates/isopods",
+        "slug": "invertebrates/isopods"
+      },
+      {
+        "name": "Scorpions",
+        "originalId": "invertebrates/scorpions",
+        "slug": "invertebrates/scorpions"
+      },
+      {
+        "name": "Tarantulas",
+        "originalId": "invertebrates/tarantulas",
+        "slug": "invertebrates/tarantulas"
+      }
+    ]
+  },
+  {
+    "name": "Amphibians",
+    "originalId": "amphibians",
+    "slug": "amphibians",
+    "children": [
+      {
+        "name": "Toads",
+        "originalId": "amphibians/toads",
+        "slug": "amphibians/toads"
+      },
+      {
+        "name": "Salamanders",
+        "originalId": "amphibians/salamanders",
+        "slug": "amphibians/salamanders"
+      },
+      {
+        "name": "Newts",
+        "originalId": "amphibians/newts",
+        "slug": "amphibians/newts"
+      },
+      {
+        "name": "Axolotls",
+        "originalId": "amphibians/axolotls",
+        "slug": "amphibians/axolotls"
+      }
+    ]
+  },
+  {
+    "name": "Tortoises",
+    "originalId": "tortoises",
+    "slug": "tortoises",
+    "children": [
+      {
+        "name": "Aldabra Tortoises",
+        "originalId": "tortoises/aldabra-tortoises",
+        "slug": "tortoises/aldabra-tortoises"
+      },
+      {
+        "name": "Galapagos Tortoises",
+        "originalId": "tortoises/galapagos-tortoises",
+        "slug": "tortoises/galapagos-tortoises"
+      },
+      {
+        "name": "Greek Tortoises",
+        "originalId": "tortoises/greek-tortoises",
+        "slug": "tortoises/greek-tortoises"
+      },
+      {
+        "name": "Hermann's Tortoises",
+        "originalId": "tortoises/hermanns-tortoises",
+        "slug": "tortoises/hermanns-tortoises"
+      },
+      {
+        "name": "Star Tortoises",
+        "originalId": "tortoises/star-tortoises",
+        "slug": "tortoises/star-tortoises"
+      },
+      {
+        "name": "Leopard Tortoises",
+        "originalId": "tortoises/leopard-tortoises",
+        "slug": "tortoises/leopard-tortoises"
+      },
+      {
+        "name": "Red-Footed Tortoises",
+        "originalId": "tortoises/red-footed-tortoises",
+        "slug": "tortoises/red-footed-tortoises"
+      },
+      {
+        "name": "Russian Tortoises",
+        "originalId": "tortoises/russian-tortoises",
+        "slug": "tortoises/russian-tortoises"
+      },
+      {
+        "name": "Sulcata Tortoises",
+        "originalId": "tortoises/sulcata-tortoises",
+        "slug": "tortoises/sulcata-tortoises"
+      }
+    ]
+  },
+  {
+    "name": "Geckos",
+    "originalId": "geckos",
+    "slug": "geckos",
+    "children": [
+      {
+        "name": "Leopard Geckos",
+        "originalId": "geckos/leopard-geckos",
+        "slug": "geckos/leopard-geckos"
+      },
+      {
+        "name": "Crested Geckos",
+        "originalId": "geckos/crested-geckos",
+        "slug": "geckos/crested-geckos"
+      },
+      {
+        "name": "Day Geckos",
+        "originalId": "geckos/day-geckos",
+        "slug": "geckos/day-geckos"
+      },
+      {
+        "name": "Tokay Geckos",
+        "originalId": "geckos/tokay-geckos",
+        "slug": "geckos/tokay-geckos"
+      },
+      {
+        "name": "Gargoyle Geckos",
+        "originalId": "geckos/gargoyle-geckos",
+        "slug": "geckos/gargoyle-geckos"
+      },
+      {
+        "name": "Leachianus Geckos",
+        "originalId": "geckos/leachianus-geckos",
+        "slug": "geckos/leachianus-geckos"
+      },
+      {
+        "name": "African Fat-Tailed Geckos",
+        "originalId": "geckos/african-fat-tailed-geckos",
+        "slug": "geckos/african-fat-tailed-geckos"
+      },
+      {
+        "name": "Chahoua Geckos",
+        "originalId": "geckos/chahoua-geckos",
+        "slug": "geckos/chahoua-geckos"
+      },
+      {
+        "name": "Knob-Tailed Geckos",
+        "originalId": "geckos/knob-tailed-geckos",
+        "slug": "geckos/knob-tailed-geckos"
+      }
+    ]
+  }
+]
