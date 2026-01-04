@@ -92,7 +92,7 @@ export function ProductListingPage() {
   }, []);
 
   return (
-    <div className="container-app py-10">
+    <div className="container-app">
       <ProductListBreadcrumb
         currentCategory={selectedCategory}
         searchQuery={searchQuery}

@@ -77,7 +77,7 @@ export function ProductCard({
         {/* Content */}
         <div className="min-w-0 flex-1">
           <h3 className="mb-2 line-clamp-2 font-semibold text-text">
-            {product.name}
+            {product.title || product.name}
           </h3>
 
           <div className="mb-2 flex items-center gap-2 text-sm text-text-muted">
@@ -121,7 +121,7 @@ export function ProductCard({
           />
           <div className="min-w-0 flex-1">
             <h4 className="line-clamp-1 text-sm font-medium text-text">
-              {product.name}
+              {product.title || product.name}
             </h4>
             <p className="mt-1 text-sm font-bold text-primary">
               {formatUSD(product.currentPrice)}
@@ -185,8 +185,8 @@ export function ProductCard({
         </p>
 
         {/* Title */}
-        <h3 className="mb-3 line-clamp-2 font-semibold text-text transition-colors group-hover:text-primary">
-          {product.name}
+        <h3 className="mb-3 line-clamp-2 h-16 font-semibold text-text transition-colors group-hover:text-primary">
+          {product.title || product.name}
         </h3>
 
         {/* Price and Bids */}

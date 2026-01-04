@@ -17,5 +17,5 @@ export const ProductListBreadcrumb = memo(function ProductListBreadcrumb({
       ? [{ label: `Search: "${searchQuery}"` }]
       : [{ label: "All Products" }];
 
-  return <Breadcrumb items={breadcrumbItems} className="mb-8" />;
+  return <Breadcrumb items={breadcrumbItems} className="my-4" />;
 });

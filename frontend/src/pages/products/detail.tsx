@@ -195,7 +195,7 @@ export function ProductDetailPage() {
   const minimumBid = product.currentPrice + product.bidStep;
 
   return (
-    <div className="container-app py-10">
+    <div className="container-app">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -205,7 +205,7 @@ export function ProductDetailPage() {
           },
           { label: product.title },
         ]}
-        className="mb-6"
+        className="my-4"
       />
 
       <div className="grid gap-10 lg:grid-cols-2">

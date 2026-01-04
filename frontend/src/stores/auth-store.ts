@@ -70,10 +70,14 @@ export const useAuthStore = create<AuthState>()(
       verifyEmail: async (email, otpCode) => {
         set({ isLoading: true });
         try {
-          const response = await authApi.verifyEmail(email, otpCode);
+          // This stores tokens in localStorage via auth-api.ts
+          await authApi.verifyEmail(email, otpCode);
+
+          // Fetch user profile now that we have valid tokens
+          const user = await usersApi.getProfile();
 
           set({
-            user: response.user,
+            user,
             isAuthenticated: true,
             isLoading: false,
             pendingVerification: null,
@@ -142,6 +146,13 @@ export const useAuthStore = create<AuthState>()(
           }
         }
 
+        // Clear all auth tokens
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+
+        // Clear watchlist storage
+        localStorage.removeItem("morphee-watchlist-storage");
+
         set({
           user: null,
           isAuthenticated: false,
@@ -204,6 +215,10 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "morphee-auth-storage",
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
     },
   ),
 );
