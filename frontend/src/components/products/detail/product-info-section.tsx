@@ -1,27 +1,48 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { BidHistoryTable } from "@/components/shared/bid-history";
 import { TabPanel, Tabs } from "@/components/ui/tabs";
+import type { Question } from "@/types";
+import { AskSellerForm } from "./ask-seller-form";
 
 interface ProductInfoSectionProps {
+  productId: string;
   description: string;
   bids: any[];
+  questions: Question[];
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onQuestionAsked: () => void;
+  isAuthenticated?: boolean;
 }
 
 export const ProductInfoSection = memo(function ProductInfoSection({
+  productId,
   description,
   bids,
+  questions,
   activeTab,
   onTabChange,
+  onQuestionAsked,
+  isAuthenticated = false,
 }: ProductInfoSectionProps) {
+  // Build tabs based on authentication status
+  const tabs = useMemo(() => {
+    const baseTabs = [{ id: "description", label: "Description" }];
+
+    // Only show bid history tab for authenticated users
+    if (isAuthenticated) {
+      baseTabs.push({ id: "bids", label: `Bid History (${bids.length})` });
+    }
+
+    baseTabs.push({ id: "qa", label: `Q&A (${questions.length})` });
+
+    return baseTabs;
+  }, [isAuthenticated, bids.length, questions.length]);
+
   return (
     <div className="mt-16">
       <Tabs
-        tabs={[
-          { id: "description", label: "Description" },
-          { id: "bids", label: `Bid History (${bids.length})` },
-        ]}
+        tabs={tabs}
         activeTab={activeTab}
         onChange={onTabChange}
         variant="underline"
@@ -35,8 +56,18 @@ export const ProductInfoSection = memo(function ProductInfoSection({
           />
         </TabPanel>
 
-        <TabPanel value="bids" activeTab={activeTab}>
-          <BidHistoryTable bids={bids} />
+        {isAuthenticated && (
+          <TabPanel value="bids" activeTab={activeTab}>
+            <BidHistoryTable bids={bids} />
+          </TabPanel>
+        )}
+
+        <TabPanel value="qa" activeTab={activeTab}>
+          <AskSellerForm
+            productId={productId}
+            questions={questions}
+            onQuestionAsked={onQuestionAsked}
+          />
         </TabPanel>
       </div>
     </div>

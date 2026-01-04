@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Minus, Plus } from "lucide-react";
+import { AlertTriangle, CheckCircle, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatUSD, hasGoodRating } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ export interface BidInputProps {
   isLoading?: boolean;
   disabled?: boolean;
   userRating?: { positive: number; total: number };
+  allowNewBidders?: boolean;
   className?: string;
 }
 
@@ -22,12 +23,19 @@ export function BidInput({
   isLoading = false,
   disabled = false,
   userRating,
+  allowNewBidders = true,
   className,
 }: BidInputProps) {
   const [bidAmount, setBidAmount] = useState(minimumBid);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const canBid =
-    !userRating || hasGoodRating(userRating.positive, userRating.total);
+  const hasNoRatings = !userRating || userRating.total === 0;
+  const hasGoodRatingScore = userRating
+    ? hasGoodRating(userRating.positive, userRating.total)
+    : true;
+
+  // Check if user can bid based on rating and allowNewBidders
+  const canBidRating = hasNoRatings ? allowNewBidders : hasGoodRatingScore;
   const isValidBid = bidAmount >= minimumBid;
 
   const handleIncrement = () => {
@@ -39,10 +47,59 @@ export function BidInput({
   };
 
   const handleSubmit = () => {
-    if (isValidBid && canBid) {
-      onPlaceBid(bidAmount);
+    if (isValidBid && canBidRating) {
+      setShowConfirmation(true);
     }
   };
+
+  const handleConfirm = () => {
+    setShowConfirmation(false);
+    onPlaceBid(bidAmount);
+  };
+
+  const handleCancel = () => {
+    setShowConfirmation(false);
+  };
+
+  // Confirmation view
+  if (showConfirmation) {
+    return (
+      <div className={cn("space-y-4", className)}>
+        <div className="rounded-lg border border-primary/20 bg-primary-light p-4 text-center">
+          <CheckCircle className="mx-auto mb-2 h-8 w-8 text-primary" />
+          <h3 className="mb-1 font-semibold text-text">Confirm Your Bid</h3>
+          <p className="text-sm text-text-muted">
+            You are about to place a bid of
+          </p>
+          <p className="my-2 text-2xl font-bold text-primary">
+            {formatUSD(bidAmount)}
+          </p>
+          <p className="text-xs text-text-muted">
+            This action cannot be undone. By confirming, you agree to purchase
+            this item if you win.
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="flex-1"
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            className="flex-1"
+            isLoading={isLoading}
+          >
+            Confirm Bid
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -54,10 +111,20 @@ export function BidInput({
         </span>
       </div>
 
-      {/* Rating warning */}
-      {userRating && !canBid && (
+      {/* Rating warning - low rating */}
+      {userRating && !hasNoRatings && !hasGoodRatingScore && (
         <div className="rounded-lg border border-error/20 bg-error-light p-3 text-sm text-error">
+          <AlertTriangle className="mr-2 inline h-4 w-4" />
           Your rating is below 80%. You cannot place bids on this auction.
+        </div>
+      )}
+
+      {/* Rating warning - new bidder not allowed */}
+      {hasNoRatings && !allowNewBidders && (
+        <div className="rounded-lg border border-warning/20 bg-warning-light p-3 text-sm text-warning">
+          <AlertTriangle className="mr-2 inline h-4 w-4" />
+          The seller does not allow new bidders (users without ratings) on this
+          auction.
         </div>
       )}
 
@@ -121,7 +188,7 @@ export function BidInput({
       {/* Place bid button */}
       <Button
         onClick={handleSubmit}
-        disabled={disabled || !isValidBid || !canBid || isLoading}
+        disabled={disabled || !isValidBid || !canBidRating || isLoading}
         isLoading={isLoading}
         className="w-full"
         size="lg"

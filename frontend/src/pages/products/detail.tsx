@@ -14,11 +14,11 @@ import { BidInput } from "@/components/shared/bid-input";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { bidsApi, productsApi } from "@/lib";
+import { bidsApi, productsApi, questionsApi } from "@/lib";
 import { formatUSD } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
-import type { Product } from "@/types";
+import type { Product, Question } from "@/types";
 
 // Helper to convert user rating to BidInput expected format
 function getUserRatingForBid(
@@ -50,6 +50,7 @@ export function ProductDetailPage() {
 
   const [product, setProduct] = useState<any>(null);
   const [bids, setBids] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   const { user, isAuthenticated } = useAuthStore();
@@ -63,14 +64,24 @@ export function ProductDetailPage() {
       try {
         setIsLoading(true);
 
-        // Fetch product details by slug
+        // Fetch product details by slug (public)
         const productData = await productsApi.getProductBySlug(slug);
         setProduct(productData);
         setRelatedProducts(productData.relatedProducts || []);
 
-        // Fetch bid history
-        const bidHistory = await bidsApi.getBidHistory(productData.id);
-        setBids(bidHistory);
+        // Fetch questions (public)
+        const productQuestions = await questionsApi
+          .getQuestions(productData.id)
+          .catch(() => []);
+        setQuestions(productQuestions);
+
+        // Only fetch bid history if authenticated
+        if (isAuthenticated) {
+          const bidHistory = await bidsApi
+            .getBidHistory(productData.id)
+            .catch(() => []);
+          setBids(bidHistory);
+        }
       } catch (error) {
         console.error("Failed to fetch product:", error);
         toast.error("Product not found");
@@ -80,12 +91,11 @@ export function ProductDetailPage() {
     };
 
     fetchProductData();
-  }, [slug]);
+  }, [slug, isAuthenticated]);
 
   const handlePlaceBid = useCallback(
     async (amount: number) => {
       if (!isAuthenticated) {
-        toast.error("Please login to place a bid");
         navigate("/login");
         return;
       }
@@ -116,7 +126,6 @@ export function ProductDetailPage() {
 
   const handleWatchlistToggle = useCallback(async () => {
     if (!isAuthenticated) {
-      toast.error("Please login to add to watchlist");
       navigate("/login");
       return;
     }
@@ -144,7 +153,6 @@ export function ProductDetailPage() {
 
   const handleBuyNow = useCallback(() => {
     if (!isAuthenticated) {
-      toast.error("Please login to buy now");
       navigate("/login");
       return;
     }
@@ -264,10 +272,17 @@ export function ProductDetailPage() {
 
       {/* Info Section */}
       <ProductInfoSection
+        productId={product.id}
         description={product.description}
         bids={bids}
+        questions={questions}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        onQuestionAsked={async () => {
+          const updated = await questionsApi.getQuestions(product.id);
+          setQuestions(updated);
+        }}
+        isAuthenticated={isAuthenticated}
       />
 
       {/* Related Products */}
@@ -292,6 +307,7 @@ export function ProductDetailPage() {
           onPlaceBid={handlePlaceBid}
           isLoading={isBidding}
           userRating={getUserRatingForBid(user)}
+          allowNewBidders={product.allowNewBidders ?? true}
         />
       </Modal>
     </div>
