@@ -24,7 +24,7 @@ export function MobileMenu({
   if (!isOpen) return null;
 
   return (
-    <div className="z-modal fixed inset-0 lg:hidden">
+    <div className="fixed inset-0 z-9999 lg:hidden">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 

@@ -63,7 +63,10 @@ export const authApi = {
   verifyEmail: async (
     email: string,
     otpCode: string,
-  ): Promise<AuthResponse> => {
+  ): Promise<{
+    message: string;
+    tokens: { accessToken: string; refreshToken: string };
+  }> => {
     const data = await apiClient.post<any>("/auth/verify-email", {
       email,
       otpCode,
@@ -76,8 +79,8 @@ export const authApi = {
     }
 
     return {
-      ...data,
-      user: transformUser(data.user),
+      message: data.message,
+      tokens: data.tokens,
     };
   },
 

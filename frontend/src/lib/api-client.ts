@@ -80,7 +80,8 @@ axiosInstance.interceptors.response.use(
 
       if (!refreshToken) {
         // No refresh token - user was never logged in (guest)
-        // Just reject the error, don't redirect to login
+        // Reset isRefreshing and reject the error
+        isRefreshing = false;
         localStorage.removeItem("accessToken");
         return Promise.reject(error);
       }

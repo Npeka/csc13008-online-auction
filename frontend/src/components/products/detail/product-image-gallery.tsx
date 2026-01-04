@@ -38,7 +38,7 @@ export const ProductImageGallery = memo(function ProductImageGallery({
   }, [selectedIndex, displayIndex]);
 
   return (
-    <div>
+    <div className="relative z-0">
       {/* Main Image with transition effects */}
       <div className="relative mb-4 aspect-square overflow-hidden rounded-xl bg-bg-secondary">
         <div

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
-import { Check,Lock, Mail, MapPin, User } from "lucide-react";
+import { Check, Lock, Mail, MapPin, User } from "lucide-react";
 import logoImage from "@/assets/logo.avif";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ export function RegisterPage() {
   });
   const [otp, setOtp] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const isSubmittingOtp = useRef(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -99,13 +100,12 @@ export function RegisterPage() {
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVerifyOtp = async (e?: React.FormEvent) => {
+    e?.preventDefault();
 
-    if (otp.length !== 6) {
-      toast.error("Please enter a valid 6-digit code");
-      return;
-    }
+    if (otp.length !== 6 || isSubmittingOtp.current) return;
+
+    isSubmittingOtp.current = true;
 
     try {
       const success = await verifyEmail(formData.email, otp);
@@ -114,13 +114,22 @@ export function RegisterPage() {
         navigate("/");
       } else {
         toast.error("Invalid verification code");
+        isSubmittingOtp.current = false;
       }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Verification failed",
       );
+      isSubmittingOtp.current = false;
     }
   };
+
+  // Auto-submit when OTP is 6 digits
+  useEffect(() => {
+    if (otp.length === 6 && step === "otp") {
+      handleVerifyOtp();
+    }
+  }, [otp]);
 
   const handleResendOtp = async () => {
     try {
@@ -172,7 +181,8 @@ export function RegisterPage() {
                   setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                 }
                 placeholder="000000"
-                className="w-full rounded-lg border border-border bg-bg-secondary px-4 py-4 text-center text-3xl tracking-[0.5em] text-text"
+                disabled={isLoading}
+                className="w-full rounded-lg border border-border bg-bg-secondary px-4 py-4 text-center text-3xl tracking-[0.5em] text-text disabled:cursor-not-allowed disabled:opacity-70"
                 maxLength={6}
               />
             </div>

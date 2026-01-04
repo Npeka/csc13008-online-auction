@@ -1,7 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
-import { Lock,Mail } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import logoImage from "@/assets/logo.avif";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Button } from "@/components/ui/button";
@@ -46,12 +46,13 @@ export function LoginPage() {
 
     if (!validate()) return;
 
-    try {
-      await login(formData.email, formData.password);
+    const success = await login(formData.email, formData.password);
+
+    if (success) {
       toast.success("Welcome back!");
       navigate("/");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Login failed");
+    } else {
+      toast.error("Invalid email or password");
     }
   };
 
