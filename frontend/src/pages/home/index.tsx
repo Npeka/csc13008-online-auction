@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { Clock, DollarSign, TrendingUp } from "lucide-react";
-import {
-  CategoriesSection,
-  CTASection,
-  HeroSection,
-  ProductSection,
-} from "@/components/home";
+import { CTASection, HeroSection, ProductSection } from "@/components/home";
 import { categoriesApi, productsApi } from "@/lib";
 import type { Category, Product } from "@/types";
 
@@ -63,8 +58,6 @@ export function HomePage() {
         activeAuctionsCount={endingSoon.length}
         categoriesCount={categories.length}
       />
-
-      <CategoriesSection categories={categories} />
 
       <ProductSection
         title="Ending Soon"
