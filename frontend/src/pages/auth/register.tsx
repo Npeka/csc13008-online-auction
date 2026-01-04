@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
-import { Check, Lock, Mail, MapPin, User } from "lucide-react";
+import { Lock, Mail, MapPin, User } from "lucide-react";
 import logoImage from "@/assets/logo.avif";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export function RegisterPage() {
     agreeToTerms: false,
   });
   const [otp, setOtp] = useState("");
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const isSubmittingOtp = useRef(false);
 
@@ -68,6 +70,10 @@ export function RegisterPage() {
 
     if (!formData.agreeToTerms) {
       newErrors.agreeToTerms = "You must agree to the terms";
+    }
+
+    if (!captchaValue) {
+      newErrors.captcha = "Please complete the CAPTCHA";
     }
 
     setErrors(newErrors);
@@ -308,18 +314,19 @@ export function RegisterPage() {
             )}
           </div>
 
-          {/* reCAPTCHA placeholder */}
-          <div className="rounded-lg border border-border bg-bg-secondary p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-primary-light">
-                <Check className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-text">I'm not a robot</p>
-                <p className="text-xs text-text-muted">reCAPTCHA</p>
-              </div>
-            </div>
+          {/* reCAPTCHA */}
+          <div className="flex justify-center">
+            <ReCAPTCHA
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || ""}
+              onChange={(value) => {
+                setCaptchaValue(value);
+                setErrors((prev) => ({ ...prev, captcha: "" }));
+              }}
+            />
           </div>
+          {errors.captcha && (
+            <p className="text-center text-sm text-error">{errors.captcha}</p>
+          )}
 
           <label className="flex cursor-pointer items-start gap-2">
             <input
