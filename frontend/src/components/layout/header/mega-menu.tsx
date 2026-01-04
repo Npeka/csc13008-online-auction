@@ -132,14 +132,14 @@ function MegaMenuPanel({ category }: { category: Category }) {
               key={subCategory.id}
               to={`/products?category=${subCategory.slug}`}
               className={cn(
-                "flex items-center justify-between rounded-lg p-3",
+                "flex items-center gap-3 rounded-lg p-3",
                 "group cursor-pointer transition-colors hover:bg-bg-secondary",
               )}
             >
-              <span className="font-medium text-text transition-colors group-hover:text-primary">
+              <span className="min-w-0 flex-1 truncate font-medium text-text transition-colors group-hover:text-primary">
                 {subCategory.name}
               </span>
-              <span className="text-sm text-text-muted">
+              <span className="shrink-0 text-sm text-text-muted">
                 {subCategory.productCount || 0}
               </span>
             </Link>

@@ -1,9 +1,10 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Heart, Users } from "lucide-react";
 import { CountdownBadge } from "@/components/shared/countdown";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatUSD, isNewProduct, maskName } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { Product } from "@/types";
 
@@ -18,6 +19,8 @@ export function ProductCard({
   variant = "default",
   className,
 }: ProductCardProps) {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } =
     useWatchlistStore();
   const inWatchlist = isInWatchlist(product.id);
@@ -26,6 +29,12 @@ export function ProductCard({
   const handleWatchlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
     if (inWatchlist) {
       await removeFromWatchlist(product.id);
     } else {
