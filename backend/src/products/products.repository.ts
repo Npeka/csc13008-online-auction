@@ -52,6 +52,19 @@ export class ProductsRepository {
               ratingCount: true,
             },
           },
+          bids: {
+            take: 1,
+            orderBy: { amount: 'desc' },
+            include: {
+              bidder: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatar: true,
+                },
+              },
+            },
+          },
           _count: {
             select: { bids: true },
           },

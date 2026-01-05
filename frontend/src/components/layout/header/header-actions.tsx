@@ -1,11 +1,13 @@
 import { Link } from "react-router";
-import { Heart, Moon, Sun } from "lucide-react";
+import { Gavel, Heart, Moon, Sun, Trophy } from "lucide-react";
+import { useAuthStore } from "@/stores/auth-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { useWatchlistCount } from "@/stores/watchlist-store";
 import { UserMenu } from "./user-menu";
 
 export function HeaderActions() {
   const { resolvedTheme, toggleTheme } = useThemeStore();
+  const { isAuthenticated } = useAuthStore();
   const watchlistCount = useWatchlistCount();
 
   return (
@@ -27,6 +29,7 @@ export function HeaderActions() {
       <Link
         to="/profile/watchlist"
         className="relative rounded-lg p-2 transition-colors hover:bg-bg-secondary"
+        title="Watchlist"
       >
         <Heart className="h-5 w-5" />
         {watchlistCount > 0 && (
@@ -35,6 +38,28 @@ export function HeaderActions() {
           </span>
         )}
       </Link>
+
+      {/* My Bids - Authenticated only */}
+      {isAuthenticated && (
+        <Link
+          to="/profile/bids"
+          className="rounded-lg p-2 transition-colors hover:bg-bg-secondary"
+          title="My Bids"
+        >
+          <Gavel className="h-5 w-5" />
+        </Link>
+      )}
+
+      {/* Won Auctions - Authenticated only */}
+      {isAuthenticated && (
+        <Link
+          to="/profile/won"
+          className="rounded-lg p-2 transition-colors hover:bg-bg-secondary"
+          title="Won Auctions"
+        >
+          <Trophy className="h-5 w-5" />
+        </Link>
+      )}
 
       {/* User Menu */}
       <UserMenu />

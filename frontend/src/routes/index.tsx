@@ -28,6 +28,15 @@ const router = createBrowserRouter([
       { path: "products", Component: ProductListingPage },
       { path: "products/:slug", Component: ProductDetailPage },
 
+      // Public User Profile
+      {
+        path: "users/:id",
+        lazy: async () => {
+          const { UserProfilePage } = await import("@/pages/users");
+          return { Component: UserProfilePage };
+        },
+      },
+
       // Profile Routes
       { path: "profile", Component: ProfilePage },
       { path: "profile/watchlist", Component: WatchlistPage },

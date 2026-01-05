@@ -116,6 +116,7 @@ export class ProductsService {
     const productsWithMeta = products.map((product) => ({
       ...product,
       bidCount: product._count.bids,
+      highestBidder: product.bids[0]?.bidder,
       isNew: product.createdAt > newThreshold,
     }));
 

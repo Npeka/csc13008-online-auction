@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { Heart, Users } from "lucide-react";
+import { Crown, Heart, Users } from "lucide-react";
 import { CountdownBadge } from "@/components/shared/countdown";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +20,18 @@ export function ProductCard({
   className,
 }: ProductCardProps) {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } =
     useWatchlistStore();
   const inWatchlist = isInWatchlist(product.id);
   const isNew = product.isNew || isNewProduct(product.createdAt);
+
+  // Check if current user is the highest bidder
+  const isWinning =
+    isAuthenticated &&
+    user?.id &&
+    product.highestBidder?.id &&
+    user.id === product.highestBidder.id;
 
   const handleWatchlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -57,6 +64,7 @@ export function ProductCard({
         className={cn(
           "flex gap-4 rounded-xl border border-border bg-bg-card p-4",
           "cursor-pointer transition-all hover:border-primary/30 hover:shadow-md",
+          isWinning && "border-success bg-success/5",
           className,
         )}
       >
@@ -70,6 +78,12 @@ export function ProductCard({
           {isNew && (
             <Badge variant="new" className="absolute top-2 left-2">
               NEW
+            </Badge>
+          )}
+          {isWinning && (
+            <Badge variant="success" className="absolute top-2 left-2">
+              <Crown className="mr-1 h-3 w-3" />
+              Winning
             </Badge>
           )}
         </div>
@@ -110,15 +124,21 @@ export function ProductCard({
         className={cn(
           "block rounded-lg border border-border bg-bg-card p-3",
           "cursor-pointer transition-all hover:border-primary/30",
+          isWinning && "border-success bg-success/5",
           className,
         )}
       >
         <div className="flex items-center gap-3">
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="h-16 w-16 rounded-lg object-cover"
-          />
+          <div className="relative">
+            <img
+              src={imageUrl}
+              alt={product.name}
+              className="h-16 w-16 rounded-lg object-cover"
+            />
+            {isWinning && (
+              <Crown className="absolute -top-1 -right-1 h-4 w-4 text-success" />
+            )}
+          </div>
           <div className="min-w-0 flex-1">
             <h4 className="line-clamp-1 text-sm font-medium text-text">
               {product.title || product.name}
@@ -141,6 +161,7 @@ export function ProductCard({
         "group block overflow-hidden rounded-xl border border-border bg-bg-card",
         "cursor-pointer transition-all hover:border-primary/30 hover:shadow-lg",
         "card-hover",
+        isWinning && "border-success ring-2 ring-success/20",
         className,
       )}
     >
@@ -154,7 +175,13 @@ export function ProductCard({
 
         {/* Overlay badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {isNew && <Badge variant="new">NEW</Badge>}
+          {isWinning && (
+            <Badge variant="success">
+              <Crown className="mr-1 h-3 w-3" />
+              You're Winning
+            </Badge>
+          )}
+          {isNew && !isWinning && <Badge variant="new">NEW</Badge>}
           {product.isFeatured && <Badge variant="warning">Featured</Badge>}
         </div>
 
