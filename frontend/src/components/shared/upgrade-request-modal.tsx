@@ -14,7 +14,7 @@ import { Modal } from "@/components/ui/modal";
 export interface UpgradeRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: () => Promise<void>;
+  onSubmit?: (reason: string) => Promise<void>;
 }
 
 export function UpgradeRequestModal({
@@ -24,12 +24,13 @@ export function UpgradeRequestModal({
 }: UpgradeRequestModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [reason, setReason] = useState("");
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
       if (onSubmit) {
-        await onSubmit();
+        await onSubmit(reason);
       } else {
         // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -46,7 +47,10 @@ export function UpgradeRequestModal({
   const handleClose = () => {
     if (!isSubmitting) {
       // Reset state after a delay to avoid flickering
-      setTimeout(() => setIsSubmitted(false), 300);
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setReason("");
+      }, 300);
       onClose();
     }
   };
@@ -110,12 +114,12 @@ export function UpgradeRequestModal({
             {benefits.map((benefit) => (
               <div
                 key={benefit.title}
-                className="flex items-start gap-3 rounded-lg bg-bg-secondary p-3"
+                className="flex items-center gap-3 rounded-lg bg-bg-secondary p-3"
               >
                 <div className="rounded-lg bg-primary/10 p-2 text-primary">
                   {benefit.icon}
                 </div>
-                <div>
+                <div className="text-start">
                   <p className="font-medium text-text">{benefit.title}</p>
                   <p className="text-sm text-text-muted">
                     {benefit.description}
@@ -123,6 +127,19 @@ export function UpgradeRequestModal({
                 </div>
               </div>
             ))}
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-text">
+              Reason for Upgrade (Optional)
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Tell us why you want to become a seller..."
+              className="w-full rounded-lg border border-border bg-bg-card px-3 py-2 text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+              rows={3}
+            />
           </div>
 
           {/* Requirements Notice */}
