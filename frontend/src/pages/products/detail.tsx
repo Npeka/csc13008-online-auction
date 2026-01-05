@@ -249,7 +249,13 @@ export function ProductDetailPage() {
             buyNowPrice={product.buyNowPrice}
             status={product.status}
             inWatchlist={inWatchlist}
-            onPlaceBid={() => setShowBidModal(true)}
+            onPlaceBid={() => {
+              if (!isAuthenticated) {
+                navigate("/login");
+                return;
+              }
+              setShowBidModal(true);
+            }}
             onBuyNow={handleBuyNow}
             onWatchlistToggle={handleWatchlistToggle}
           />

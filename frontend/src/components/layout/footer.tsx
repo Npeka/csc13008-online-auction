@@ -22,7 +22,7 @@ export function Footer() {
     ],
     seller: [
       { label: "Start Selling", href: "/seller/create" },
-      { label: "Seller Dashboard", href: "/seller/dashboard" },
+      { label: "Seller Dashboard", href: "/seller" },
       { label: "My Listings", href: "/seller/listings" },
       { label: "Sold Items", href: "/seller/sold" },
     ],
