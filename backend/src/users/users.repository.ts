@@ -57,6 +57,21 @@ export class UsersRepository {
     });
   }
 
+  async findPublicProfile(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        role: true,
+        rating: true,
+        ratingCount: true,
+        createdAt: true,
+      },
+    });
+  }
+
   async create(data: Prisma.UserUncheckedCreateInput) {
     return this.prisma.user.create({
       data,

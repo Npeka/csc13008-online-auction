@@ -17,12 +17,20 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { UserRole } from '@prisma/client';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private usersService: UsersService) {}
+
+  // Public endpoint - no auth required
+  @Public()
+  @Get(':id/public')
+  getPublicProfile(@Param('id') userId: string) {
+    return this.usersService.getPublicProfile(userId);
+  }
 
   @Get('me')
   getProfile(@GetUser('id') userId: string) {

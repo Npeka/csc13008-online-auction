@@ -28,6 +28,16 @@ export class UsersService {
     return user;
   }
 
+  async getPublicProfile(userId: string) {
+    const user = await this.usersRepository.findPublicProfile(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.usersRepository.update(userId, {
       ...(dto.name && { name: dto.name }),
