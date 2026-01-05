@@ -42,6 +42,11 @@ export const ProductListContent = memo(function ProductListContent({
 
   useEffect(() => {
     const fetchData = async () => {
+      // If we have a categorySlug but categories aren't loaded yet, wait
+      if (categorySlug && !isLoadedCategories) {
+        return;
+      }
+
       try {
         setIsLoading(true);
 

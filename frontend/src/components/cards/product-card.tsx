@@ -21,9 +21,8 @@ export function ProductCard({
 }: ProductCardProps) {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
-  const { isInWatchlist, addToWatchlist, removeFromWatchlist } =
-    useWatchlistStore();
-  const inWatchlist = isInWatchlist(product.id);
+  const { items, addToWatchlist, removeFromWatchlist } = useWatchlistStore();
+  const inWatchlist = items.some((item) => item.id === product.id);
   const isNew = product.isNew || isNewProduct(product.createdAt);
 
   // Check if current user is the highest bidder
@@ -59,38 +58,39 @@ export function ProductCard({
 
   if (variant === "horizontal") {
     return (
-      <Link
-        to={`/products/${product.slug}`}
+      <div
         className={cn(
           "flex gap-4 rounded-xl border border-border bg-bg-card p-4",
-          "cursor-pointer transition-all hover:border-primary/30 hover:shadow-md",
+          "transition-all hover:border-primary/30 hover:shadow-md",
           isWinning && "border-success bg-success/5",
           className,
         )}
       >
         {/* Image */}
-        <div className="relative h-32 w-32 shrink-0">
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="h-full w-full rounded-lg object-cover"
-          />
-          {isNew && (
-            <Badge variant="new" className="absolute top-2 left-2">
-              NEW
-            </Badge>
-          )}
-          {isWinning && (
-            <Badge variant="success" className="absolute top-2 left-2">
-              <Crown className="mr-1 h-3 w-3" />
-              Winning
-            </Badge>
-          )}
-        </div>
+        <Link to={`/products/${product.slug}`} className="shrink-0">
+          <div className="relative h-32 w-32">
+            <img
+              src={imageUrl}
+              alt={product.name}
+              className="h-full w-full rounded-lg object-cover"
+            />
+            {isNew && (
+              <Badge variant="new" className="absolute top-2 left-2">
+                NEW
+              </Badge>
+            )}
+            {isWinning && (
+              <Badge variant="success" className="absolute top-2 left-2">
+                <Crown className="mr-1 h-3 w-3" />
+                Winning
+              </Badge>
+            )}
+          </div>
+        </Link>
 
         {/* Content */}
-        <div className="min-w-0 flex-1">
-          <h3 className="mb-2 line-clamp-2 font-semibold text-text">
+        <Link to={`/products/${product.slug}`} className="min-w-0 flex-1">
+          <h3 className="mb-2 line-clamp-2 font-semibold text-text hover:text-primary">
             {product.title || product.name}
           </h3>
 
@@ -103,17 +103,30 @@ export function ProductCard({
             </span>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-text-muted">Current Bid</p>
-              <p className="text-lg font-bold text-primary">
-                {formatUSD(product.currentPrice)}
-              </p>
-            </div>
-            <CountdownBadge endTime={product.endTime} />
+          <div>
+            <p className="text-xs text-text-muted">Current Bid</p>
+            <p className="text-lg font-bold text-primary">
+              {formatUSD(product.currentPrice)}
+            </p>
           </div>
+        </Link>
+
+        {/* Right Column: Countdown + Watchlist */}
+        <div className="flex shrink-0 flex-col items-end justify-between">
+          <CountdownBadge endTime={product.endTime} />
+          <button
+            onClick={handleWatchlistClick}
+            className={cn(
+              "cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              inWatchlist
+                ? "bg-cta text-white"
+                : "border border-border bg-bg-secondary text-text-muted hover:border-cta hover:text-cta",
+            )}
+          >
+            {inWatchlist ? "Watching" : "Watch"}
+          </button>
         </div>
-      </Link>
+      </div>
     );
   }
 
@@ -265,13 +278,14 @@ export function ProductGrid({
   className,
 }: {
   products: Product[];
-  columns?: 2 | 3 | 4;
+  columns?: 2 | 3 | 4 | 5;
   className?: string;
 }) {
   const columnClasses = {
     2: "grid-cols-1 sm:grid-cols-2",
     3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
     4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+    5: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5",
   };
 
   return (

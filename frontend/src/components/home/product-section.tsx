@@ -44,7 +44,7 @@ export function ProductSection({
           View All <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
-      <ProductGrid products={products} columns={4} />
+      <ProductGrid products={products} columns={5} />
     </>
   );
 
