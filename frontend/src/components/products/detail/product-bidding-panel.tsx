@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Link } from "react-router";
-import { Heart, Share2, Shield } from "lucide-react";
+import { Heart, Shield } from "lucide-react";
 import { Countdown } from "@/components/shared/countdown";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -113,21 +113,20 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
           </Button>
         )}
 
-        <div className="flex gap-3">
-          <Button
-            onClick={onWatchlistToggle}
-            variant={inWatchlist ? "secondary" : "ghost"}
-            className="flex-1"
-          >
-            <Heart
-              className={cn("mr-2 h-4 w-4", inWatchlist && "fill-current")}
-            />
-            {inWatchlist ? "Watching" : "Add to Watchlist"}
-          </Button>
-          <Button variant="ghost" className="px-4">
-            <Share2 className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Watchlist Button */}
+        <Button
+          onClick={onWatchlistToggle}
+          variant={inWatchlist ? "secondary" : "outline"}
+          className="w-full"
+        >
+          <Heart
+            className={cn(
+              "mr-2 h-4 w-4",
+              inWatchlist && "fill-current text-cta",
+            )}
+          />
+          {inWatchlist ? "Watching" : "Add to Watchlist"}
+        </Button>
       </div>
 
       {/* Trust indicators */}

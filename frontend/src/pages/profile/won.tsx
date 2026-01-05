@@ -1,18 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Star, Trophy } from "lucide-react";
 import { RatingModal } from "@/components/shared/rating-modal";
 import { Button } from "@/components/ui/button";
-import { mockProducts } from "@/data/mock";
+import { bidsApi } from "@/lib/bids-api";
 import { formatUSD } from "@/lib/utils";
 import type { Product } from "@/types";
 
 export function WonPage() {
+  const [wonProducts, setWonProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [ratedProducts, setRatedProducts] = useState<Set<string>>(new Set());
 
-  // Mock won products
-  const wonProducts = mockProducts.slice(0, 2);
+  useEffect(() => {
+    async function fetchWonProducts() {
+      try {
+        setIsLoading(true);
+        const products = await bidsApi.getMyWonProducts();
+        setWonProducts(products);
+      } catch (error) {
+        console.error("Failed to fetch won products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchWonProducts();
+  }, []);
 
   const handleRateClick = (product: Product) => {
     setSelectedProduct(product);
@@ -23,6 +38,14 @@ export function WonPage() {
       setRatedProducts((prev) => new Set([...prev, selectedProduct.id]));
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container-app flex min-h-[50vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="container-app py-10">
@@ -70,7 +93,7 @@ export function WonPage() {
                     to={`/products/${product.id}`}
                     className="line-clamp-2 font-medium text-text hover:text-primary"
                   >
-                    {product.name}
+                    {product.title || product.name}
                   </Link>
                   <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-muted">
                     <span>

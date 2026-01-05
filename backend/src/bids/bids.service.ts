@@ -52,11 +52,9 @@ export class BidsService {
     }
 
     // Check rating requirements using RatingsService
-    const allowNewBidders =
-      product.allowNewBidders || product.seller.allowNewBidders;
     const canBid = await this.ratingsService.canUserBid(
       bidderId,
-      allowNewBidders,
+      product.allowNewBidders,
     );
 
     if (!canBid) {
