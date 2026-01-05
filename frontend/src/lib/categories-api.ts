@@ -35,31 +35,28 @@ export const categoriesApi = {
     return response.data;
   },
 
-  // Create category (admin)
   createCategory: async (data: CreateCategoryData): Promise<Category> => {
     const response = await apiClient.post<ApiResponse<Category>>(
-      "/admin/categories",
+      "/categories",
       data,
     );
     return response.data;
   },
 
-  // Update category (admin)
   updateCategory: async (
     categoryId: string,
     data: Partial<CreateCategoryData>,
   ): Promise<Category> => {
     const response = await apiClient.patch<ApiResponse<Category>>(
-      `/admin/categories/${categoryId}`,
+      `/categories/${categoryId}`,
       data,
     );
     return response.data;
   },
 
-  // Delete category (admin)
   deleteCategory: async (categoryId: string): Promise<{ message: string }> => {
     const response = await apiClient.delete<ApiResponse<null>>(
-      `/admin/categories/${categoryId}`,
+      `/categories/${categoryId}`,
     );
     return { message: response.message || "Success" };
   },

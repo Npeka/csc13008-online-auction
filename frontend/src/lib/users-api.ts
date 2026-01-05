@@ -83,8 +83,26 @@ export const usersApi = {
     return await apiClient.post("/users/upgrade-request", { reason });
   },
 
-  getUpgradeRequests: async (): Promise<UpgradeRequest[]> => {
-    return await apiClient.get("/users/admin/upgrade-requests");
+  getUpgradeRequests: async (options?: {
+    page?: number;
+    limit?: number;
+    status?: "PENDING" | "APPROVED" | "REJECTED";
+  }) => {
+    const params = new URLSearchParams();
+    if (options?.page) params.set("page", options.page.toString());
+    if (options?.limit) params.set("limit", options.limit.toString());
+    if (options?.status) params.set("status", options.status);
+    const query = params.toString();
+
+    return await apiClient.get<{
+      data: UpgradeRequest[];
+      meta: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>(`/users/admin/upgrade-requests${query ? `?${query}` : ""}`);
   },
 
   processUpgradeRequest: async (
@@ -98,6 +116,24 @@ export const usersApi = {
     });
   },
 
+  // --- Admin User CRUD ---
+
+  createUser: async (data: any) => {
+    return await apiClient.post("/users/admin/users", data);
+  },
+
+  updateUser: async (id: string, data: any) => {
+    return await apiClient.patch(`/users/admin/users/${id}`, data);
+  },
+
+  deleteUser: async (id: string) => {
+    return await apiClient.delete(`/users/admin/users/${id}`);
+  },
+
+  getUser: async (id: string) => {
+    return await apiClient.get<User>(`/users/admin/users/${id}`);
+  },
+
   getPublicProfile: async (userId: string) => {
     return await apiClient.get<{
       id: string;
@@ -108,5 +144,42 @@ export const usersApi = {
       ratingCount: number;
       createdAt: string;
     }>(`/users/${userId}/public`);
+  },
+
+  getUsers: async (options?: {
+    search?: string;
+    role?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (options?.search) params.set("search", options.search);
+    if (options?.role) params.set("role", options.role);
+    if (options?.page) params.set("page", options.page.toString());
+    if (options?.limit) params.set("limit", options.limit.toString());
+
+    const query = params.toString();
+    return await apiClient.get<{
+      data: Array<{
+        id: string;
+        email: string;
+        name: string;
+        role: string;
+        rating: number;
+        ratingCount: number;
+        emailVerified: boolean;
+        createdAt: string;
+      }>;
+      meta: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>(`/users/admin/users${query ? `?${query}` : ""}`);
+  },
+
+  adminResetUserPassword: async (userId: string) => {
+    return await apiClient.post(`/auth/admin/reset-password/${userId}`);
   },
 };
