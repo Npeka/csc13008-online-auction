@@ -47,7 +47,7 @@ const router = createBrowserRouter([
 
       // Seller Routes
       {
-        path: "seller/dashboard",
+        path: "seller",
         async lazy() {
           const { SellerDashboard } = await import("@/pages/seller");
           return { Component: SellerDashboard };
@@ -110,6 +110,13 @@ const router = createBrowserRouter([
         async lazy() {
           const { UpgradeRequests } = await import("@/pages/admin");
           return { Component: UpgradeRequests };
+        },
+      },
+      {
+        path: "users",
+        async lazy() {
+          const { UsersManagement } = await import("@/pages/admin");
+          return { Component: UsersManagement };
         },
       },
     ],

@@ -10,6 +10,7 @@ import { StatsGrid } from "@/components/profile/StatsGrid";
 import { UpgradeBanner } from "@/components/profile/UpgradeBanner";
 import { UpgradeRequestModal } from "@/components/shared/upgrade-request-modal";
 import { useAuthStore } from "@/stores/auth-store";
+import { usersApi } from "@/lib/users-api";
 
 export function ProfilePage() {
   const { user, isAuthenticated, fetchProfile } = useAuthStore();
@@ -61,14 +62,12 @@ export function ProfilePage() {
     <ProfileAuthGuard>
       <div className="container-app py-10">
         <ProfileHeader user={user} />
-
         <div className="mb-10 grid gap-8 md:grid-cols-2">
           <PersonalInfoCard user={user} />
           <SectionCard title="Change Password">
             <ChangePasswordForm />
           </SectionCard>
         </div>
-
         <StatsGrid stats={stats} />
         <QuickLinks />
         {user.role === "BIDDER" && (
@@ -77,6 +76,9 @@ export function ProfilePage() {
         <UpgradeRequestModal
           isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
+          onSubmit={async (reason) => {
+            await usersApi.createUpgradeRequest(reason);
+          }}
         />
       </div>
     </ProfileAuthGuard>
