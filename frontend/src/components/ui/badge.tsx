@@ -39,7 +39,7 @@ export function Badge({
 export function RoleBadge({
   role,
 }: {
-  role: "GUEST" | "BIDDER" | "SELLER" | "ADMIN";
+  role: "GUEST" | "BIDDER" | "SELLER" | "ADMIN" | string;
 }) {
   const roleConfig: Record<string, { label: string; variant: BadgeVariant }> = {
     guest: { label: "Guest", variant: "default" },
@@ -48,11 +48,12 @@ export function RoleBadge({
     admin: { label: "Admin", variant: "warning" },
   };
 
-  const config = roleConfig[role];
+  // Convert to lowercase to handle both UPPER and lower case
+  const config = roleConfig[role.toLowerCase()];
 
   // Fallback to default if role not found
   if (!config) {
-    return <Badge variant="default">Unknown</Badge>;
+    return <Badge variant="default">{role}</Badge>;
   }
 
   return <Badge variant={config.variant}>{config.label}</Badge>;

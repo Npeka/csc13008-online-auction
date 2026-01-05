@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { RatingBadge } from "@/components/shared/rating";
 import { Avatar } from "@/components/ui/avatar";
 import { RoleBadge } from "@/components/ui/badge";
@@ -158,14 +159,21 @@ export function SellerInfoCard({
         Seller
       </p>
       <div className="flex items-center gap-3">
-        <Avatar
-          src={avatarUrl}
-          alt={displayName}
-          fallback={displayName}
-          size="lg"
-        />
+        <Link to={`/users/${seller.id}`}>
+          <Avatar
+            src={avatarUrl}
+            alt={displayName}
+            fallback={displayName}
+            size="lg"
+          />
+        </Link>
         <div>
-          <h4 className="font-semibold text-text">{displayName}</h4>
+          <Link
+            to={`/users/${seller.id}`}
+            className="font-semibold text-text hover:text-primary hover:underline"
+          >
+            {displayName}
+          </Link>
           {totalRatings > 0 ? (
             <p className="text-sm text-text-muted">
               {seller.rating?.toFixed(1)}/5 ({totalRatings}{" "}

@@ -97,4 +97,16 @@ export const usersApi = {
       adminComment,
     });
   },
+
+  getPublicProfile: async (userId: string) => {
+    return await apiClient.get<{
+      id: string;
+      name: string;
+      avatar: string | null;
+      role: string;
+      rating: number;
+      ratingCount: number;
+      createdAt: string;
+    }>(`/users/${userId}/public`);
+  },
 };

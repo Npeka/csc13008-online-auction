@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Link } from "react-router";
 import { Heart, Share2, Shield } from "lucide-react";
 import { Countdown } from "@/components/shared/countdown";
 import { Avatar } from "@/components/ui/avatar";
@@ -8,7 +9,13 @@ import { cn, formatUSD, maskName } from "@/lib/utils";
 interface ProductBiddingPanelProps {
   currentPrice: number;
   endTime: string;
-  highestBidder?: { avatar: string; name: string };
+  highestBidder?: {
+    id: string;
+    avatar: string;
+    name: string;
+    rating?: number;
+    ratingCount?: number;
+  };
   minimumBid: number;
   bidStep: number;
   buyNowPrice?: number;
@@ -47,16 +54,26 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
       {/* Highest Bidder */}
       {highestBidder && (
         <div className="mb-4 flex items-center gap-2 rounded-lg bg-bg-secondary p-3">
-          <Avatar
-            src={highestBidder.avatar}
-            fallback={highestBidder.name}
-            size="sm"
-          />
+          <Link to={`/users/${highestBidder.id}`}>
+            <Avatar
+              src={highestBidder.avatar}
+              fallback={highestBidder.name}
+              size="sm"
+            />
+          </Link>
           <div className="flex-1">
             <p className="text-sm text-text-muted">Highest Bidder</p>
-            <p className="font-medium text-text">
+            <Link
+              to={`/users/${highestBidder.id}`}
+              className="font-medium text-text hover:text-primary hover:underline"
+            >
               {maskName(highestBidder.name)}
-            </p>
+            </Link>
+            {highestBidder.ratingCount && highestBidder.ratingCount > 0 && (
+              <p className="text-xs text-text-muted">
+                {(((highestBidder.rating || 0) / 5) * 100).toFixed(0)}% positive
+              </p>
+            )}
           </div>
         </div>
       )}
