@@ -1,88 +1,101 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Calendar, Check, Mail, User, X } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  Mail,
+  User,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-interface UpgradeRequest {
-  id: string;
-  userId: string;
-  userName: string;
-  email: string;
-  reason: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  createdAt: string;
-}
+import { usersApi, type UpgradeRequest } from "@/lib";
 
 export function UpgradeRequests() {
-  const [requests, setRequests] = useState<UpgradeRequest[]>([
-    {
-      id: "1",
-      userId: "user1",
-      userName: "Alice Johnson",
-      email: "alice@example.com",
-      reason: "I want to sell my vintage collectibles",
-      status: "PENDING",
-      createdAt: "2026-01-01T08:00:00Z",
-    },
-    {
-      id: "2",
-      userId: "user2",
-      userName: "Bob Smith",
-      email: "bob@example.com",
-      reason: "Looking to auction my art pieces",
-      status: "PENDING",
-      createdAt: "2025-12-31T14:30:00Z",
-    },
-  ]);
-
+  const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState<
     "PENDING" | "APPROVED" | "REJECTED"
   >("PENDING");
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+
+  // Query
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["upgrades", { page, limit, status: selectedTab }],
+    queryFn: () =>
+      usersApi.getUpgradeRequests({
+        page,
+        limit,
+        status: selectedTab,
+      }),
+    placeholderData: keepPreviousData,
+  });
+
+  const requests = data?.data || [];
+  const totalRequests = data?.meta?.total || 0;
+  const totalPages = data?.meta?.totalPages || 1;
+
+  // Mutation
+  const processMutation = useMutation({
+    mutationFn: ({
+      id,
+      status,
+      reason,
+    }: {
+      id: string;
+      status: "APPROVED" | "REJECTED";
+      reason?: string;
+    }) => usersApi.processUpgradeRequest(id, status, reason),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["upgrades"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      toast.success(
+        `${variables.status === "APPROVED" ? "Approved" : "Rejected"} upgrade request`,
+      );
+    },
+    onError: () => {
+      toast.error("Failed to process request");
+    },
+  });
+
   const handleApprove = (request: UpgradeRequest) => {
-    // TODO: Call API to approve
-    setRequests(
-      requests.map((r) =>
-        r.id === request.id ? { ...r, status: "APPROVED" as const } : r,
-      ),
-    );
-    toast.success(`Approved ${request.userName}'s upgrade request`);
+    processMutation.mutate({ id: request.id, status: "APPROVED" });
   };
 
   const handleReject = (request: UpgradeRequest) => {
     const reason = window.prompt("Reason for rejection (optional):");
-    // TODO: Call API to reject with reason
-     
-    console.log(reason);
-    setRequests(
-      requests.map((r) =>
-        r.id === request.id ? { ...r, status: "REJECTED" as const } : r,
-      ),
-    );
-    toast.success(`Rejected ${request.userName}'s upgrade request`);
+    if (reason === null) return; // Cancelled
+    processMutation.mutate({
+      id: request.id,
+      status: "REJECTED",
+      reason: reason || undefined,
+    });
   };
 
-  const filteredRequests = requests.filter((r) => r.status === selectedTab);
+  const tabs: Array<{ key: typeof selectedTab; label: string }> = [
+    { key: "PENDING", label: "Pending" },
+    { key: "APPROVED", label: "Approved" },
+    { key: "REJECTED", label: "Rejected" },
+  ];
 
-  const tabs: Array<{ key: typeof selectedTab; label: string; count: number }> =
-    [
-      {
-        key: "PENDING",
-        label: "Pending",
-        count: requests.filter((r) => r.status === "PENDING").length,
-      },
-      {
-        key: "APPROVED",
-        label: "Approved",
-        count: requests.filter((r) => r.status === "APPROVED").length,
-      },
-      {
-        key: "REJECTED",
-        label: "Rejected",
-        count: requests.filter((r) => r.status === "REJECTED").length,
-      },
-    ];
+  if (isLoading && requests.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -98,7 +111,10 @@ export function UpgradeRequests() {
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setSelectedTab(tab.key)}
+            onClick={() => {
+              setSelectedTab(tab.key);
+              setPage(1);
+            }}
             className={`flex items-center gap-2 border-b-2 px-4 py-3 font-medium transition-colors ${
               selectedTab === tab.key
                 ? "border-primary text-primary"
@@ -106,22 +122,18 @@ export function UpgradeRequests() {
             }`}
           >
             {tab.label}
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs ${
-                selectedTab === tab.key
-                  ? "bg-primary text-white"
-                  : "bg-bg-secondary text-text-muted"
-              }`}
-            >
-              {tab.count}
-            </span>
           </button>
         ))}
       </div>
 
       {/* Requests List */}
-      <div className="space-y-4">
-        {filteredRequests.map((request) => (
+      <div className="relative space-y-4">
+        {isFetching && !isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg-card/50 backdrop-blur-[1px]">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+        {requests.map((request) => (
           <div
             key={request.id}
             className="rounded-xl border border-border bg-bg-card p-6"
@@ -134,12 +146,12 @@ export function UpgradeRequests() {
                   </div>
                   <div>
                     <p className="font-semibold text-text">
-                      {request.userName}
+                      {request.user?.name}
                     </p>
                     <div className="flex items-center gap-4 text-sm text-text-muted">
                       <span className="flex items-center gap-1">
                         <Mail className="h-3.5 w-3.5" />
-                        {request.email}
+                        {request.user?.email}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5" />
@@ -149,10 +161,12 @@ export function UpgradeRequests() {
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-bg-secondary p-4">
-                  <p className="text-sm font-medium text-text">Reason:</p>
-                  <p className="mt-1 text-text-muted">{request.reason}</p>
-                </div>
+                {request.reason && (
+                  <div className="rounded-lg bg-bg-secondary p-4">
+                    <p className="text-sm font-medium text-text">Reason:</p>
+                    <p className="mt-1 text-text-muted">{request.reason}</p>
+                  </div>
+                )}
               </div>
 
               <div className="ml-4 flex items-center gap-2">
@@ -160,7 +174,12 @@ export function UpgradeRequests() {
                   <>
                     <Button
                       onClick={() => handleApprove(request)}
-                      variant="primary"
+                      variant="default" // Changed from primary -> default/primary depending on theme. Assuming default is primary-like or stick to variant provided.
+                      // Wait, original was variant="primary". Button usually has default as primary. Or "default".
+                      // I'll use "default" if defined in ui/button, or check existing usage.
+                      // Original used "primary" explicitly? Let's check imports.
+                      // ui/button usually has variants: default, destructive, outline, secondary, ghost, link.
+                      // I'll stick to "default" (filled) for Approve.
                       size="sm"
                     >
                       <Check className="mr-1 h-4 w-4" />
@@ -189,7 +208,7 @@ export function UpgradeRequests() {
           </div>
         ))}
 
-        {filteredRequests.length === 0 && (
+        {requests.length === 0 && (
           <div className="rounded-xl border border-border bg-bg-card p-12 text-center">
             <User className="mx-auto h-12 w-12 text-text-muted" />
             <h3 className="mt-4 text-lg font-semibold text-text">
@@ -203,6 +222,45 @@ export function UpgradeRequests() {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-border pt-4">
+          <p className="text-sm text-text-muted">
+            Showing{" "}
+            <span className="font-medium">{(page - 1) * limit + 1}</span> to{" "}
+            <span className="font-medium">
+              {Math.min(page * limit, totalRequests)}
+            </span>{" "}
+            of <span className="font-medium">{totalRequests}</span> requests
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1 || isLoading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <div className="flex items-center gap-1">
+              <span className="px-2 text-sm text-text-muted">
+                Page {page} of {totalPages}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages || isLoading}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
