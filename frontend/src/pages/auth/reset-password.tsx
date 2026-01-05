@@ -1,7 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Link,useNavigate, useSearchParams } from "react-router";
-import { Eye, EyeOff,Lock } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import logoImage from "@/assets/logo.avif";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,7 +99,7 @@ export function ResetPasswordPage() {
     <div className="w-full px-4" style={{ maxWidth: "32rem" }}>
       {/* Logo */}
       <div className="mb-8 text-center">
-        <Link to="/" className="inline-flex items-center">
+        <Link to="/" className="inline-flex items-center gap-2">
           <div className="size-12">
             <img src={logoImage} alt="logo" />
           </div>

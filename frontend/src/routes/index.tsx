@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router";
+import { AdminLayout } from "@/components/layout/admin-layout";
 import { AuthLayout, RootLayout } from "@/components/layout/root-layout";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import {
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
           return { Component: CreateProductPage };
         },
       },
+
       {
         path: "seller/products/:id/append",
         async lazy() {
@@ -73,31 +75,38 @@ const router = createBrowserRouter([
           return { Component: AppendDescriptionPage };
         },
       },
+    ],
+  },
 
-      // Admin Routes
+  // Admin Layout
+  {
+    path: "/admin",
+    Component: AdminLayout,
+    errorElement: <ErrorBoundary />,
+    children: [
       {
-        path: "admin",
+        index: true,
         async lazy() {
           const { AdminDashboard } = await import("@/pages/admin");
           return { Component: AdminDashboard };
         },
       },
       {
-        path: "admin/categories",
+        path: "categories",
         async lazy() {
           const { CategoriesManagement } = await import("@/pages/admin");
           return { Component: CategoriesManagement };
         },
       },
       {
-        path: "admin/products",
+        path: "products",
         async lazy() {
           const { ProductsManagement } = await import("@/pages/admin");
           return { Component: ProductsManagement };
         },
       },
       {
-        path: "admin/upgrades",
+        path: "upgrades",
         async lazy() {
           const { UpgradeRequests } = await import("@/pages/admin");
           return { Component: UpgradeRequests };

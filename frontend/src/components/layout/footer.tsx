@@ -42,7 +42,7 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <Link to="/" className="mb-4 flex items-center">
+            <Link to="/" className="mb-4 flex items-center gap-2">
               <div className="size-10">
                 <img src={logoImage} alt="logo" />
               </div>

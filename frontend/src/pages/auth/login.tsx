@@ -50,7 +50,13 @@ export function LoginPage() {
 
     if (success) {
       toast.success("Welcome back!");
-      navigate("/");
+      // Get the updated user from store and redirect based on role
+      const { user } = useAuthStore.getState();
+      if (user?.role === "ADMIN") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } else {
       toast.error("Invalid email or password");
     }
@@ -60,7 +66,7 @@ export function LoginPage() {
     <div className="w-full px-4" style={{ maxWidth: "32rem" }}>
       {/* Logo */}
       <div className="mb-8 text-center">
-        <Link to="/" className="inline-flex items-center">
+        <Link to="/" className="inline-flex items-center gap-2">
           <div className="size-12">
             <img src={logoImage} alt="logo" />
           </div>

@@ -48,7 +48,7 @@ export function ForgotPasswordPage() {
     <div className="w-full px-4" style={{ maxWidth: "32rem" }}>
       {/* Logo */}
       <div className="mb-8 text-center">
-        <Link to="/" className="inline-flex items-center">
+        <Link to="/" className="inline-flex items-center gap-2">
           <div className="size-12">
             <img src={logoImage} alt="logo" />
           </div>
