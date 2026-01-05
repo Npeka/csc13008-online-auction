@@ -12,6 +12,59 @@ export class UsersRepository {
     });
   }
 
+  async findAll(options?: {
+    search?: string;
+    role?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const where: any = {};
+    const page = options?.page ? Number(options.page) : 1;
+    const limit = options?.limit ? Number(options.limit) : 10;
+    const skip = (page - 1) * limit;
+
+    if (options?.search) {
+      where.OR = [
+        { name: { contains: options.search, mode: 'insensitive' } },
+        { email: { contains: options.search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (options?.role) {
+      where.role = options.role;
+    }
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          rating: true,
+          ratingCount: true,
+          emailVerified: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      data: users,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async findById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
@@ -189,6 +242,12 @@ export class UsersRepository {
     });
   }
 
+  async delete(id: string) {
+    return this.prisma.user.delete({
+      where: { id },
+    });
+  }
+
   // --- Rating Methods ---
 
   async findRatingsForUser(userId: string) {
@@ -224,22 +283,51 @@ export class UsersRepository {
     });
   }
 
-  async findAllUpgradeRequests() {
-    return this.prisma.upgradeRequest.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            rating: true,
-            ratingCount: true,
-            createdAt: true,
+  async findAllUpgradeRequests(options?: {
+    page?: number;
+    limit?: number;
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  }) {
+    const page = options?.page ? Number(options.page) : 1;
+    const limit = options?.limit ? Number(options.limit) : 10;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (options?.status) {
+      where.status = options.status;
+    }
+
+    const [requests, total] = await Promise.all([
+      this.prisma.upgradeRequest.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              rating: true,
+              ratingCount: true,
+              createdAt: true,
+            },
           },
         },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.upgradeRequest.count({ where }),
+    ]);
+
+    return {
+      data: requests,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    };
   }
 
   async findUpgradeRequestById(id: string) {
@@ -263,6 +351,25 @@ export class UsersRepository {
     return this.prisma.user.update({
       where: { id },
       data: { role },
+    });
+  }
+
+  async expireOldUpgradeRequests(days: number = 7) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    return this.prisma.upgradeRequest.updateMany({
+      where: {
+        status: 'PENDING',
+        createdAt: {
+          lt: cutoffDate,
+        },
+      },
+      data: {
+        status: 'REJECTED',
+        adminComment: `System: Auto-expired after ${days} days`,
+        reviewedAt: new Date(),
+      },
     });
   }
 }

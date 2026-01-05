@@ -13,10 +13,6 @@ export class CreateCategoryDto {
 
   @IsOptional()
   @IsString()
-  image?: string;
-
-  @IsOptional()
-  @IsUUID()
   parentId?: string;
 }
 
@@ -38,6 +34,6 @@ export class UpdateCategoryDto {
   image?: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   parentId?: string;
 }

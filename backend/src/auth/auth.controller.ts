@@ -23,7 +23,10 @@ import {
 import { GoogleOAuthLoginDto } from './dto/oauth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GetUser } from './decorators/get-user.decorator';
-import { Public } from '../common/decorators/public.decorator';
+import { Public, Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { UserRole } from '@prisma/client';
+import { Param } from '@nestjs/common';
 
 @Controller('auth')
 export class AuthController {
@@ -102,5 +105,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   googleLogin(@Body() dto: GoogleOAuthLoginDto) {
     return this.authService.googleOAuthLogin(dto.firebaseToken);
+  }
+
+  @Post('admin/reset-password/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  adminResetUserPassword(@Param('id') userId: string) {
+    return this.authService.adminResetUserPassword(userId);
   }
 }

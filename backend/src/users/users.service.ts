@@ -8,12 +8,24 @@ import {
   UpdateProfileDto,
   CreateUpgradeRequestDto,
   ProcessUpgradeRequestDto,
+  CreateUserDto,
+  AdminUpdateUserDto,
 } from './dto/user.dto';
 import { UserRole } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
   constructor(private usersRepository: UsersRepository) {}
+
+  async getUsers(options?: {
+    search?: string;
+    role?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    return this.usersRepository.findAll(options);
+  }
 
   async getProfile(userId: string) {
     const startTime = Date.now();
@@ -98,8 +110,20 @@ export class UsersService {
     return request;
   }
 
-  async getUpgradeRequests() {
-    return this.usersRepository.findAllUpgradeRequests();
+  async getUpgradeRequests(options?: {
+    page?: number;
+    limit?: number;
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  }) {
+    // Lazy expiration: Check and expire old requests before fetching
+    if (
+      !options?.status ||
+      options.status === 'PENDING' ||
+      options.status === 'REJECTED'
+    ) {
+      await this.usersRepository.expireOldUpgradeRequests(7);
+    }
+    return this.usersRepository.findAllUpgradeRequests(options);
   }
 
   async processUpgradeRequest(
@@ -138,5 +162,54 @@ export class UsersService {
     }
 
     return updatedRequest;
+  }
+
+  // --- Admin User CRUD ---
+
+  async createAdminUser(dto: CreateUserDto) {
+    const existingUser = await this.usersRepository.findByEmail(dto.email);
+    if (existingUser) {
+      throw new BadRequestException('Email already registered');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 12);
+
+    return this.usersRepository.create({
+      name: dto.name,
+      email: dto.email,
+      password: hashedPassword,
+      role: dto.role as UserRole,
+      address: dto.address,
+      phone: dto.phone,
+      emailVerified: dto.emailVerified ?? true,
+    });
+  }
+
+  async updateAdminUser(id: string, dto: AdminUpdateUserDto) {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const data: any = { ...dto };
+    if (dto.password) {
+      data.password = await bcrypt.hash(dto.password, 12);
+    }
+
+    return this.usersRepository.update(id, data);
+  }
+
+  async deleteUser(id: string) {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.usersRepository.delete(id);
+  }
+
+  async getAdminUser(id: string) {
+    const user = await this.usersRepository.findProfile(id);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 }
