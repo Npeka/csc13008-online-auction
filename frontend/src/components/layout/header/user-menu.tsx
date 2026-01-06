@@ -4,7 +4,6 @@ import {
   ChevronDown,
   LayoutDashboard,
   LogOut,
-  Package,
   Settings,
   User as UserIcon,
 } from "lucide-react";

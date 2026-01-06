@@ -105,7 +105,7 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
               This is your product
             </p>
           </div>
-          
+
           {/* Bid History for Seller */}
           {bids.length > 0 ? (
             <div>
