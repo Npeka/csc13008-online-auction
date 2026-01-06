@@ -56,6 +56,9 @@ export interface UpgradeRequest {
   userId: string;
   reason?: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
+  adminComment?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
   createdAt: string;
   user?: {
     id: string;
@@ -84,6 +87,26 @@ export const usersApi = {
 
   createUpgradeRequest: async (reason?: string): Promise<UpgradeRequest> => {
     return await apiClient.post("/users/upgrade-request", { reason });
+  },
+
+  getUserUpgradeRequests: async (options?: {
+    page?: number;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (options?.page) params.set("page", options.page.toString());
+    if (options?.limit) params.set("limit", options.limit.toString());
+    const query = params.toString();
+
+    return await apiClient.get<{
+      data: UpgradeRequest[];
+      meta: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>(`/users/me/upgrade-requests${query ? `?${query}` : ""}`);
   },
 
   getUpgradeRequests: async (options?: {
@@ -131,6 +154,10 @@ export const usersApi = {
 
   deleteUser: async (id: string) => {
     return await apiClient.delete(`/users/admin/users/${id}`);
+  },
+
+  resetPassword: async (id: string) => {
+    return await apiClient.post(`/users/admin/users/${id}/reset-password`);
   },
 
   getUser: async (id: string) => {
