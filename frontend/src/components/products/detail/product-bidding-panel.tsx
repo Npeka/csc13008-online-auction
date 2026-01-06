@@ -4,6 +4,7 @@ import { Heart, Shield } from "lucide-react";
 import { Countdown } from "@/components/shared/countdown";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { BidHistoryTable } from "@/components/shared/bid-history";
 import { cn, formatUSD, maskName } from "@/lib/utils";
 
 interface ProductBiddingPanelProps {
@@ -21,9 +22,12 @@ interface ProductBiddingPanelProps {
   buyNowPrice?: number;
   status: string;
   inWatchlist: boolean;
+  isSeller?: boolean; // New prop to check if current user is the seller
+  bids?: any[]; // Bid history for seller view
   onPlaceBid: () => void;
   onBuyNow: () => void;
   onWatchlistToggle: () => void;
+  onRejectBidder?: (bidderId: string) => void;
 }
 
 export const ProductBiddingPanel = memo(function ProductBiddingPanel({
@@ -35,9 +39,12 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
   buyNowPrice,
   status,
   inWatchlist,
+  isSeller = false,
+  bids = [],
   onPlaceBid,
   onBuyNow,
   onWatchlistToggle,
+  onRejectBidder,
 }: ProductBiddingPanelProps) {
   return (
     <div className="mb-6 rounded-xl border border-border bg-bg-card p-6">
@@ -90,50 +97,80 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="space-y-3">
-        <Button
-          onClick={onPlaceBid}
-          className="w-full"
-          size="lg"
-          disabled={status !== "ACTIVE"}
-        >
-          Place Bid
-        </Button>
-
-        {buyNowPrice && (
+      {/* Action Buttons or Bid History */}
+      {isSeller ? (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
+            <p className="text-sm font-medium text-text">
+              This is your product
+            </p>
+          </div>
+          
+          {/* Bid History for Seller */}
+          {bids.length > 0 ? (
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-text">
+                Bid History ({bids.length})
+              </h3>
+              <div className="max-h-[400px] overflow-y-auto">
+                <BidHistoryTable
+                  bids={bids}
+                  isSeller={true}
+                  onRejectBidder={onRejectBidder}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-border bg-bg-secondary p-4 text-center">
+              <p className="text-sm text-text-muted">No bids yet</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
           <Button
-            onClick={onBuyNow}
-            variant="outline"
-            className="w-full border-cta text-cta hover:bg-cta hover:text-white"
+            onClick={onPlaceBid}
+            className="w-full"
             size="lg"
             disabled={status !== "ACTIVE"}
           >
-            Buy Now - {formatUSD(buyNowPrice)}
+            Place Bid
           </Button>
-        )}
 
-        {/* Watchlist Button */}
-        <Button
-          onClick={onWatchlistToggle}
-          variant={inWatchlist ? "secondary" : "outline"}
-          className="w-full"
-        >
-          <Heart
-            className={cn(
-              "mr-2 h-4 w-4",
-              inWatchlist && "fill-current text-cta",
-            )}
-          />
-          {inWatchlist ? "Watching" : "Add to Watchlist"}
-        </Button>
-      </div>
+          {buyNowPrice && (
+            <Button
+              onClick={onBuyNow}
+              variant="outline"
+              className="w-full border-cta text-cta hover:bg-cta hover:text-white"
+              size="lg"
+              disabled={status !== "ACTIVE"}
+            >
+              Buy Now - {formatUSD(buyNowPrice)}
+            </Button>
+          )}
 
-      {/* Trust indicators */}
-      <div className="mt-4 flex items-center gap-2 border-t border-border pt-4 text-xs text-text-muted">
-        <Shield className="h-4 w-4 text-success" />
-        Buyer Protection Guarantee
-      </div>
+          {/* Watchlist Button */}
+          <Button
+            onClick={onWatchlistToggle}
+            variant={inWatchlist ? "secondary" : "outline"}
+            className="w-full"
+          >
+            <Heart
+              className={cn(
+                "mr-2 h-4 w-4",
+                inWatchlist && "fill-current text-cta",
+              )}
+            />
+            {inWatchlist ? "Watching" : "Add to Watchlist"}
+          </Button>
+
+          {/* Trust indicators */}
+          <div className="mt-4 flex items-center gap-2 border-t border-border pt-4 text-xs text-text-muted">
+            <Shield className="h-4 w-4 text-success" />
+            Buyer Protection Guarantee
+          </div>
+        </div>
+      )}
     </div>
   );
 });

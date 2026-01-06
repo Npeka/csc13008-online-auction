@@ -57,6 +57,8 @@ export function ProductDetailPage() {
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } =
     useWatchlistStore();
 
+  const isSeller = isAuthenticated && user?.id === product?.seller?.id;
+
   useEffect(() => {
     const fetchProductData = async () => {
       if (!slug) return;
@@ -122,6 +124,32 @@ export function ProductDetailPage() {
       }
     },
     [isAuthenticated, navigate, product?.id, slug],
+  );
+
+  const handleRejectBidder = useCallback(
+    async (bidderId: string) => {
+      if (!isSeller) return;
+
+      if (
+        !confirm(
+          "Are you sure you want to reject this bidder? They will be unable to bid on this product again.",
+        )
+      ) {
+        return;
+      }
+
+      try {
+        await bidsApi.rejectBidder(product.id, bidderId);
+        toast.success("Bidder rejected successfully");
+
+        // Refresh bids
+        const updatedBids = await bidsApi.getBidHistory(product.id);
+        setBids(updatedBids);
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to reject bidder");
+      }
+    },
+    [isSeller, product?.id],
   );
 
   const handleWatchlistToggle = useCallback(async () => {
@@ -249,6 +277,8 @@ export function ProductDetailPage() {
             buyNowPrice={product.buyNowPrice}
             status={product.status}
             inWatchlist={inWatchlist}
+            isSeller={isSeller}
+            bids={bids}
             onPlaceBid={() => {
               if (!isAuthenticated) {
                 navigate("/login");
@@ -258,6 +288,7 @@ export function ProductDetailPage() {
             }}
             onBuyNow={handleBuyNow}
             onWatchlistToggle={handleWatchlistToggle}
+            onRejectBidder={handleRejectBidder}
           />
 
           {/* Seller Info */}
@@ -289,6 +320,8 @@ export function ProductDetailPage() {
           setQuestions(updated);
         }}
         isAuthenticated={isAuthenticated}
+        isSeller={isSeller}
+        onRejectBidder={handleRejectBidder}
       />
 
       {/* Related Products */}
