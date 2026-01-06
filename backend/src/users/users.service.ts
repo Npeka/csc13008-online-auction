@@ -57,6 +57,9 @@ export class UsersService {
       ...(dto.phone !== undefined && { phone: dto.phone }),
       ...(dto.dateOfBirth && { dateOfBirth: new Date(dto.dateOfBirth) }),
       ...(dto.avatar !== undefined && { avatar: dto.avatar }),
+      ...(dto.allowNewBidders !== undefined && {
+        allowNewBidders: dto.allowNewBidders,
+      }),
     });
 
     return user;

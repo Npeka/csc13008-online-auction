@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authApi, usersApi } from "@/lib";
 import type { User } from "@/types";
+import { queryClient } from "@/lib/query-client";
+import { PROFILE_QUERY_KEY } from "@/hooks/use-profile";
 
 interface AuthState {
   user: User | null;
@@ -83,6 +85,9 @@ export const useAuthStore = create<AuthState>()(
             pendingVerification: null,
           });
 
+          // Sync with React Query cache
+          queryClient.setQueryData(PROFILE_QUERY_KEY, user);
+
           return true;
         } catch (error) {
           set({ isLoading: false });
@@ -119,6 +124,9 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          // Sync with React Query cache
+          queryClient.setQueryData(PROFILE_QUERY_KEY, response.user);
 
           return true;
         } catch (error: any) {
@@ -158,6 +166,9 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           pendingVerification: null,
         });
+
+        // Clear React Query cache
+        queryClient.removeQueries({ queryKey: PROFILE_QUERY_KEY });
       },
 
       googleLogin: async (firebaseToken: string) => {
@@ -172,6 +183,9 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             pendingVerification: null,
           });
+
+          // Sync with React Query cache
+          queryClient.setQueryData(PROFILE_QUERY_KEY, response.user);
 
           return true;
         } catch (error: any) {
@@ -205,11 +219,15 @@ export const useAuthStore = create<AuthState>()(
             user,
             isAuthenticated: true,
           });
+          // Sync with React Query cache
+          queryClient.setQueryData(PROFILE_QUERY_KEY, user);
         } catch (error) {
           set({
             user: null,
             isAuthenticated: false,
           });
+          // Clear React Query cache on error
+          queryClient.removeQueries({ queryKey: PROFILE_QUERY_KEY });
         }
       },
     }),

@@ -36,10 +36,15 @@ export class SystemService {
       'AUCTION_EXTENSION_DURATION_MINUTES',
       '10',
     );
+    const newProductThreshold = await this.getValue(
+      'NEW_PRODUCT_THRESHOLD_MINUTES',
+      '1440', // 24 hours default
+    );
 
     return {
       extensionTriggerTime: parseInt(triggerTime, 10),
       extensionDuration: parseInt(duration, 10),
+      newProductThreshold: parseInt(newProductThreshold, 10),
     };
   }
 }

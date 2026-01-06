@@ -10,7 +10,7 @@ import { SystemService } from './system.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '@prisma/client';
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 
 class UpdateAuctionConfigDto {
   @IsNumber()
@@ -18,6 +18,10 @@ class UpdateAuctionConfigDto {
 
   @IsNumber()
   extensionDuration: number;
+
+  @IsOptional()
+  @IsNumber()
+  newProductThreshold?: number;
 }
 
 @Controller('system')
@@ -47,6 +51,13 @@ export class SystemController {
       'AUCTION_EXTENSION_DURATION_MINUTES',
       dto.extensionDuration.toString(),
     );
+
+    if (dto.newProductThreshold !== undefined) {
+      await this.systemService.setValue(
+        'NEW_PRODUCT_THRESHOLD_MINUTES',
+        dto.newProductThreshold.toString(),
+      );
+    }
 
     return { message: 'Configuration updated successfully' };
   }

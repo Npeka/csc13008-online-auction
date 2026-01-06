@@ -27,6 +27,10 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   avatar?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allowNewBidders?: boolean;
 }
 
 export class CreateUpgradeRequestDto {

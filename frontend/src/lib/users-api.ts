@@ -7,6 +7,7 @@ export interface UpdateProfileData {
   phone?: string;
   dateOfBirth?: string;
   avatar?: string;
+  allowNewBidders?: boolean; // Seller setting for allowing new bidders
 }
 
 const transformUser = (backendUser: any): User => {
@@ -25,6 +26,7 @@ const transformUser = (backendUser: any): User => {
       total: backendUser.ratingCount || 0,
     },
     isVerified: backendUser.emailVerified,
+    allowNewBidders: backendUser.allowNewBidders ?? true,
   };
 };
 
@@ -177,9 +179,5 @@ export const usersApi = {
         totalPages: number;
       };
     }>(`/users/admin/users${query ? `?${query}` : ""}`);
-  },
-
-  adminResetUserPassword: async (userId: string) => {
-    return await apiClient.post(`/auth/admin/reset-password/${userId}`);
   },
 };

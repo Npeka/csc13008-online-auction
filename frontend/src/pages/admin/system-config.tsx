@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Settings } from "lucide-react";
+import { Settings, Sparkles } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ export function AdminSystemConfigPage() {
   const [formData, setFormData] = useState<AuctionConfig>({
     extensionTriggerTime: 5,
     extensionDuration: 10,
+    newProductThreshold: 1440, // 24 hours default
   });
 
   // Fetch config with React Query
@@ -45,6 +46,7 @@ export function AdminSystemConfigPage() {
     updateMutation.mutate({
       extensionTriggerTime: Number(formData.extensionTriggerTime),
       extensionDuration: Number(formData.extensionDuration),
+      newProductThreshold: Number(formData.newProductThreshold),
     });
   };
 
@@ -118,6 +120,36 @@ export function AdminSystemConfigPage() {
                   setFormData({
                     ...formData,
                     extensionDuration: Number(e.target.value),
+                  })
+                }
+                required
+              />
+            </div>
+          </div>
+
+          {/* New Product Threshold */}
+          <div className="border-t border-border pt-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-warning" />
+              <h3 className="font-semibold text-text">New Product Badge</h3>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newProductThreshold">
+                New Product Threshold (Minutes)
+              </Label>
+              <p className="text-xs text-text-muted">
+                Products created within this time will show the "New" badge.
+                Default: 1440 minutes (24 hours).
+              </p>
+              <Input
+                id="newProductThreshold"
+                type="number"
+                min="1"
+                value={formData.newProductThreshold}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    newProductThreshold: Number(e.target.value),
                   })
                 }
                 required

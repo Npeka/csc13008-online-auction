@@ -3,6 +3,7 @@ import apiClient from "./api-client";
 export interface AuctionConfig {
   extensionTriggerTime: number;
   extensionDuration: number;
+  newProductThreshold: number;
 }
 
 export const systemApi = {

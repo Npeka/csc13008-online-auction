@@ -21,4 +21,6 @@ export interface User {
       };
   ratingCount?: number; // Added for new flat structure
   isVerified?: boolean;
+  // Seller settings
+  allowNewBidders?: boolean; // Allow bidders without ratings to bid on products
 }
