@@ -332,6 +332,38 @@ export class UsersRepository {
     };
   }
 
+  async findUserUpgradeRequests(
+    userId: string,
+    options?: {
+      page?: number;
+      limit?: number;
+    },
+  ) {
+    const page = options?.page ? Number(options.page) : 1;
+    const limit = options?.limit ? Number(options.limit) : 10;
+    const skip = (page - 1) * limit;
+
+    const [requests, total] = await Promise.all([
+      this.prisma.upgradeRequest.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.upgradeRequest.count({ where: { userId } }),
+    ]);
+
+    return {
+      data: requests,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async findUpgradeRequestById(id: string) {
     return this.prisma.upgradeRequest.findUnique({
       where: { id },

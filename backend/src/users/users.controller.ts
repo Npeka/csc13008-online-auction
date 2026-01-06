@@ -43,6 +43,15 @@ export class UsersController {
     return this.usersService.getRatings(userId);
   }
 
+  @Get('me/upgrade-requests')
+  getUserUpgradeRequests(
+    @GetUser('id') userId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.usersService.getUserUpgradeRequests(userId, { page, limit });
+  }
+
   @Post('upgrade-request')
   @Roles(UserRole.BIDDER)
   @UseGuards(RolesGuard)
@@ -93,6 +102,13 @@ export class UsersController {
     return this.usersService.updateAdminUser(id, dto);
   }
 
+  @Post('admin/users/:id/reset-password')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  adminResetPassword(@Param('id') id: string) {
+    return this.usersService.adminResetPassword(id);
+  }
+
   @Get('admin/users')
   @Roles(UserRole.ADMIN)
   @UseGuards(RolesGuard)
@@ -116,7 +132,6 @@ export class UsersController {
     return this.usersService.processUpgradeRequest(requestId, dto, adminId);
   }
 
-  // Public endpoint - MUST be at the end because :id is dynamic
   @Public()
   @Get(':id/public')
   getPublicProfile(@Param('id') userId: string) {

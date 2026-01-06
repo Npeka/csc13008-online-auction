@@ -13,10 +13,15 @@ import {
 } from './dto/user.dto';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(
+    private usersRepository: UsersRepository,
+    private emailService: EmailService,
+  ) {}
 
   async getUsers(options?: {
     search?: string;
@@ -129,6 +134,16 @@ export class UsersService {
     return this.usersRepository.findAllUpgradeRequests(options);
   }
 
+  async getUserUpgradeRequests(
+    userId: string,
+    options?: {
+      page?: number;
+      limit?: number;
+    },
+  ) {
+    return this.usersRepository.findUserUpgradeRequests(userId, options);
+  }
+
   async processUpgradeRequest(
     requestId: string,
     dto: ProcessUpgradeRequestDto,
@@ -225,5 +240,30 @@ export class UsersService {
     const user = await this.usersRepository.findProfile(id);
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  async adminResetPassword(id: string) {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Generate random password (8 chars)
+    const newPassword = crypto.randomBytes(4).toString('hex');
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Update password
+    await this.usersRepository.update(id, {
+      password: hashedPassword,
+    });
+
+    // Send email
+    await this.emailService.sendAdminResetPasswordEmail(
+      user.email,
+      user.name,
+      newPassword,
+    );
+
+    return { message: 'Password reset successfully' };
   }
 }

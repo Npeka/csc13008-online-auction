@@ -4,9 +4,11 @@ import { UsersService } from './users.service';
 import { UsersRepository } from './users.repository';
 import { SocialAccountsRepository } from './social-accounts.repository';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailModule } from '../email/email.module';
 
 @Global()
 @Module({
+  imports: [EmailModule],
   controllers: [UsersController],
   providers: [
     UsersService,
