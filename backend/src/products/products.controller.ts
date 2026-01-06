@@ -59,6 +59,7 @@ export class ProductsController {
     @Query('status') status?: 'active' | 'ended',
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('search') search?: string,
   ) {
     // If pagination params provided, use paginated version
     if (page || limit) {
@@ -67,6 +68,7 @@ export class ProductsController {
         page ? +page : 1,
         limit ? +limit : 10,
         status,
+        search,
       );
     }
     // Otherwise return all (for backward compatibility)
@@ -77,6 +79,12 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard)
   getMyProductsCount(@GetUser('id') userId: string) {
     return this.productsService.getUserProductsCount(userId);
+  }
+
+  @Get('my-products/sold')
+  @UseGuards(JwtAuthGuard)
+  getMySoldProducts(@GetUser('id') userId: string) {
+    return this.productsService.getUserSoldProducts(userId);
   }
 
   @Public()

@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ProductsRepository } from './products.repository';
+import { BidsRepository } from '../bids/bids.repository';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -19,6 +20,7 @@ export class ProductsService {
   constructor(
     private productsRepository: ProductsRepository,
     private systemService: SystemService,
+    private bidsRepository: BidsRepository,
   ) {}
 
   private generateSlug(title: string): string {
@@ -349,12 +351,22 @@ ${dto.additionalDescription}`;
     page: number = 1,
     limit: number = 10,
     status?: 'active' | 'ended',
+    search?: string,
   ) {
     const where: any = { sellerId: userId };
 
     if (status) {
       where.status =
         status === 'active' ? ProductStatus.ACTIVE : ProductStatus.ENDED;
+    }
+
+    // Add search functionality
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { category: { name: { contains: search, mode: 'insensitive' } } },
+      ];
     }
 
     const [products, total] = await Promise.all([
@@ -386,5 +398,59 @@ ${dto.additionalDescription}`;
     return this.productsRepository.count({
       where: { sellerId: userId },
     });
+  }
+
+  /**
+   * Get user's sold products (products that have been sold)
+   */
+  async getUserSoldProducts(userId: string) {
+    // Get all ended products with orders
+    const products = await this.productsRepository.findMany({
+      where: {
+        sellerId: userId,
+        status: ProductStatus.ENDED,
+      },
+      include: {
+        category: true,
+        order: {
+          include: {
+            buyer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        _count: { select: { bids: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Filter products that have a non-cancelled order
+    const soldProducts = products.filter(
+      (p) => p.order && p.order.status !== 'CANCELLED',
+    );
+
+    // Check if seller has rated each buyer
+    const productsWithRatings = await Promise.all(
+      soldProducts.map(async (p) => {
+        const hasRated = await this.bidsRepository.checkUserRatedSeller(
+          userId,
+          (p.order as any).buyer.id,
+        );
+
+        return {
+          ...p,
+          bidCount: p._count.bids,
+          buyerInfo: (p.order as any).buyer,
+          hasRated,
+        };
+      }),
+    );
+
+    return productsWithRatings;
   }
 }
