@@ -6,10 +6,19 @@ import { BidsRepository } from './bids.repository';
 import { RatingsModule } from '../ratings/ratings.module';
 import { EmailModule } from '../email/email.module';
 
+import { AutoBiddingService } from './auto-bidding.service';
+import { BidsProcessor } from './bids.processor';
+
 @Module({
   imports: [RatingsModule, EmailModule],
   controllers: [BidsController],
-  providers: [BidsService, PrismaService, BidsRepository],
-  exports: [BidsService, BidsRepository],
+  providers: [
+    BidsService,
+    PrismaService,
+    BidsRepository,
+    AutoBiddingService,
+    BidsProcessor,
+  ],
+  exports: [BidsService, BidsRepository, AutoBiddingService],
 })
 export class BidsModule {}

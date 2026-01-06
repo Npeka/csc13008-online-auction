@@ -48,6 +48,7 @@ model Product {
   questions      Question[]
   blockedBidders BidderBlock[]
   order          Order?
+  autoBids       AutoBid[]
 
   // Timestamps
   createdAt DateTime @default(now())

@@ -6,14 +6,24 @@ import { Prisma } from '@prisma/client';
 export class BidsRepository {
   constructor(private prisma: PrismaService) {}
 
-  async findProductWithBids(id: string) {
-    return this.prisma.product.findUnique({
+  async findProductWithBids(id: string, tx?: Prisma.TransactionClient) {
+    const client = tx || this.prisma;
+    return client.product.findUnique({
       where: { id },
       include: {
         seller: true,
         bids: {
           orderBy: { amount: 'desc' },
           take: 1,
+          include: {
+            bidder: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
         },
       },
     });
@@ -279,5 +289,95 @@ export class BidsRepository {
       },
     });
     return !!rating;
+  }
+
+  // Auto-Bidding Methods
+
+  async upsertAutoBid(
+    userId: string,
+    productId: string,
+    maxAmount: number,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx || this.prisma;
+    return client.autoBid.upsert({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+      create: {
+        userId,
+        productId,
+        maxAmount,
+      },
+      update: {
+        maxAmount,
+      },
+    });
+  }
+
+  async createAuctionEvent(
+    type: string,
+    payload: any,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx || this.prisma;
+    return client.auctionEvent.create({
+      data: {
+        type,
+        payload,
+        status: 'PENDING', // Using string default pending
+      },
+    });
+  }
+
+  async findPendingAuctionEvents(limit = 10) {
+    return this.prisma.auctionEvent.findMany({
+      where: {
+        status: 'PENDING',
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+      take: limit,
+    });
+  }
+
+  async updateAuctionEventStatus(
+    id: string,
+    status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED',
+    tx?: Prisma.TransactionClient,
+    retryCount?: number,
+  ) {
+    const client = tx || this.prisma;
+    return client.auctionEvent.update({
+      where: { id },
+      data: {
+        status,
+        ...(retryCount !== undefined && { retryCount }),
+      },
+    });
+  }
+
+  async findAutoBidsByProduct(
+    productId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx || this.prisma;
+    return client.autoBid.findMany({
+      where: { productId },
+      orderBy: { maxAmount: 'desc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 }

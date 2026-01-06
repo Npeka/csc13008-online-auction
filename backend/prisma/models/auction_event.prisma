@@ -1,0 +1,19 @@
+model AuctionEvent {
+  id        String      @id @default(uuid())
+  type      String      // e.g., 'PROCESS_AUTO_BID'
+  payload   Json
+  status    EventStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  retryCount Int        @default(0)
+  
+  @@index([status, createdAt])
+  @@map("auction_events")
+}
+
+enum EventStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}

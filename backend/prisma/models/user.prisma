@@ -57,6 +57,7 @@ model User {
   ordersAsSeller   Order[]          @relation("OrderSeller")
   chatMessages     ChatMessage[]
   socialAccounts   SocialAccount[]  // OAuth providers
+  autoBids         AutoBid[]
 
   @@index([email])
   @@index([resetToken])

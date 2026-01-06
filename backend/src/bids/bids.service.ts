@@ -84,6 +84,15 @@ export class BidsService {
       );
     }
 
+    // Validate max amount for auto-bidding
+    if (dto.maxAmount) {
+      if (dto.maxAmount < dto.amount) {
+        throw new BadRequestException(
+          'Max bid amount must be greater than or equal to your bid amount',
+        );
+      }
+    }
+
     // Create bid in transaction
     const result = await this.bidsRepository.transaction(async (tx) => {
       // Create the bid
@@ -105,7 +114,25 @@ export class BidsService {
         tx,
       );
 
-      // Check auto-extend
+      // Handle Auto-Bidding Setup
+      if (dto.maxAmount) {
+        await this.bidsRepository.upsertAutoBid(
+          bidderId,
+          productId,
+          dto.maxAmount,
+          tx,
+        );
+      }
+
+      // Create Event for Background Processing
+      // This triggers the auto-bidding processor to check if any auto-bids need to fire
+      await this.bidsRepository.createAuctionEvent(
+        'PROCESS_AUTO_BID',
+        { productId },
+        tx,
+      );
+
+      // 5. Check auto-extend
       if (product.autoExtend) {
         const timeUntilEnd = product.endTime.getTime() - Date.now();
         const triggerMs = product.extensionTriggerTime * 60 * 1000;
@@ -126,65 +153,73 @@ export class BidsService {
       return bid;
     });
 
-    // Send email notifications
+    // Send email notifications in background (Fire and Forget)
+    // We pass the ORIGINAL product state (before bid) which contains previous bidder info
+    // And we pass the successful bid result
+    this.handleBidNotifications(product, bidderId, dto.amount).catch((err) =>
+      this.logger.error('Failed to handle background bid notifications', err),
+    );
+
+    return result;
+  }
+
+  /**
+   * Handle email notifications asynchronously
+   */
+  private async handleBidNotifications(
+    product: any,
+    bidderId: string,
+    amount: number,
+  ) {
     try {
-      // Get full product with seller info for emails
-      const productForEmail =
-        await this.bidsRepository.findProductWithBids(productId);
-
-      if (!productForEmail) {
-        this.logger.warn('Product not found for email notification');
-        return result;
-      }
-
-      // 1. Send confirmation to new bidder - get full user data
+      // 1. Send confirmation to new bidder
       const bidderUser = await this.bidsRepository.findUser(bidderId);
       if (bidderUser?.email) {
         await this.emailService.sendBidPlacedEmail({
           toEmail: bidderUser.email,
           toName: bidderUser.name,
-          productTitle: productForEmail.title,
-          productSlug: productForEmail.slug,
-          bidAmount: dto.amount,
-          currentPrice: dto.amount,
+          productTitle: product.title,
+          productSlug: product.slug,
+          bidAmount: amount,
+          currentPrice: amount,
         });
       }
 
-      // 2. Send outbid notification to previous highest bidder (if exists)
+      // 2. Send outbid notification to previous highest bidder
+      // product.bids is from BEFORE the new bid, so bids[0] is the person being outbid.
       if (product.bids.length > 0 && product.bids[0].bidderId !== bidderId) {
-        const previousBidderId = product.bids[0].bidderId;
-        const previousBidder =
-          await this.bidsRepository.findUser(previousBidderId);
+        const previousBidder = product.bids[0].bidder; // Included in findProductWithBids
+        // Note: My findProductWithBids includes bidder: { id, name, email }
+        // So I don't need to fetch User again if repo returns it!
+        // Step 786 line 13: includes `seller`, `bids` -> `bidder` (id, name, email).
+        // So I can use it directly.
 
         if (previousBidder?.email) {
           await this.emailService.sendBidderOutbidEmail({
             toEmail: previousBidder.email,
             toName: previousBidder.name,
-            productTitle: productForEmail.title,
-            productSlug: productForEmail.slug,
+            productTitle: product.title,
+            productSlug: product.slug,
             yourBid: product.bids[0].amount,
-            newHighestBid: dto.amount,
+            newHighestBid: amount,
           });
         }
       }
 
-      // 3. Notify seller of new bid
-      if (productForEmail.seller?.email) {
+      // 3. Notify seller
+      if (product.seller?.email && product.sellerId !== bidderId) {
         await this.emailService.sendBidPlacedEmail({
-          toEmail: productForEmail.seller.email,
-          toName: productForEmail.seller.name,
-          productTitle: productForEmail.title,
-          productSlug: productForEmail.slug,
-          bidAmount: dto.amount,
-          currentPrice: dto.amount,
+          toEmail: product.seller.email,
+          toName: product.seller.name,
+          productTitle: product.title,
+          productSlug: product.slug,
+          bidAmount: amount,
+          currentPrice: amount,
         });
       }
-    } catch (emailError) {
-      this.logger.error('Failed to send bid notification emails', emailError);
-      // Don't fail the bid if email fails
+    } catch (error) {
+      this.logger.error('Error sending bid emails', error);
     }
-
-    return result;
   }
 
   async getBidHistory(productId: string) {

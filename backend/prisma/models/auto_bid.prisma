@@ -1,0 +1,14 @@
+model AutoBid {
+  id        String   @id @default(uuid())
+  maxAmount Float
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([productId, maxAmount])
+  @@map("auto_bids")
+}
