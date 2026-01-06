@@ -70,28 +70,36 @@ export function ProductDetailPage() {
       try {
         setIsLoading(true);
 
-        // Fetch product details by slug (public)
+        // Fetch product details first (needed for subsequent calls)
         const productData = await productsApi.getProductBySlug(slug);
         setProduct(productData);
         setRelatedProducts(productData.relatedProducts || []);
 
-        // Fetch questions (public)
-        const productQuestions = await questionsApi
-          .getQuestions(productData.id)
-          .catch(() => []);
-        setQuestions(productQuestions);
+        // End loading state immediately - product is ready to display
+        setIsLoading(false);
 
-        // Only fetch bid history if authenticated
-        if (isAuthenticated) {
-          const bidHistory = await bidsApi
-            .getBidHistory(productData.id)
-            .catch(() => []);
-          setBids(bidHistory);
+        // Fetch questions and bid history in parallel (in background)
+        const [questionsResult, bidsResult] = await Promise.allSettled([
+          questionsApi.getQuestions(productData.id),
+          isAuthenticated
+            ? bidsApi.getBidHistory(productData.id)
+            : Promise.resolve([]),
+        ]);
+
+        // Handle questions result
+        if (questionsResult.status === "fulfilled") {
+          setQuestions(questionsResult.value);
+        } else {
+          setQuestions([]);
+        }
+
+        // Handle bid history result (only if authenticated)
+        if (isAuthenticated && bidsResult.status === "fulfilled") {
+          setBids(bidsResult.value);
         }
       } catch (error) {
         console.error("Failed to fetch product:", error);
         toast.error("Product not found");
-      } finally {
         setIsLoading(false);
       }
     };
@@ -100,7 +108,7 @@ export function ProductDetailPage() {
   }, [slug, isAuthenticated]);
 
   const handlePlaceBid = useCallback(
-    async (amount: number) => {
+    async (amount: number, maxAmount?: number) => {
       if (!isAuthenticated) {
         navigate("/login");
         return;
@@ -109,9 +117,13 @@ export function ProductDetailPage() {
       try {
         setIsBidding(true);
         setIsBlocked(false); // Reset blocked state
-        await bidsApi.placeBid(product.id, amount);
+        await bidsApi.placeBid(product.id, amount, maxAmount);
 
-        toast.success(`Bid of ${formatUSD(amount)} placed successfully!`);
+        toast.success(
+          maxAmount
+            ? `Auto-bid placed! We'll bid up to ${formatUSD(maxAmount)} for you.`
+            : `Bid of ${formatUSD(amount)} placed successfully!`,
+        );
 
         // Refresh product and bids
         const [updatedProduct, updatedBids] = await Promise.all([

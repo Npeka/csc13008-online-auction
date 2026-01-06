@@ -12,9 +12,14 @@ export interface MaskedBid extends Omit<Bid, "bidder"> {
 
 export const bidsApi = {
   // Place a bid
-  placeBid: async (productId: string, amount: number): Promise<Bid> => {
+  placeBid: async (
+    productId: string,
+    amount: number,
+    maxAmount?: number,
+  ): Promise<Bid> => {
     return await apiClient.post(`/bids/products/${productId}`, {
       amount,
+      maxAmount,
     });
   },
 
