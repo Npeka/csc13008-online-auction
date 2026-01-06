@@ -1,12 +1,6 @@
-// System configuration
 model SystemConfig {
-  id    String @id @default(cuid())
-  key   String @unique
+  key   String @id
   value String
 
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("system_config")
+  @@map("system_configs")
 }
