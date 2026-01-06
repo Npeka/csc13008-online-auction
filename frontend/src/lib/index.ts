@@ -8,6 +8,7 @@ export { ordersApi } from "./orders-api";
 export { questionsApi } from "./questions-api";
 export { usersApi } from "./users-api";
 export { systemApi } from "./system-api";
+export { ratingsApi } from "./ratings-api";
 
 // Export types
 export type { AuthResponse, LoginData, RegisterData } from "./auth-api";
