@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import toast from "react-hot-toast";
 import { Star, Trophy } from "lucide-react";
 import { RatingModal } from "@/components/shared/rating-modal";
 import { Button } from "@/components/ui/button";
-import { bidsApi } from "@/lib/bids-api";
+import { bidsApi, ratingsApi } from "@/lib";
 import { formatUSD } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -33,9 +34,30 @@ export function WonPage() {
     setSelectedProduct(product);
   };
 
-  const handleRatingSubmit = async () => {
-    if (selectedProduct) {
+  const handleRatingSubmit = async (ratingData: {
+    score: 1 | -1;
+    comment: string;
+  }) => {
+    if (!selectedProduct || !selectedProduct.seller) {
+      toast.error("Seller information is missing");
+      return;
+    }
+
+    try {
+      await ratingsApi.createRating({
+        rating: ratingData.score,
+        comment: ratingData.comment || undefined,
+        receiverId: selectedProduct.seller.id,
+        // orderId: product.orderId, // TODO: Add if available from product data
+      });
+
       setRatedProducts((prev) => new Set([...prev, selectedProduct.id]));
+      toast.success("Rating submitted successfully!");
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to submit rating";
+      toast.error(errorMessage);
+      throw error; // Re-throw to let modal handle it
     }
   };
 
@@ -67,7 +89,8 @@ export function WonPage() {
       ) : (
         <div className="space-y-4">
           {wonProducts.map((product) => {
-            const isRated = ratedProducts.has(product.id);
+            // Use hasRated from API response
+            const isRated = product.hasRated || ratedProducts.has(product.id);
 
             return (
               <div
@@ -136,11 +159,20 @@ export function WonPage() {
       )}
 
       {/* Rating Modal */}
-      {selectedProduct && (
+      {selectedProduct && selectedProduct.seller && (
         <RatingModal
           isOpen={!!selectedProduct}
           onClose={() => setSelectedProduct(null)}
-          seller={selectedProduct.seller as any}
+          targetUser={
+            {
+              ...selectedProduct.seller,
+              fullName: selectedProduct.seller.name,
+              role: "SELLER",
+              email: "", // Dummy data for type satisfaction
+              createdAt: "",
+            } as any
+          }
+          type="seller"
           product={selectedProduct}
           onSubmit={handleRatingSubmit}
         />
