@@ -17,6 +17,7 @@ import { RatingsModule } from './ratings/ratings.module';
 import { QuestionsModule } from './questions/questions.module';
 import { OrdersModule } from './orders/orders.module';
 import { SystemModule } from './system/system.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
@@ -57,6 +58,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     QuestionsModule,
     OrdersModule,
     SystemModule,
+    SchedulerModule, // ADD THIS
   ],
   controllers: [AppController],
   providers: [
