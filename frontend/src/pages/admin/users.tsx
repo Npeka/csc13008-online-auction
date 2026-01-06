@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Loader2,
   ExternalLink,
+  Lock,
 } from "lucide-react";
 import { Link } from "react-router";
 import {
@@ -41,6 +42,7 @@ export function UsersManagement() {
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [resetUserId, setResetUserId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -103,6 +105,17 @@ export function UsersManagement() {
     },
   });
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: usersApi.resetPassword,
+    onSuccess: () => {
+      toast.success("Password reset successfully. Email sent to user.");
+      setResetUserId(null);
+    },
+    onError: () => {
+      toast.error("Failed to reset password");
+    },
+  });
+
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(formData);
@@ -111,6 +124,11 @@ export function UsersManagement() {
   const handleDeleteUser = () => {
     if (!deleteUserId) return;
     deleteMutation.mutate(deleteUserId);
+  };
+
+  const handleResetPassword = () => {
+    if (!resetUserId) return;
+    resetPasswordMutation.mutate(resetUserId);
   };
 
   const resetForm = () => {
@@ -291,6 +309,13 @@ export function UsersManagement() {
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                       <button
+                        onClick={() => setResetUserId(user.id)}
+                        className="rounded-lg p-2 text-text-muted transition-colors hover:bg-bg-tertiary hover:text-warning"
+                        title="Reset Password"
+                      >
+                        <Lock className="h-4 w-4" />
+                      </button>
+                      <button
                         onClick={() => setDeleteUserId(user.id)}
                         className="rounded-lg p-2 text-text-muted transition-colors hover:bg-bg-tertiary hover:text-error"
                         title="Delete User"
@@ -449,6 +474,18 @@ export function UsersManagement() {
         confirmText="Delete"
         variant="danger"
         isLoading={deleteMutation.isPending}
+      />
+
+      {/* Reset Password Modal */}
+      <ConfirmModal
+        isOpen={!!resetUserId}
+        onClose={() => setResetUserId(null)}
+        onConfirm={handleResetPassword}
+        title="Reset Password"
+        message="Are you sure you want to reset this user's password? A new password will be generated and sent to their email."
+        confirmText="Reset Password"
+        variant="warning"
+        isLoading={resetPasswordMutation.isPending}
       />
     </div>
   );
