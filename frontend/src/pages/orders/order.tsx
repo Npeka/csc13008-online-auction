@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar } from "@/components/ui/avatar";
@@ -43,6 +44,7 @@ export function OrderPage() {
     shippingAddress: "",
   });
   const [shippingData, setShippingData] = useState({ trackingNumber: "" });
+  const [showDeliveryConfirm, setShowDeliveryConfirm] = useState(false);
 
   useEffect(() => {
     fetchOrder();
@@ -110,13 +112,14 @@ export function OrderPage() {
 
   const onConfirmDelivery = async () => {
     if (!id) return;
-    if (!confirm("Confirm that you have received the item?")) return;
     try {
       await ordersApi.confirmDelivery(id);
       toast.success("Delivery confirmed!");
       fetchOrder();
     } catch (error) {
       toast.error("Failed to confirm delivery");
+    } finally {
+      setShowDeliveryConfirm(false);
     }
   };
 
@@ -289,7 +292,10 @@ export function OrderPage() {
                   <p className="mb-1 text-sm font-medium">Tracking Number:</p>
                   <p className="font-mono text-lg">{order.trackingNumber}</p>
                 </div>
-                <Button onClick={onConfirmDelivery} className="w-full">
+                <Button
+                  onClick={() => setShowDeliveryConfirm(true)}
+                  className="w-full"
+                >
                   Confirm Delivery
                 </Button>
               </div>
@@ -354,11 +360,12 @@ export function OrderPage() {
                     )}
                   >
                     <Avatar
-                      src={msg.sender.avatar}
+                      src={msg.sender.avatar || undefined}
                       fallback={msg.sender.name}
                       size="xs"
                       className="mt-1"
                     />
+
                     <div
                       className={cn(
                         "rounded-lg p-3 text-sm",
@@ -397,6 +404,17 @@ export function OrderPage() {
           </div>
         </div>
       </div>
+
+      {/* Delivery Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeliveryConfirm}
+        onClose={() => setShowDeliveryConfirm(false)}
+        onConfirm={onConfirmDelivery}
+        title="Confirm Delivery"
+        message="Confirm that you have received the item? This action cannot be undone."
+        confirmText="Yes, I Received It"
+        variant="info"
+      />
     </div>
   );
 }
