@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Gavel, Heart, Star, Trophy } from "lucide-react";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { PersonalInfoCard } from "@/components/profile/PersonalInfoCard";
@@ -6,23 +6,35 @@ import { ProfileAuthGuard } from "@/components/profile/ProfileAuthGuard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { QuickLinks } from "@/components/profile/QuickLinks";
 import { SectionCard } from "@/components/profile/SectionCard";
+import { SellerSettingsCard } from "@/components/profile/SellerSettingsCard";
+import { SellerStatusBanner } from "@/components/profile/SellerStatusBanner";
 import { StatsGrid } from "@/components/profile/StatsGrid";
 import { UpgradeBanner } from "@/components/profile/UpgradeBanner";
 import { UpgradeRequestModal } from "@/components/shared/upgrade-request-modal";
 import { useAuthStore } from "@/stores/auth-store";
 import { usersApi } from "@/lib/users-api";
+import { useProfile } from "@/hooks/use-profile";
 
 export function ProfilePage() {
-  const { user, isAuthenticated, fetchProfile } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
+  const { data: user, isLoading, error } = useProfile();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchProfile();
-    }
-  }, [isAuthenticated]);
+  if (!isAuthenticated) {
+    return <ProfileAuthGuard>{null}</ProfileAuthGuard>;
+  }
 
-  if (!isAuthenticated || !user) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container-app flex min-h-[60vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Error or no user state
+  if (error || !user) {
     return <ProfileAuthGuard>{null}</ProfileAuthGuard>;
   }
 
@@ -62,12 +74,19 @@ export function ProfilePage() {
     <ProfileAuthGuard>
       <div className="container-app py-10">
         <ProfileHeader user={user} />
+        <SellerStatusBanner user={user} />
         <div className="mb-10 grid gap-8 md:grid-cols-2">
           <PersonalInfoCard user={user} />
           <SectionCard title="Change Password">
             <ChangePasswordForm />
           </SectionCard>
         </div>
+        {/* Seller Settings - only show for sellers */}
+        {(user.role === "SELLER" || user.role === "ADMIN") && (
+          <div className="mb-10">
+            <SellerSettingsCard user={user} />
+          </div>
+        )}
         <StatsGrid stats={stats} />
         <QuickLinks />
         {user.role === "BIDDER" && (

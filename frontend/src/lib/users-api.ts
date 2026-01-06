@@ -27,6 +27,7 @@ const transformUser = (backendUser: any): User => {
     },
     isVerified: backendUser.emailVerified,
     allowNewBidders: backendUser.allowNewBidders ?? true,
+    sellerExpiresAt: backendUser.sellerExpiresAt,
   };
 };
 

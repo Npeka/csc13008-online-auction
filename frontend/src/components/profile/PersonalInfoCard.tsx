@@ -1,8 +1,7 @@
-import React, { type FormEvent,useState } from "react";
+import React, { type FormEvent, useState } from "react";
 import { Edit2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { usersApi } from "@/lib/users-api";
-import { useAuthStore } from "@/stores/auth-store";
+import { useUpdateProfile } from "@/hooks/use-profile";
 import { FormMessage } from "./FormMessage";
 
 /**
@@ -10,9 +9,8 @@ import { FormMessage } from "./FormMessage";
  * Displays personal information with inline edit capability
  */
 export const PersonalInfoCard: React.FC<{ user: any }> = ({ user }) => {
-  const { updateProfile } = useAuthStore();
+  const updateProfile = useUpdateProfile();
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -38,7 +36,6 @@ export const PersonalInfoCard: React.FC<{ user: any }> = ({ user }) => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setMessage(null);
 
     try {
@@ -49,14 +46,7 @@ export const PersonalInfoCard: React.FC<{ user: any }> = ({ user }) => {
       if (formData.phone) updateData.phone = formData.phone;
       if (formData.dateOfBirth) updateData.dateOfBirth = formData.dateOfBirth;
 
-      const updatedUser = await usersApi.updateProfile(updateData);
-
-      updateProfile({
-        fullName: updatedUser.fullName,
-        address: updatedUser.address,
-        phone: updatedUser.phone,
-        dateOfBirth: updatedUser.dateOfBirth,
-      });
+      await updateProfile.mutateAsync(updateData);
 
       setMessage({ type: "success", text: "Profile updated successfully!" });
       setIsEditing(false);
@@ -65,8 +55,6 @@ export const PersonalInfoCard: React.FC<{ user: any }> = ({ user }) => {
         type: "error",
         text: error.response?.data?.message || "Failed to update profile",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -141,8 +129,8 @@ export const PersonalInfoCard: React.FC<{ user: any }> = ({ user }) => {
           </div>
           {message && <FormMessage type={message.type} text={message.text} />}
           <div className="flex gap-3">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
+            <Button type="submit" disabled={updateProfile.isPending}>
+              {updateProfile.isPending ? "Saving..." : "Save Changes"}
             </Button>
             <Button type="button" variant="outline" onClick={handleCancel}>
               <X className="mr-2 h-4 w-4" />
