@@ -53,12 +53,27 @@ export class QuestionsRepository {
     return this.prisma.question.findUnique({
       where: { id },
       include: {
-        asker: true,
+        asker: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
         product: {
           select: {
             id: true,
             title: true,
+            slug: true,
             sellerId: true,
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
         },
         answers: true,

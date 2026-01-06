@@ -45,7 +45,7 @@ export const AskSellerForm = memo(function AskSellerForm({
     try {
       setIsSubmitting(true);
       await questionsApi.askQuestion(productId, content.trim());
-      toast.success("Question sent! Seller will be notified via email.");
+      toast.success("Question sent! The seller has been notified via email.");
       setContent("");
       onQuestionAsked();
     } catch (error) {

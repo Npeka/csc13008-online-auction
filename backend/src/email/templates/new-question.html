@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Question on Your Product</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        text-align: center;
+      }
+      .header h1 {
+        color: #ffffff;
+        margin: 0;
+        font-size: 24px;
+      }
+      .content {
+        padding: 40px 30px;
+      }
+      .content h2 {
+        color: #333;
+        margin-top: 0;
+        font-size: 20px;
+      }
+      .question-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 20px;
+        margin: 25px 0;
+        border-radius: 4px;
+      }
+      .question-meta {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+      .question-text {
+        color: #333;
+        font-size: 16px;
+        margin: 10px 0;
+        line-height: 1.6;
+      }
+      .product-info {
+        background-color: #f0f4ff;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 20px 0;
+      }
+      .product-info strong {
+        color: #667eea;
+      }
+      .button {
+        display: inline-block;
+        padding: 14px 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 20px 0;
+        text-align: center;
+      }
+      .button:hover {
+        opacity: 0.9;
+      }
+      .footer {
+        background-color: #f8f9fa;
+        padding: 30px;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+      }
+      .footer a {
+        color: #667eea;
+        text-decoration: none;
+      }
+      .tip {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .tip strong {
+        color: #856404;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>💬 New Question on Your Product</h1>
+      </div>
+
+      <div class="content">
+        <h2>Hi {{sellerName}}!</h2>
+
+        <p>
+          A buyer has asked a question about your product. Quick responses help
+          build trust and increase sales!
+        </p>
+
+        <div class="product-info">
+          <strong>Product:</strong> {{productTitle}}
+        </div>
+
+        <div class="question-box">
+          <div class="question-meta"><strong>{{askerName}}</strong> asked:</div>
+          <div class="question-text">{{questionContent}}</div>
+        </div>
+
+        <div style="text-align: center">
+          <a href="{{productUrl}}" class="button"> Answer Question </a>
+        </div>
+
+        <div class="tip">
+          <strong>💡 Pro Tip:</strong> Answer within 24 hours to improve your
+          seller rating and buyer confidence!
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>&copy; {{currentYear}} {{brandName}}. All rights reserved.</p>
+        <p>
+          This email was sent because you are the seller of the product.<br />
+          <a href="{{productUrl}}">View Product</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

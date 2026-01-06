@@ -137,4 +137,51 @@ export class EmailService {
       throw new Error('Failed to send password reset email');
     }
   }
+
+  async sendNewQuestionEmail(data: {
+    toEmail: string;
+    toName: string;
+    askerName: string;
+    productTitle: string;
+    productSlug: string;
+    questionContent: string;
+  }): Promise<void> {
+    try {
+      const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/products/${data.productSlug}#qa`;
+
+      const { subject, html } = EmailTemplates.newQuestionEmail({
+        sellerName: data.toName,
+        askerName: data.askerName,
+        productTitle: data.productTitle,
+        questionContent: data.questionContent,
+        productUrl,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [
+        {
+          email: data.toEmail,
+          name: data.toName,
+        },
+      ];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+
+      this.logger.log(
+        `New question notification sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send new question email to ${data.toEmail}`,
+      );
+      this.logger.error(`Error details: ${JSON.stringify(error.response?.body || error.message)}`);
+      // Don't throw - notification email is not critical
+    }
+  }
 }

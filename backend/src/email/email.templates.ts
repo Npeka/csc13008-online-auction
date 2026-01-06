@@ -82,4 +82,30 @@ export class EmailTemplates {
       html,
     };
   }
+
+  /**
+   * New Question Notification Email Template
+   */
+  static newQuestionEmail(data: {
+    sellerName: string;
+    askerName: string;
+    productTitle: string;
+    questionContent: string;
+    productUrl: string;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('new-question.html', {
+      sellerName: data.sellerName,
+      askerName: data.askerName,
+      productTitle: data.productTitle,
+      questionContent: data.questionContent,
+      productUrl: data.productUrl,
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `New Question on "${data.productTitle}" - ${this.BRAND_NAME}`,
+      html,
+    };
+  }
 }

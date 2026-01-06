@@ -5,10 +5,14 @@ import {
 } from '@nestjs/common';
 import { QuestionsRepository } from './questions.repository';
 import { AskQuestionDto, AnswerQuestionDto } from './dto/question.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class QuestionsService {
-  constructor(private questionsRepository: QuestionsRepository) {}
+  constructor(
+    private questionsRepository: QuestionsRepository,
+    private emailService: EmailService,
+  ) {}
 
   async askQuestion(productId: string, askerId: string, dto: AskQuestionDto) {
     const question = await this.questionsRepository.create({
@@ -17,7 +21,25 @@ export class QuestionsService {
       question: dto.content, // Map DTO content to schema question field
     });
 
-    // TODO: Send email notification to seller
+    // Get full question with product and seller details for email
+    const fullQuestion = await this.questionsRepository.findById(question.id);
+
+    if (fullQuestion?.product) {
+      // Send email notification to seller (non-blocking)
+      try {
+        await this.emailService.sendNewQuestionEmail({
+          toEmail: fullQuestion.product.seller.email,
+          toName: fullQuestion.product.seller.name,
+          askerName: fullQuestion.asker.name,
+          productTitle: fullQuestion.product.title,
+          productSlug: fullQuestion.product.slug,
+          questionContent: dto.content,
+        });
+      } catch (error) {
+        // Log error but don't fail the request
+        console.error('Failed to send email notification:', error.message);
+      }
+    }
 
     return question;
   }
