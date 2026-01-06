@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import toast from "react-hot-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -10,25 +10,44 @@ import {
   Plus,
   Search,
   ShoppingBag,
+  Star,
 } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
+import { RatingModal } from "@/components/shared/rating-modal";
 import { UpgradeRequestModal } from "@/components/shared/upgrade-request-modal";
-import { productsApi, usersApi } from "@/lib";
+import { productsApi, usersApi, ratingsApi } from "@/lib";
 import { formatCurrency } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import type { ProductListResponse } from "@/lib/products-api";
+import type { Product } from "@/types";
 
 export function SellerProductsPage() {
   const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "ended">("all");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "active" | "ended" | "sold">(
+    "all",
+  );
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [ratedProducts, setRatedProducts] = useState<Set<string>>(new Set());
 
   // Pagination state
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setPage(1); // Reset to first page when search changes
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Check if user can create products (active seller, not expired)
   const canCreateProducts =
@@ -50,10 +69,44 @@ export function SellerProductsPage() {
 
   // Query
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["my-products", { page, limit, filter }],
+    queryKey: [
+      "my-products",
+      { page, limit, filter, search: debouncedSearchQuery },
+    ],
     queryFn: async () => {
+      // Handle sold filter
+      if (filter === "sold") {
+        const soldProducts = await productsApi.getMySoldProducts();
+
+        // Sold products API currently returns full list without pagination meta
+        // So we manually paginate or just return all for now
+        // For consistency let's assume we show all or paginate on client side if needed
+        // But since API returns Product[], we need to wrap it
+
+        // Mock pagination for sold products since current API returns all
+        // TODO: Update backend to support pagination for sold products if list gets long
+        const start = (page - 1) * limit;
+        const end = start + limit;
+        const paginatedProducts = soldProducts.slice(start, end);
+
+        return {
+          products: paginatedProducts,
+          pagination: {
+            page,
+            limit,
+            total: soldProducts.length,
+            totalPages: Math.ceil(soldProducts.length / limit),
+          },
+        } as ProductListResponse;
+      }
+
       const statusParam = filter === "all" ? undefined : filter;
-      const result = await productsApi.getMyProducts(statusParam, page, limit);
+      const result = await productsApi.getMyProducts(
+        statusParam,
+        page,
+        limit,
+        debouncedSearchQuery || undefined,
+      );
       return result as ProductListResponse;
     },
     placeholderData: keepPreviousData,
@@ -62,13 +115,6 @@ export function SellerProductsPage() {
   const products = data?.products || [];
   const totalProducts = data?.pagination?.total || 0;
   const totalPages = data?.pagination?.totalPages || 1;
-
-  // Filter products by search query (client-side for now)
-  const filteredProducts = searchQuery
-    ? products.filter((p) =>
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : products;
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -180,6 +226,19 @@ export function SellerProductsPage() {
           >
             Ended
           </button>
+          <button
+            onClick={() => {
+              setFilter("sold");
+              setPage(1);
+            }}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              filter === "sold"
+                ? "bg-primary text-white"
+                : "text-text-muted hover:text-text"
+            }`}
+          >
+            Sold
+          </button>
         </div>
       </div>
 
@@ -191,7 +250,7 @@ export function SellerProductsPage() {
           </div>
         )}
 
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
             <div className="mb-4 rounded-full bg-bg-secondary p-4">
               <FileText className="h-8 w-8 text-text-muted" />
@@ -235,10 +294,10 @@ export function SellerProductsPage() {
                     Bids
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap text-text">
-                    Status
+                    {filter === "sold" ? "Buyer" : "Status"}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap text-text">
-                    Ending
+                    {filter === "sold" ? "Sold Price" : "Ending"}
                   </th>
                   <th className="px-6 py-4 text-right text-sm font-semibold whitespace-nowrap text-text">
                     Actions
@@ -246,7 +305,7 @@ export function SellerProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <tr
                     key={product.id}
                     className="transition-colors hover:bg-bg-secondary"
@@ -292,21 +351,45 @@ export function SellerProductsPage() {
                     </td>
                     <td className="px-6 py-4 text-text">{product.bidCount}</td>
                     <td className="px-6 py-4">
-                      <Badge
-                        variant="secondary"
-                        className={getStatusColor(product.status)}
-                      >
-                        {product.status.toUpperCase()}
-                      </Badge>
+                      {filter === "sold" && product.buyerInfo ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar
+                            src={product.buyerInfo.avatar}
+                            fallback={product.buyerInfo.name}
+                            size="sm"
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-text">
+                              {product.buyerInfo.name}
+                            </span>
+                            <span className="text-xs text-text-muted">
+                              {product.buyerInfo.email}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <Badge
+                          variant="secondary"
+                          className={getStatusColor(product.status)}
+                        >
+                          {product.status.toUpperCase()}
+                        </Badge>
+                      )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-text-muted">
-                        {new Date(product.endTime) < new Date()
-                          ? "Ended"
-                          : formatDistanceToNow(new Date(product.endTime), {
-                              addSuffix: true,
-                            })}
-                      </span>
+                      {filter === "sold" ? (
+                        <div className="text-sm font-medium text-text">
+                          {formatCurrency(product.currentPrice)}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-text-muted">
+                          {new Date(product.endTime) < new Date()
+                            ? "Ended"
+                            : formatDistanceToNow(new Date(product.endTime), {
+                                addSuffix: true,
+                              })}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
@@ -327,7 +410,8 @@ export function SellerProductsPage() {
                             <Edit className="h-4 w-4" />
                           </Link>
                         )}
-                        {(product.status as any) === "SOLD" && (
+                        {/* View Order Link for Sold Products */}
+                        {filter === "sold" && (
                           <Link
                             to={`/orders/${product.id}`}
                             className="rounded-lg p-2 text-text-muted transition-colors hover:bg-bg-tertiary hover:text-primary"
@@ -335,6 +419,31 @@ export function SellerProductsPage() {
                           >
                             <ShoppingBag className="h-4 w-4" />
                           </Link>
+                        )}
+
+                        {/* Rate Buyer Action */}
+                        {filter === "sold" && (
+                          <>
+                            {product.hasRated ||
+                            ratedProducts.has(product.id) ? (
+                              <Badge
+                                variant="success"
+                                className="bg-success/10 text-success hover:bg-success/20"
+                              >
+                                Rated
+                              </Badge>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 gap-1.5"
+                                onClick={() => setSelectedProduct(product)}
+                              >
+                                <Star className="h-3.5 w-3.5" />
+                                Rate Buyer
+                              </Button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -389,6 +498,36 @@ export function SellerProductsPage() {
         onClose={() => setIsUpgradeModalOpen(false)}
         onSubmit={handleUpgradeRequest}
       />
+
+      {/* Rate Buyer Modal */}
+      {selectedProduct && selectedProduct.buyerInfo && (
+        <RatingModal
+          isOpen={!!selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          targetUser={selectedProduct.buyerInfo as any}
+          product={selectedProduct}
+          type="buyer"
+          onSubmit={async ({ score, comment }) => {
+            try {
+              if (!selectedProduct.buyerInfo) return;
+
+              await ratingsApi.createRating({
+                rating: score,
+                comment,
+                receiverId: selectedProduct.buyerInfo.id,
+                // We should pass orderId ideally but currently backend infers from context or we need to add it to Product
+              });
+
+              setRatedProducts(
+                (prev) => new Set([...prev, selectedProduct.id]),
+              );
+            } catch (error) {
+              console.error(error);
+              throw error; // Let modal handle error toast
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

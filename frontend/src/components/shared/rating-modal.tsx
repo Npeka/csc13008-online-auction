@@ -10,16 +10,18 @@ import type { Product, User } from "@/types";
 export interface RatingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  seller: User;
+  targetUser: User;
   product: Product;
+  type?: "seller" | "buyer";
   onSubmit?: (rating: { score: 1 | -1; comment: string }) => Promise<void>;
 }
 
 export function RatingModal({
   isOpen,
   onClose,
-  seller,
+  targetUser,
   product,
+  type = "seller",
   onSubmit,
 }: RatingModalProps) {
   const [score, setScore] = useState<1 | -1 | null>(null);
@@ -64,8 +66,8 @@ export function RatingModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Rate Seller"
-      description={`How was your experience with ${seller.fullName}?`}
+      title={`Rate ${type === "seller" ? "Seller" : "Buyer"}`}
+      description={`How was your experience with ${targetUser.fullName}?`}
       size="md"
     >
       <div className="space-y-6">
@@ -83,21 +85,27 @@ export function RatingModal({
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium text-text">{product.name}</p>
             <p className="text-sm text-text-muted">
-              Purchased from {seller.fullName}
+              {type === "seller" ? "Purchased from" : "Sold to"}{" "}
+              {targetUser.fullName}
             </p>
           </div>
         </div>
 
-        {/* Seller Info */}
+        {/* User Info */}
         <div className="flex items-center gap-3">
-          <Avatar src={seller.avatar} fallback={seller.fullName} size="md" />
+          <Avatar
+            src={targetUser.avatar}
+            fallback={targetUser.fullName}
+            size="md"
+          />
           <div>
-            <p className="font-medium text-text">{seller.fullName}</p>
+            <p className="font-medium text-text">{targetUser.fullName}</p>
             <div className="flex items-center gap-1 text-sm text-text-muted">
               <Star className="h-3.5 w-3.5 fill-warning text-warning" />
               <span>
-                {typeof seller.rating === "object" && seller.rating.total > 0
-                  ? `${Math.round((seller.rating.positive / seller.rating.total) * 100)}% positive`
+                {typeof targetUser.rating === "object" &&
+                targetUser.rating.total > 0
+                  ? `${Math.round((targetUser.rating.positive / targetUser.rating.total) * 100)}% positive`
                   : "No ratings yet"}
               </span>
             </div>
@@ -107,7 +115,7 @@ export function RatingModal({
         {/* Rating Buttons */}
         <div>
           <p className="mb-3 text-sm font-medium text-text">
-            Would you recommend this seller?
+            Would you recommend this {type === "seller" ? "seller" : "buyer"}?
           </p>
           <div className="flex gap-4">
             <button
@@ -153,7 +161,7 @@ export function RatingModal({
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Share your experience with this seller..."
+            placeholder={`Share your experience with this ${type === "seller" ? "seller" : "buyer"}...`}
             className="w-full resize-none rounded-lg border border-border bg-bg-secondary px-4 py-2.5 text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
             rows={3}
             disabled={isSubmitting}

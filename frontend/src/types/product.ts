@@ -54,6 +54,15 @@ export interface Product {
   // Flags
   isNew?: boolean;
   isFeatured?: boolean;
+  hasRated?: boolean; // Indicates if user has rated the seller (for won products)
+
+  // Sold products specific
+  buyerInfo?: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
 }
 
 import type { PaginationParams } from "./common";
