@@ -3,17 +3,22 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { BidsRepository } from './bids.repository';
 import { PlaceBidDto } from './dto/bid.dto';
 import { ProductStatus } from '@prisma/client';
 import { RatingsService } from '../ratings/ratings.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class BidsService {
+  private readonly logger = new Logger(BidsService.name);
+
   constructor(
     private bidsRepository: BidsRepository,
     private ratingsService: RatingsService,
+    private emailService: EmailService,
   ) {}
 
   async placeBid(productId: string, bidderId: string, dto: PlaceBidDto) {
@@ -121,10 +126,63 @@ export class BidsService {
       return bid;
     });
 
-    // TODO: Send email notifications
-    // - To seller
-    // - To new bidder (confirmation)
-    // - To previous highest bidder (outbid notification)
+    // Send email notifications
+    try {
+      // Get full product with seller info for emails
+      const productForEmail =
+        await this.bidsRepository.findProductWithBids(productId);
+
+      if (!productForEmail) {
+        this.logger.warn('Product not found for email notification');
+        return result;
+      }
+
+      // 1. Send confirmation to new bidder - get full user data
+      const bidderUser = await this.bidsRepository.findUser(bidderId);
+      if (bidderUser?.email) {
+        await this.emailService.sendBidPlacedEmail({
+          toEmail: bidderUser.email,
+          toName: bidderUser.name,
+          productTitle: productForEmail.title,
+          productSlug: productForEmail.slug,
+          bidAmount: dto.amount,
+          currentPrice: dto.amount,
+        });
+      }
+
+      // 2. Send outbid notification to previous highest bidder (if exists)
+      if (product.bids.length > 0 && product.bids[0].bidderId !== bidderId) {
+        const previousBidderId = product.bids[0].bidderId;
+        const previousBidder =
+          await this.bidsRepository.findUser(previousBidderId);
+
+        if (previousBidder?.email) {
+          await this.emailService.sendBidderOutbidEmail({
+            toEmail: previousBidder.email,
+            toName: previousBidder.name,
+            productTitle: productForEmail.title,
+            productSlug: productForEmail.slug,
+            yourBid: product.bids[0].amount,
+            newHighestBid: dto.amount,
+          });
+        }
+      }
+
+      // 3. Notify seller of new bid
+      if (productForEmail.seller?.email) {
+        await this.emailService.sendBidPlacedEmail({
+          toEmail: productForEmail.seller.email,
+          toName: productForEmail.seller.name,
+          productTitle: productForEmail.title,
+          productSlug: productForEmail.slug,
+          bidAmount: dto.amount,
+          currentPrice: dto.amount,
+        });
+      }
+    } catch (emailError) {
+      this.logger.error('Failed to send bid notification emails', emailError);
+      // Don't fail the bid if email fails
+    }
 
     return result;
   }
@@ -203,7 +261,21 @@ export class BidsService {
       });
     }
 
-    // TODO: Send notification to rejected bidder
+    // Send notification to rejected bidder
+    try {
+      const bidderUser = await this.bidsRepository.findUser(bidderId);
+
+      if (bidderUser?.email) {
+        await this.emailService.sendBidderRejectedEmail({
+          toEmail: bidderUser.email,
+          toName: bidderUser.name,
+          productTitle: product.title,
+          rejectionReason: 'The seller has removed you from this auction',
+        });
+      }
+    } catch (emailError) {
+      this.logger.error('Failed to send rejection email', emailError);
+    }
 
     return { message: 'Bidder rejected successfully' };
   }
@@ -262,8 +334,27 @@ export class BidsService {
 
   async getUserWonProducts(userId: string) {
     const products = await this.bidsRepository.findUserWonProducts(userId);
+
     // Filter to only products where user is the winner
-    return products.filter((p) => p.bids[0]?.bidderId === userId);
+    const wonProducts = products.filter((p) => p.bids[0]?.bidderId === userId);
+
+    // Check if user has rated each seller
+    const productsWithRatings = await Promise.all(
+      wonProducts.map(async (product) => {
+        // Check if user (giver) has rated this seller (receiver)
+        const hasRated = await this.bidsRepository.checkUserRatedSeller(
+          userId,
+          product.sellerId,
+        );
+
+        return {
+          ...product,
+          hasRated,
+        };
+      }),
+    );
+
+    return productsWithRatings;
   }
 
   private maskName(name: string): string {

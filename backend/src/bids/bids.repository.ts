@@ -267,4 +267,17 @@ export class BidsRepository {
       },
     });
   }
+
+  async checkUserRatedSeller(
+    giverId: string,
+    receiverId: string,
+  ): Promise<boolean> {
+    const rating = await this.prisma.rating.findFirst({
+      where: {
+        giverId,
+        receiverId,
+      },
+    });
+    return !!rating;
+  }
 }
