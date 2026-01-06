@@ -138,6 +138,52 @@ export class EmailService {
     }
   }
 
+  async sendAdminResetPasswordEmail(
+    toEmail: string,
+    toName: string,
+    newPassword: string,
+  ): Promise<void> {
+    try {
+      const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/login`;
+
+      const { subject, html } = EmailTemplates.adminResetPasswordEmail(
+        toName,
+        newPassword,
+        loginUrl,
+      );
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [
+        {
+          email: toEmail,
+          name: toName,
+        },
+      ];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+
+      this.logger.log(
+        `Admin reset password email sent to ${toEmail} - Message ID: ${result.body.messageId}`,
+      );
+
+      if (this.isDevelopment) {
+        this.logger.debug(`New Password for ${toEmail}: ${newPassword}`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to send admin reset password email to ${toEmail}:`,
+        error,
+      );
+      throw new Error('Failed to send password reset email');
+    }
+  }
+
   async sendNewQuestionEmail(data: {
     toEmail: string;
     toName: string;
@@ -177,11 +223,225 @@ export class EmailService {
         `New question notification sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
       );
     } catch (error) {
+      this.logger.error(`Failed to send new question email to ${data.toEmail}`);
       this.logger.error(
-        `Failed to send new question email to ${data.toEmail}`,
+        `Error details: ${JSON.stringify(error.response?.body || error.message)}`,
       );
-      this.logger.error(`Error details: ${JSON.stringify(error.response?.body || error.message)}`);
       // Don't throw - notification email is not critical
     }
+  }
+
+  /**
+   * Send bid placed notification to bidder
+   */
+  async sendBidPlacedEmail(data: {
+    toEmail: string;
+    toName: string;
+    productTitle: string;
+    productSlug: string;
+    bidAmount: number;
+    currentPrice: number;
+  }): Promise<void> {
+    try {
+      const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/products/${data.productSlug}`;
+      const { subject, html } = EmailTemplates.bidPlacedEmail({
+        userName: data.toName,
+        productTitle: data.productTitle,
+        bidAmount: this.formatCurrency(data.bidAmount),
+        currentPrice: this.formatCurrency(data.currentPrice),
+        productUrl,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [{ email: data.toEmail, name: data.toName }];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      this.logger.log(
+        `Bid placed email sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send bid placed email to ${data.toEmail}`,
+        error,
+      );
+      // Don't throw - notification email is not critical
+    }
+  }
+
+  /**
+   * Send outbid notification to previous highest bidder
+   */
+  async sendBidderOutbidEmail(data: {
+    toEmail: string;
+    toName: string;
+    productTitle: string;
+    productSlug: string;
+    yourBid: number;
+    newHighestBid: number;
+  }): Promise<void> {
+    try {
+      const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/products/${data.productSlug}`;
+      const { subject, html } = EmailTemplates.bidderOutbidEmail({
+        userName: data.toName,
+        productTitle: data.productTitle,
+        yourBid: this.formatCurrency(data.yourBid),
+        newHighestBid: this.formatCurrency(data.newHighestBid),
+        productUrl,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [{ email: data.toEmail, name: data.toName }];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      this.logger.log(
+        `Outbid notification sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send outbid email to ${data.toEmail}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send bidder rejected notification
+   */
+  async sendBidderRejectedEmail(data: {
+    toEmail: string;
+    toName: string;
+    productTitle: string;
+    rejectionReason?: string;
+  }): Promise<void> {
+    try {
+      const { subject, html } = EmailTemplates.bidderRejectedEmail({
+        userName: data.toName,
+        productTitle: data.productTitle,
+        rejectionReason: data.rejectionReason,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [{ email: data.toEmail, name: data.toName }];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      this.logger.log(
+        `Bidder rejected email sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send rejection email to ${data.toEmail}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send auction ended notification (winner)
+   */
+  async sendAuctionEndedWinnerEmail(data: {
+    toEmail: string;
+    toName: string;
+    productTitle: string;
+    finalPrice: number;
+    orderId: string;
+  }): Promise<void> {
+    try {
+      const orderUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/orders/${data.orderId}`;
+      const { subject, html } = EmailTemplates.auctionEndedWinnerEmail({
+        userName: data.toName,
+        productTitle: data.productTitle,
+        finalPrice: this.formatCurrency(data.finalPrice),
+        orderUrl,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [{ email: data.toEmail, name: data.toName }];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      this.logger.log(
+        `Auction ended (winner) email sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send auction ended email to ${data.toEmail}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send auction ended notification (non-winner)
+   */
+  async sendAuctionEndedNonWinnerEmail(data: {
+    toEmail: string;
+    toName: string;
+    productTitle: string;
+    productSlug: string;
+    finalPrice: number;
+    winnerName: string;
+  }): Promise<void> {
+    try {
+      const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/products/${data.productSlug}`;
+      const { subject, html } = EmailTemplates.auctionEndedNonWinnerEmail({
+        userName: data.toName,
+        productTitle: data.productTitle,
+        finalPrice: this.formatCurrency(data.finalPrice),
+        winnerName: data.winnerName,
+        productUrl,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [{ email: data.toEmail, name: data.toName }];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      this.logger.log(
+        `Auction ended (non-winner) email sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send auction ended email to ${data.toEmail}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Helper: Format currency
+   */
+  private formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
   }
 }

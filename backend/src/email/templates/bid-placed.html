@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bid Placed Successfully</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+      .header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        padding: 30px;
+        text-align: center;
+      }
+      .header h1 {
+        color: #ffffff;
+        margin: 0;
+        font-size: 24px;
+      }
+      .content {
+        padding: 40px 30px;
+      }
+      .content h2 {
+        color: #333;
+        margin-top: 0;
+        font-size: 20px;
+      }
+      .bid-box {
+        background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+        border-left: 4px solid #0ea5e9;
+        padding: 25px;
+        margin: 25px 0;
+        border-radius: 8px;
+      }
+      .bid-amount {
+        font-size: 32px;
+        font-weight: 700;
+        color: #0ea5e9;
+        margin: 10px 0;
+      }
+      .product-info {
+        background-color: #f9fafb;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border: 1px solid #e5e7eb;
+      }
+      .product-title {
+        color: #111827;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-label {
+        color: #6b7280;
+        font-size: 14px;
+      }
+      .info-value {
+        color: #111827;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .button {
+        display: inline-block;
+        padding: 14px 32px;
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 20px 0;
+        text-align: center;
+      }
+      .button:hover {
+        opacity: 0.9;
+      }
+      .success-badge {
+        display: inline-block;
+        background-color: #10b981;
+        color: white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        margin: 10px 0;
+      }
+      .footer {
+        background-color: #f8f9fa;
+        padding: 30px;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+      }
+      .footer a {
+        color: #0ea5e9;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>✅ Bid Placed Successfully!</h1>
+      </div>
+
+      <div class="content">
+        <h2>Hi {{userName}}!</h2>
+
+        <div class="success-badge">🎉 Your bid has been placed</div>
+
+        <p>
+          Great news! Your bid has been successfully recorded. You're now
+          competing for this item.
+        </p>
+
+        <div class="product-info">
+          <div class="product-title">{{productTitle}}</div>
+          <div class="info-row">
+            <span class="info-label">Your Bid</span>
+            <span class="info-value">{{bidAmount}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Current Highest Bid</span>
+            <span class="info-value">{{currentPrice}}</span>
+          </div>
+        </div>
+
+        <div class="bid-box">
+          <div style="font-size: 14px; color: #0369a1; margin-bottom: 5px">
+            Your Bid Amount
+          </div>
+          <div class="bid-amount">{{bidAmount}}</div>
+          <div style="font-size: 14px; color: #64748b; margin-top: 10px">
+            ⏰ Keep an eye on this auction - you'll be notified if you're
+            outbid!
+          </div>
+        </div>
+
+        <div style="text-align: center">
+          <a href="{{productUrl}}" class="button">View Product Details</a>
+        </div>
+
+        <p style="color: #6b7280; font-size: 14px; margin-top: 30px">
+          💡 <strong>Tip:</strong> You'll receive an email notification if
+          another bidder outbids you. Stay competitive!
+        </p>
+      </div>
+
+      <div class="footer">
+        <p>&copy; {{currentYear}} {{brandName}}. All rights reserved.</p>
+        <p>
+          You're receiving this because you placed a bid on this product.<br />
+          <a href="{{productUrl}}">View Product</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -108,4 +108,157 @@ export class EmailTemplates {
       html,
     };
   }
+
+  /**
+   * Bid Placed Email Template
+   */
+  static bidPlacedEmail(data: {
+    userName: string;
+    productTitle: string;
+    bidAmount: string;
+    currentPrice: string;
+    productUrl: string;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('bid-placed.html', {
+      userName: data.userName,
+      productTitle: data.productTitle,
+      bidAmount: data.bidAmount,
+      currentPrice: data.currentPrice,
+      productUrl: data.productUrl,
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `Bid Successful on "${data.productTitle}" - ${this.BRAND_NAME}`,
+      html,
+    };
+  }
+
+  /**
+   * Outbid Notification Email Template
+   */
+  static bidderOutbidEmail(data: {
+    userName: string;
+    productTitle: string;
+    yourBid: string;
+    newHighestBid: string;
+    productUrl: string;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('bidder-outbid.html', {
+      userName: data.userName,
+      productTitle: data.productTitle,
+      yourBid: data.yourBid,
+      newHighestBid: data.newHighestBid,
+      productUrl: data.productUrl,
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `You've been outbid on "${data.productTitle}" - ${this.BRAND_NAME}`,
+      html,
+    };
+  }
+
+  /**
+   * Bidder Rejected Email Template
+   */
+  static bidderRejectedEmail(data: {
+    userName: string;
+    productTitle: string;
+    rejectionReason?: string;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('bidder-rejected.html', {
+      userName: data.userName,
+      productTitle: data.productTitle,
+      rejectionReason: data.rejectionReason || 'No specific reason provided',
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `Bidding access revoked for "${data.productTitle}" - ${this.BRAND_NAME}`,
+      html,
+    };
+  }
+
+  /**
+   * Auction Ended Email Template (for winner)
+   */
+  static auctionEndedWinnerEmail(data: {
+    userName: string;
+    productTitle: string;
+    finalPrice: string;
+    orderUrl: string;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('auction-ended.html', {
+      userName: data.userName,
+      productTitle: data.productTitle,
+      finalPrice: data.finalPrice,
+      winnerName: data.userName,
+      nextSteps: '🎉 Congratulations! You won the auction!',
+      nextStepsDetail:
+        'Please proceed to complete your order by submitting payment proof and your shipping address.',
+      orderUrl: data.orderUrl,
+      productUrl: '',
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `🎉 You Won! "${data.productTitle}" - ${this.BRAND_NAME}`,
+      html,
+    };
+  }
+
+  /**
+   * Auction Ended Email Template (for non-winner)
+   */
+  static auctionEndedNonWinnerEmail(data: {
+    userName: string;
+    productTitle: string;
+    finalPrice: string;
+    winnerName: string;
+    productUrl: string;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('auction-ended.html', {
+      userName: data.userName,
+      productTitle: data.productTitle,
+      finalPrice: data.finalPrice,
+      winnerName: data.winnerName,
+      nextSteps: 'The auction has ended',
+      nextStepsDetail:
+        'Unfortunately, another bidder won this auction. Thank you for participating! Browse more products to find your next great deal.',
+      orderUrl: '',
+      productUrl: data.productUrl,
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `Auction Ended: "${data.productTitle}" - ${this.BRAND_NAME}`,
+      html,
+    };
+  }
+  /**
+   * Admin Initiated Password Reset Email Template
+   */
+  static adminResetPasswordEmail(
+    userName: string,
+    newPassword: string,
+    loginUrl: string,
+  ): { subject: string; html: string } {
+    const html = this.loadTemplate('admin-reset-password.html', {
+      userName,
+      newPassword,
+      loginUrl,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `Your ${this.BRAND_NAME} Password Has Been Reset`,
+      html,
+    };
+  }
 }
