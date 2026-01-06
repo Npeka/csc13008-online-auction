@@ -69,10 +69,12 @@ export const productsApi = {
     status?: "active" | "ended",
     page?: number,
     limit?: number,
+    search?: string,
   ): Promise<Product[] | ProductListResponse> => {
     const params: any = { status };
     if (page) params.page = page;
     if (limit) params.limit = limit;
+    if (search) params.search = search;
 
     return await apiClient.get("/products/my-products", { params });
   },
@@ -80,6 +82,11 @@ export const productsApi = {
   // Get my products count (for header badge)
   getMyProductsCount: async (): Promise<number> => {
     return await apiClient.get("/products/my-products-count");
+  },
+
+  // Get my sold products
+  getMySoldProducts: async (): Promise<Product[]> => {
+    return await apiClient.get("/products/my-products/sold");
   },
 
   // Create product (seller/admin)
