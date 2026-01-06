@@ -293,8 +293,19 @@ export class ProductsService {
       throw new ForbiddenException('You can only update your own products');
     }
 
-    const timestamp = new Date().toLocaleDateString('vi-VN');
-    const appendedDescription = `${product.description}\n\n✏️ ${timestamp}\n\n${dto.additionalDescription}`;
+    const timestamp = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const appendedDescription = `${product.description}
+
+<div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; margin-top: 1rem">
+  <span style="font-size: 1.25rem;">✏️</span>
+  <span style="color: #6b7280; font-size: 0.875rem; font-style: italic;">Updated on ${timestamp}</span>
+</div>
+
+${dto.additionalDescription}`;
 
     return this.productsRepository.update(productId, {
       description: appendedDescription,
@@ -330,6 +341,50 @@ export class ProductsService {
         category: true,
         _count: { select: { bids: true } },
       },
+    });
+  }
+
+  async getUserProductsPaginated(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+    status?: 'active' | 'ended',
+  ) {
+    const where: any = { sellerId: userId };
+
+    if (status) {
+      where.status =
+        status === 'active' ? ProductStatus.ACTIVE : ProductStatus.ENDED;
+    }
+
+    const [products, total] = await Promise.all([
+      this.productsRepository.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: (page - 1) * limit,
+        include: {
+          category: true,
+          _count: { select: { bids: true } },
+        },
+      }),
+      this.productsRepository.count({ where }),
+    ]);
+
+    return {
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getUserProductsCount(userId: string): Promise<number> {
+    return this.productsRepository.count({
+      where: { sellerId: userId },
     });
   }
 }

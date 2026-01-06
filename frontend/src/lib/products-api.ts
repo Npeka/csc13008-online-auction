@@ -59,11 +59,27 @@ export const productsApi = {
     return await apiClient.get(`/products/${slug}`);
   },
 
+  // Get product by ID (for editing/appending)
+  getProductById: async (id: string): Promise<Product> => {
+    return await apiClient.get(`/products/${id}`);
+  },
+
   // Get my products (seller)
-  getMyProducts: async (status?: "active" | "ended"): Promise<Product[]> => {
-    return await apiClient.get("/products/my-products", {
-      params: { status },
-    });
+  getMyProducts: async (
+    status?: "active" | "ended",
+    page?: number,
+    limit?: number,
+  ): Promise<Product[] | ProductListResponse> => {
+    const params: any = { status };
+    if (page) params.page = page;
+    if (limit) params.limit = limit;
+
+    return await apiClient.get("/products/my-products", { params });
+  },
+
+  // Get my products count (for header badge)
+  getMyProductsCount: async (): Promise<number> => {
+    return await apiClient.get("/products/my-products-count");
   },
 
   // Create product (seller/admin)

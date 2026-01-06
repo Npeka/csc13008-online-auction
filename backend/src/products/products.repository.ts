@@ -104,6 +104,7 @@ export class ProductsRepository {
     where?: Prisma.ProductWhereInput;
     orderBy?: Prisma.ProductOrderByWithRelationInput;
     take?: number;
+    skip?: number;
     include?: Prisma.ProductInclude;
   }) {
     return this.prisma.product.findMany({
@@ -112,6 +113,10 @@ export class ProductsRepository {
         _count: { select: { bids: true } },
       },
     }); // Ensure count is included or handled by caller
+  }
+
+  async count(params: { where?: Prisma.ProductWhereInput }) {
+    return this.prisma.product.count(params);
   }
 
   async findByIdOrSlug(idOrSlug: string) {
