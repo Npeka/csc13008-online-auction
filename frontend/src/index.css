@@ -302,3 +302,48 @@ h6 {
     scroll-behavior: auto !important;
   }
 }
+
+/* React Quill Editor Overrides */
+.quill {
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.ql-toolbar.ql-snow {
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+}
+
+.ql-container.ql-snow {
+  border: none;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  min-height: 200px;
+}
+
+.ql-editor {
+  min-height: 200px;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.ql-snow .ql-stroke {
+  stroke: var(--color-text-muted);
+}
+
+.ql-snow .ql-fill {
+  fill: var(--color-text-muted);
+}
+
+.ql-snow .ql-picker {
+  color: var(--color-text-muted);
+}
+
+.ql-snow .ql-picker-options {
+  background-color: var(--color-bg-card);
+  border-color: var(--color-border);
+}

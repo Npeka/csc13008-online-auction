@@ -3,6 +3,7 @@ import { Crown, Heart, Users } from "lucide-react";
 import { CountdownBadge } from "@/components/shared/countdown";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useSystemConfig } from "@/hooks/use-system-config";
 import { cn, formatUSD, isNewProduct, maskName } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
@@ -22,8 +23,11 @@ export function ProductCard({
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
   const { items, addToWatchlist, removeFromWatchlist } = useWatchlistStore();
+  const { config } = useSystemConfig();
   const inWatchlist = items.some((item) => item.id === product.id);
-  const isNew = product.isNew || isNewProduct(product.createdAt);
+  const isNew =
+    product.isNew ||
+    isNewProduct(product.createdAt, config.newProductThreshold);
 
   // Check if current user is the highest bidder
   const isWinning =

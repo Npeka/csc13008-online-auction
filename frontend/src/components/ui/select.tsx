@@ -4,112 +4,190 @@ import * as React from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Since we might not have radix-ui installed, implementing a custom Select that mimics the API
-// This is a simplified version to avoid dependency install issues
-// If radix is available, we should use it. For now, mocking the composition API.
-
-/* 
-   NOTE: Given I cannot install packages easily without user permission and waiting,
-   I will adapt the CreateProductPage to use the simple native/custom Select if Radix is missing.
-   But to support the "Select, SelectContent" syntax, I need a context-based implementation.
-*/
-
-// Minimal Context-based Select implementation
-const SelectContext = React.createContext<{
+// Context-based Select implementation
+interface SelectContextType {
   value: string;
-  onValueChange: (value: string) => void;
+  label: string;
+  onSelect: (value: string, label: string) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
-} | null>(null);
+}
+
+const SelectContext = React.createContext<SelectContextType | null>(null);
+
+interface SelectProps {
+  children: React.ReactNode;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
 
 export const Select = ({
   children,
-  value,
+  value = "",
   onValueChange,
   open: controlledOpen,
   onOpenChange,
-}: any) => {
+}: SelectProps) => {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+  const [selectedLabel, setSelectedLabel] = React.useState("");
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
 
+  // Close on outside click
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open, setOpen]);
+
+  const onSelect = (newValue: string, label: string) => {
+    setSelectedLabel(label);
+    onValueChange?.(newValue);
+    setOpen(false);
+  };
+
   return (
-    <SelectContext.Provider value={{ value, onValueChange, open, setOpen }}>
-      <div className="relative">{children}</div>
+    <SelectContext.Provider
+      value={{ value, label: selectedLabel, onSelect, open, setOpen }}
+    >
+      <div ref={containerRef} className="relative">
+        {children}
+      </div>
     </SelectContext.Provider>
   );
 };
 
-export const SelectTrigger = ({ className, children, ...props }: any) => {
-  const { open, setOpen } = React.useContext(SelectContext)!;
+interface SelectTriggerProps extends React.HTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+}
+
+export const SelectTrigger = ({
+  className,
+  children,
+  ...props
+}: SelectTriggerProps) => {
+  const ctx = React.useContext(SelectContext);
+  if (!ctx) throw new Error("SelectTrigger must be used within Select");
+
   return (
     <button
       type="button"
-      onClick={() => setOpen(!open)}
+      onClick={() => ctx.setOpen(!ctx.open)}
       className={cn(
-        "border-input ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-10 w-full items-center justify-between rounded-md border bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-10 w-full items-center justify-between rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text",
+        "ring-offset-background placeholder:text-text-muted",
+        "focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none",
+        "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
     >
       {children}
-      <ChevronDown className="h-4 w-4 opacity-50" />
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 opacity-50 transition-transform",
+          ctx.open && "rotate-180",
+        )}
+      />
     </button>
   );
 };
 
-export const SelectValue = ({ placeholder }: any) => {
-  const { value } = React.useContext(SelectContext)!;
-  // This is a limitation of this mock: we can't easily show the label instead of value without more complex state
-  // But for now it's better than crashing.
-  // Ideally we should traverse children to find the selected label.
-  return <span className="block truncate">{value || placeholder}</span>;
+interface SelectValueProps {
+  placeholder?: string;
+}
+
+export const SelectValue = ({ placeholder }: SelectValueProps) => {
+  const ctx = React.useContext(SelectContext);
+  if (!ctx) throw new Error("SelectValue must be used within Select");
+
+  return (
+    <span className={cn("block truncate", !ctx.label && "text-text-muted")}>
+      {ctx.label || placeholder}
+    </span>
+  );
 };
+
+interface SelectContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  position?: "popper" | "item-aligned";
+}
 
 export const SelectContent = ({
   className,
   children,
   position = "popper",
   ...props
-}: any) => {
-  const { open, setOpen } = React.useContext(SelectContext)!;
+}: SelectContentProps) => {
+  const ctx = React.useContext(SelectContext);
+  if (!ctx) throw new Error("SelectContent must be used within Select");
 
-  if (!open) return null;
+  if (!ctx.open) return null;
 
   return (
     <div
       className={cn(
-        "bg-popover text-popover-foreground animate-in fade-in-80 absolute top-full z-50 min-w-[8rem] overflow-hidden rounded-md border shadow-md",
-        position === "popper" && "translate-y-1",
+        "absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-md border border-border bg-bg-card shadow-lg",
+        "animate-in fade-in-0 zoom-in-95",
         className,
       )}
       {...props}
     >
-      <div className="w-full p-1" onClick={() => setOpen(false)}>
-        {children}
-      </div>
+      <div className="max-h-[300px] overflow-y-auto p-1">{children}</div>
     </div>
   );
 };
 
-export const SelectItem = ({ className, children, value, ...props }: any) => {
-  const { onValueChange, value: selectedValue } =
-    React.useContext(SelectContext)!;
+interface SelectItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  value: string;
+  disabled?: boolean;
+  children: React.ReactNode;
+}
+
+export const SelectItem = ({
+  className,
+  children,
+  value,
+  disabled,
+  ...props
+}: SelectItemProps) => {
+  const ctx = React.useContext(SelectContext);
+  if (!ctx) throw new Error("SelectItem must be used within Select");
+
+  const isSelected = ctx.value === value;
+  const label = typeof children === "string" ? children : "";
+
   return (
     <div
       onClick={(e) => {
+        if (disabled) return;
         e.stopPropagation();
-        onValueChange(value);
+        ctx.onSelect(value, label);
       }}
       className={cn(
-        "hover:bg-accent hover:text-accent-foreground relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        selectedValue === value && "bg-accent",
+        "relative flex w-full cursor-pointer items-center rounded-sm py-2 pr-2 pl-8 text-sm outline-none select-none",
+        "hover:bg-bg-secondary focus:bg-bg-secondary",
+        isSelected && "bg-bg-secondary font-medium",
+        disabled && "pointer-events-none opacity-50",
         className,
       )}
       {...props}
     >
-      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-        {selectedValue === value && <Check className="h-4 w-4" />}
+      <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
+        {isSelected && <Check className="h-4 w-4 text-primary" />}
       </span>
       <span className="truncate">{children}</span>
     </div>

@@ -350,21 +350,6 @@ export class AuthService {
     return { message: 'Password reset successfully' };
   }
 
-  async adminResetUserPassword(userId: string) {
-    const user = await this.usersRepository.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (!user.emailVerified) {
-      throw new BadRequestException('User email is not verified');
-    }
-
-    // Reuse forgot password logic
-    return this.forgotPassword({ email: user.email });
-  }
-
   private generateOTP(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }

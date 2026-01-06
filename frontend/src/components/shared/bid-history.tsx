@@ -10,6 +10,13 @@ export interface BidHistoryProps {
   className?: string;
 }
 
+interface BidHistoryTableProps {
+  bids: Bid[];
+  className?: string;
+  isSeller?: boolean;
+  onRejectBidder?: (bidderId: string) => void;
+}
+
 export function BidHistory({
   bids,
   showAvatar = true,
@@ -85,10 +92,9 @@ export function BidHistory({
 export function BidHistoryTable({
   bids,
   className,
-}: {
-  bids: Bid[];
-  className?: string;
-}) {
+  isSeller,
+  onRejectBidder,
+}: BidHistoryTableProps) {
   return (
     <div className={cn("overflow-x-auto", className)}>
       <table className="w-full text-sm">
@@ -103,6 +109,7 @@ export function BidHistoryTable({
             <th className="px-4 py-3 text-right font-medium text-text-muted">
               Amount
             </th>
+            {isSeller && <th className="w-[50px] px-4 py-3"></th>}
           </tr>
         </thead>
         <tbody>
@@ -137,6 +144,17 @@ export function BidHistoryTable({
               >
                 {formatUSD(bid.amount)}
               </td>
+              {isSeller && onRejectBidder && (
+                <td className="px-4 py-3 text-right">
+                  <button
+                    onClick={() => onRejectBidder(bid.bidder.id)}
+                    className="text-xs text-error hover:underline"
+                    title="Reject this bidder"
+                  >
+                    Reject
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

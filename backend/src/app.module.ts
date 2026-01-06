@@ -4,7 +4,7 @@ import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaService } from './prisma/prisma.service';
+import { PrismaModule } from './prisma/prisma.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { EmailModule } from './email/email.module';
 import { RedisModule } from './redis/redis.module';
@@ -16,6 +16,7 @@ import { BidsModule } from './bids/bids.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { QuestionsModule } from './questions/questions.module';
 import { OrdersModule } from './orders/orders.module';
+import { SystemModule } from './system/system.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
@@ -42,6 +43,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
         limit: 100,
       },
     ]),
+    PrismaModule,
     FirebaseModule,
     EmailModule,
     RedisModule,
@@ -52,12 +54,14 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     BidsModule,
     RatingsModule,
     QuestionsModule,
+    QuestionsModule,
     OrdersModule,
+    SystemModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    PrismaService,
+    AppService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

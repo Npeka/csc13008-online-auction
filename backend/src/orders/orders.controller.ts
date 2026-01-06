@@ -12,6 +12,7 @@ import {
   SubmitPaymentDto,
   ConfirmShippingDto,
   CancelOrderDto,
+  SendMessageDto,
 } from './dto/order.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -61,5 +62,14 @@ export class OrdersController {
     @Body() dto: CancelOrderDto,
   ) {
     return this.ordersService.cancelOrder(orderId, userId, dto);
+  }
+
+  @Post(':id/messages')
+  sendMessage(
+    @Param('id') orderId: string,
+    @GetUser('id') userId: string,
+    @Body() dto: SendMessageDto,
+  ) {
+    return this.ordersService.sendMessage(orderId, userId, dto);
   }
 }

@@ -72,4 +72,23 @@ export class OrdersRepository {
       },
     });
   }
+
+  async addMessage(orderId: string, senderId: string, content: string) {
+    return this.prisma.chatMessage.create({
+      data: {
+        orderId,
+        senderId,
+        content,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
 }

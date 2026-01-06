@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Loader2,
   ExternalLink,
-  KeyRound,
 } from "lucide-react";
 import { Link } from "react-router";
 import {
@@ -29,17 +28,6 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { usersApi } from "@/lib";
 import { cn } from "@/lib/utils";
 
-interface AdminUser {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  rating: number;
-  ratingCount: number;
-  emailVerified: boolean;
-  createdAt: string;
-}
-
 export function UsersManagement() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,9 +41,6 @@ export function UsersManagement() {
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
-  const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(
-    null,
-  );
 
   // Form State
   const [formData, setFormData] = useState({
@@ -118,18 +103,6 @@ export function UsersManagement() {
     },
   });
 
-  const resetPasswordMutation = useMutation({
-    mutationFn: usersApi.adminResetUserPassword,
-    onSuccess: (data: any) => {
-      toast.success(data?.message || "Password reset email sent");
-    },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to send reset email",
-      );
-    },
-  });
-
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(formData);
@@ -138,20 +111,6 @@ export function UsersManagement() {
   const handleDeleteUser = () => {
     if (!deleteUserId) return;
     deleteMutation.mutate(deleteUserId);
-  };
-
-  const handleResetPassword = (user: AdminUser) => {
-    if (!user.emailVerified) {
-      toast.error("Cannot reset password for unverified email");
-      return;
-    }
-    setResetPasswordUser(user);
-  };
-
-  const handleConfirmResetPassword = () => {
-    if (!resetPasswordUser) return;
-    resetPasswordMutation.mutate(resetPasswordUser.id);
-    setResetPasswordUser(null);
   };
 
   const resetForm = () => {
@@ -331,25 +290,6 @@ export function UsersManagement() {
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Link>
-
-                      <button
-                        onClick={() => handleResetPassword(user)}
-                        disabled={!user.emailVerified}
-                        className={cn(
-                          "rounded-lg p-2 transition-colors",
-                          user.emailVerified
-                            ? "text-text-muted hover:bg-bg-tertiary hover:text-warning"
-                            : "cursor-not-allowed text-border",
-                        )}
-                        title={
-                          user.emailVerified
-                            ? "Reset Password via Email"
-                            : "Cannot reset: Email not verified"
-                        }
-                      >
-                        <KeyRound className="h-4 w-4" />
-                      </button>
-
                       <button
                         onClick={() => setDeleteUserId(user.id)}
                         className="rounded-lg p-2 text-text-muted transition-colors hover:bg-bg-tertiary hover:text-error"
@@ -509,18 +449,6 @@ export function UsersManagement() {
         confirmText="Delete"
         variant="danger"
         isLoading={deleteMutation.isPending}
-      />
-
-      {/* Reset Password Modal */}
-      <ConfirmModal
-        isOpen={!!resetPasswordUser}
-        onClose={() => setResetPasswordUser(null)}
-        onConfirm={handleConfirmResetPassword}
-        title="Reset Password"
-        message={`Are you sure you want to send a password reset email to ${resetPasswordUser?.email}?`}
-        confirmText="Send Email"
-        variant="warning"
-        isLoading={resetPasswordMutation.isPending}
       />
     </div>
   );

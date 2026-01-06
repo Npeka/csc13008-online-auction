@@ -18,3 +18,8 @@ export class CancelOrderDto {
   @IsOptional()
   reason?: string;
 }
+
+export class SendMessageDto {
+  @IsString()
+  content: string;
+}

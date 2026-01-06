@@ -106,11 +106,4 @@ export class AuthController {
   googleLogin(@Body() dto: GoogleOAuthLoginDto) {
     return this.authService.googleOAuthLogin(dto.firebaseToken);
   }
-
-  @Post('admin/reset-password/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  adminResetUserPassword(@Param('id') userId: string) {
-    return this.authService.adminResetUserPassword(userId);
-  }
 }

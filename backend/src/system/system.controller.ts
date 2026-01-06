@@ -9,6 +9,7 @@ import {
 import { SystemService } from './system.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { User, UserRole } from '@prisma/client';
 import { IsNumber, IsOptional } from 'class-validator';
 
@@ -28,6 +29,7 @@ class UpdateAuctionConfigDto {
 export class SystemController {
   constructor(private systemService: SystemService) {}
 
+  @Public()
   @Get('config/auction')
   async getAuctionConfig() {
     return this.systemService.getAuctionConfig();

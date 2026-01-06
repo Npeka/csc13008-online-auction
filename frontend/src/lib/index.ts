@@ -4,6 +4,7 @@ export { authApi } from "./auth-api";
 export { bidsApi } from "./bids-api";
 export { categoriesApi } from "./categories-api";
 export { productsApi } from "./products-api";
+export { ordersApi } from "./orders-api";
 export { questionsApi } from "./questions-api";
 export { usersApi } from "./users-api";
 export { systemApi } from "./system-api";

@@ -1,15 +1,15 @@
 import type { Product } from "./product";
 import type { Rating } from "./rating";
 import type { User } from "./user";
+import type { ChatMessage } from "./chat-message";
 
 export type OrderStatus =
-  | "pending_payment"
-  | "payment_submitted"
-  | "payment_confirmed"
-  | "shipped"
-  | "delivered"
-  | "completed"
-  | "cancelled";
+  | "PENDING_PAYMENT"
+  | "PAYMENT_CONFIRMED"
+  | "SHIPPED"
+  | "DELIVERED"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export interface Order {
   id: string;
@@ -23,8 +23,11 @@ export interface Order {
   status: OrderStatus;
 
   // Shipping
+  // Shipping & Payment
+  paymentProof?: string;
   shippingAddress?: string;
   trackingNumber?: string;
+  cancellationReason?: string;
 
   // Timestamps
   createdAt: string;
@@ -34,6 +37,8 @@ export interface Order {
   completedAt?: string;
 
   // Ratings
+  // Chat and ratings
+  messages?: ChatMessage[];
   buyerRating?: Rating;
   sellerRating?: Rating;
 }

@@ -8,6 +8,7 @@ import {
   SubmitPaymentDto,
   ConfirmShippingDto,
   CancelOrderDto,
+  SendMessageDto,
 } from './dto/order.dto';
 import { OrderStatus } from '@prisma/client';
 
@@ -121,5 +122,19 @@ export class OrdersService {
       cancelledAt: new Date(),
       cancellationReason: dto.reason || 'Buyer did not complete payment',
     });
+  }
+
+  async sendMessage(orderId: string, userId: string, dto: SendMessageDto) {
+    const order = await this.ordersRepository.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.buyerId !== userId && order.sellerId !== userId) {
+      throw new ForbiddenException('You do not have access to this order');
+    }
+
+    return this.ordersRepository.addMessage(orderId, userId, dto.content);
   }
 }
