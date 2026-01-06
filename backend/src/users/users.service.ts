@@ -156,15 +156,26 @@ export class UsersService {
       },
     );
 
-    // If approved, upgrade user to seller
+    // If approved, upgrade user to seller with 7-day temporary privilege
     if (dto.status === 'APPROVED') {
-      await this.usersRepository.updateUserRole(
-        request.userId,
-        UserRole.SELLER,
-      );
+      const sellerExpiresAt = new Date();
+      sellerExpiresAt.setDate(sellerExpiresAt.getDate() + 7);
+
+      await this.usersRepository.update(request.userId, {
+        role: UserRole.SELLER,
+        sellerExpiresAt,
+      });
     }
 
     return updatedRequest;
+  }
+
+  /**
+   * Downgrade expired temporary sellers back to BIDDER role
+   * Call this periodically (e.g., daily cron job) or manually from admin panel
+   */
+  async downgradeExpiredSellers() {
+    return this.usersRepository.downgradeExpiredSellers();
   }
 
   // --- Admin User CRUD ---

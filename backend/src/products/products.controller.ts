@@ -18,6 +18,7 @@ import {
 } from './dto/product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { ActiveSellerGuard } from '../auth/guards/active-seller.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -56,8 +57,26 @@ export class ProductsController {
   getMyProducts(
     @GetUser('id') userId: string,
     @Query('status') status?: 'active' | 'ended',
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
+    // If pagination params provided, use paginated version
+    if (page || limit) {
+      return this.productsService.getUserProductsPaginated(
+        userId,
+        page ? +page : 1,
+        limit ? +limit : 10,
+        status,
+      );
+    }
+    // Otherwise return all (for backward compatibility)
     return this.productsService.getUserProducts(userId, status);
+  }
+
+  @Get('my-products-count')
+  @UseGuards(JwtAuthGuard)
+  getMyProductsCount(@GetUser('id') userId: string) {
+    return this.productsService.getUserProductsCount(userId);
   }
 
   @Public()
@@ -67,7 +86,7 @@ export class ProductsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, ActiveSellerGuard)
   @Roles(UserRole.SELLER, UserRole.ADMIN)
   create(@GetUser('id') userId: string, @Body() dto: CreateProductDto) {
     return this.productsService.create(userId, dto);

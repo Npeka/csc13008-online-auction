@@ -32,6 +32,10 @@ model User {
 
   // Seller settings
   allowNewBidders Boolean @default(true) // Allow new bidders to bid
+  sellerExpiresAt DateTime? // When temporary seller privileges expire (null for permanent sellers)
+
+  // Account status (soft delete)
+  isActive Boolean @default(true) // Set to false to disable account
 
   // Timestamps
   createdAt DateTime @default(now())

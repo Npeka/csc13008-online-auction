@@ -23,4 +23,5 @@ export interface User {
   isVerified?: boolean;
   // Seller settings
   allowNewBidders?: boolean; // Allow bidders without ratings to bid on products
+  sellerExpiresAt?: string | null; // When temporary seller privileges expire (null for permanent sellers)
 }

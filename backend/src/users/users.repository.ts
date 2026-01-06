@@ -243,8 +243,10 @@ export class UsersRepository {
   }
 
   async delete(id: string) {
-    return this.prisma.user.delete({
+    // Soft delete - disable the account instead of removing
+    return this.prisma.user.update({
       where: { id },
+      data: { isActive: false },
     });
   }
 
@@ -371,5 +373,48 @@ export class UsersRepository {
         reviewedAt: new Date(),
       },
     });
+  }
+
+  async downgradeExpiredSellers() {
+    const now = new Date();
+
+    // Find sellers whose privileges have expired
+    const expiredSellers = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.SELLER,
+        sellerExpiresAt: {
+          not: null,
+          lt: now,
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
+    });
+
+    if (expiredSellers.length === 0) {
+      return { downgraded: 0, users: [] };
+    }
+
+    // Downgrade them back to BIDDER
+    await this.prisma.user.updateMany({
+      where: {
+        role: UserRole.SELLER,
+        sellerExpiresAt: {
+          not: null,
+          lt: now,
+        },
+      },
+      data: {
+        role: UserRole.BIDDER,
+      },
+    });
+
+    return {
+      downgraded: expiredSellers.length,
+      users: expiredSellers,
+    };
   }
 }
