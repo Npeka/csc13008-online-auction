@@ -46,7 +46,7 @@ export function HeroSection({
                 <Plus className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/seller">
+            <Link to="/seller/products">
               <Button
                 size="lg"
                 variant="outline"

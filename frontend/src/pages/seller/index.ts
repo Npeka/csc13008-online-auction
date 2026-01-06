@@ -1,4 +1,3 @@
-export { SellerDashboard } from "./dashboard";
 export {
   AppendDescriptionPage,
   CreateProductPage,

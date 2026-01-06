@@ -25,7 +25,7 @@ export function CTASection() {
             Access your seller dashboard to manage listings, track performance,
             and reach more customers.
           </p>
-          <Link to="/seller">
+          <Link to="/seller/products">
             <Button
               size="lg"
               className="bg-white hover:bg-white/90"

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router";
-import { ChevronRight,Gavel, Heart, Star, Trophy } from "lucide-react";
+import { ChevronRight, Gavel, Heart, Package, Star, Trophy } from "lucide-react";
 
 /**
  * QuickLinks
@@ -12,6 +12,11 @@ export const QuickLinks: React.FC = () => {
       label: "My Watchlist",
       href: "/profile/watchlist",
       icon: <Heart className="h-5 w-5" />,
+    },
+    {
+      label: "My Products",
+      href: "/seller/products",
+      icon: <Package className="h-5 w-5" />,
     },
     {
       label: "Active Bids",

@@ -95,17 +95,6 @@ export function UserMenu() {
               Profile
             </Link>
 
-            {user.role === "SELLER" && (
-              <Link
-                to="/seller/dashboard"
-                onClick={() => setIsUserMenuOpen(false)}
-                className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-bg-secondary"
-              >
-                <Package className="h-4 w-4" />
-                Seller Dashboard
-              </Link>
-            )}
-
             {user.role === "ADMIN" && (
               <Link
                 to="/admin"

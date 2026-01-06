@@ -45,14 +45,16 @@ const router = createBrowserRouter([
       { path: "profile/won", Component: WonPage },
       { path: "profile/ratings", Component: RatingsPage },
 
-      // Seller Routes
+      // Order Routes
       {
-        path: "seller",
+        path: "orders/:id",
         async lazy() {
-          const { SellerDashboard } = await import("@/pages/seller");
-          return { Component: SellerDashboard };
+          const { OrderPage } = await import("@/pages/orders/order");
+          return { Component: OrderPage };
         },
       },
+
+      // Seller Routes
       {
         path: "seller/products",
         async lazy() {
