@@ -119,6 +119,14 @@ const router = createBrowserRouter([
           return { Component: UsersManagement };
         },
       },
+      {
+        path: "system",
+        async lazy() {
+          const { AdminSystemConfigPage } =
+            await import("@/pages/admin/system-config");
+          return { Component: AdminSystemConfigPage };
+        },
+      },
     ],
   },
 

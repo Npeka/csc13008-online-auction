@@ -12,10 +12,14 @@ import {
   ProductFilterDto,
 } from './dto/product.dto';
 import { ProductStatus } from '@prisma/client';
+import { SystemService } from '../system/system.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private productsRepository: ProductsRepository) {}
+  constructor(
+    private productsRepository: ProductsRepository,
+    private systemService: SystemService,
+  ) {}
 
   private generateSlug(title: string): string {
     const slug = title
@@ -32,6 +36,7 @@ export class ProductsService {
 
   async create(sellerId: string, dto: CreateProductDto) {
     const slug = this.generateSlug(dto.title);
+    const auctionConfig = await this.systemService.getAuctionConfig();
 
     return this.productsRepository.create({
       title: dto.title,
@@ -48,6 +53,8 @@ export class ProductsService {
       autoExtend: dto.autoExtend ?? false,
       allowNewBidders: dto.allowNewBidders ?? true,
       status: ProductStatus.ACTIVE,
+      extensionTriggerTime: auctionConfig.extensionTriggerTime,
+      extensionDuration: auctionConfig.extensionDuration,
     });
   }
 

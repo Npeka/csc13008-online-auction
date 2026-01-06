@@ -11,6 +11,7 @@ import {
   Moon,
   Package,
   ShieldCheck,
+  Settings,
   Sun,
   Users,
 } from "lucide-react";
@@ -25,6 +26,7 @@ const adminNavItems = [
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/upgrades", label: "Upgrade Requests", icon: ShieldCheck },
+  { to: "/admin/system", label: "System Settings", icon: Settings },
 ];
 
 export function AdminLayout() {

@@ -1,4 +1,4 @@
-import type { PaginationMeta,Product, ProductFilters } from "@/types";
+import type { PaginationMeta, Product, ProductFilters } from "@/types";
 import apiClient from "./api-client";
 
 export interface CreateProductData {
@@ -11,6 +11,8 @@ export interface CreateProductData {
   buyNowPrice?: number;
   endTime: string;
   autoExtend?: boolean;
+  extensionTriggerTime?: number; // minutes before end to trigger
+  extensionDuration?: number; // minutes to extend
   allowNewBidders?: boolean;
 }
 
