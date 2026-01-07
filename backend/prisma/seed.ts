@@ -222,6 +222,39 @@ function generateAutoBidsForProduct(
   return autoBids;
 }
 
+// Placeholder images from Unsplash (reptile/nature themed)
+const PLACEHOLDER_IMAGES = [
+  'https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?w=800&h=600&fit=crop', // Snake 1
+  'https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?w=800&h=600&fit=crop&q=80', // Snake 2
+  'https://images.unsplash.com/photo-1612363148951-23e36c2c3f6f?w=800&h=600&fit=crop', // Reptile 1
+  'https://images.unsplash.com/photo-1612363148951-23e36c2c3f6f?w=800&h=600&fit=crop&q=80', // Reptile 2
+  'https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=800&h=600&fit=crop', // Lizard 1
+  'https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=800&h=600&fit=crop&q=80', // Lizard 2
+  'https://images.unsplash.com/photo-1602528874687-84366f8c25e6?w=800&h=600&fit=crop', // Boa 1
+  'https://images.unsplash.com/photo-1602528874687-84366f8c25e6?w=800&h=600&fit=crop&q=80', // Boa 2
+  'https://images.unsplash.com/photo-1551616381-5dfc17e20db8?w=800&h=600&fit=crop', // Python 1
+];
+
+// Ensure product has exactly 3 images
+function ensureThreeImages(images: string[]): string[] {
+  const validImages = images.filter((img) => img && img.trim() !== '');
+
+  // If we have 3 or more valid images, return first 3
+  if (validImages.length >= 3) {
+    return validImages.slice(0, 3);
+  }
+
+  // If we have less than 3, pad with placeholders
+  const result = [...validImages];
+  while (result.length < 3) {
+    // Use different placeholders for variety
+    const placeholderIndex = result.length % PLACEHOLDER_IMAGES.length;
+    result.push(PLACEHOLDER_IMAGES[placeholderIndex]);
+  }
+
+  return result;
+}
+
 // --- SEED EXECUTION ---
 
 async function main() {
@@ -343,7 +376,7 @@ async function main() {
           title: prod.title,
           slug: prod.slug,
           description: prod.description,
-          images: prod.images,
+          images: ensureThreeImages(prod.images),
           startPrice: prod.startPrice,
           currentPrice: prod.currentPrice,
           bidStep: prod.bidStep,
