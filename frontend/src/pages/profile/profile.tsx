@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Gavel, Heart, Star, Trophy } from "lucide-react";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { PersonalInfoCard } from "@/components/profile/PersonalInfoCard";
@@ -11,7 +11,6 @@ import { SellerStatusBanner } from "@/components/profile/SellerStatusBanner";
 import { StatsGrid } from "@/components/profile/StatsGrid";
 import { UpgradeBanner } from "@/components/profile/UpgradeBanner";
 import { UpgradeRequestModal } from "@/components/shared/upgrade-request-modal";
-import { UpgradeRequestStatus } from "@/components/profile/UpgradeRequestStatus";
 import { useAuthStore } from "@/stores/auth-store";
 import { usersApi } from "@/lib/users-api";
 import { useProfile } from "@/hooks/use-profile";
@@ -20,31 +19,9 @@ export function ProfilePage() {
   const { isAuthenticated } = useAuthStore();
   const { data: user, isLoading, error } = useProfile();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [hasUpgradeRequests, setHasUpgradeRequests] = useState(false);
-  const [upgradeRequestsKey, setUpgradeRequestsKey] = useState(0); // Key to force refetch
-
-  // Fetch upgrade requests to determine if user has any
-  useEffect(() => {
-    if (user?.role === "BIDDER") {
-      usersApi
-        .getUserUpgradeRequests({ limit: 1 })
-        .then((response) => {
-          setHasUpgradeRequests(response.data.length > 0);
-        })
-        .catch(() => {
-          setHasUpgradeRequests(false);
-        });
-    }
-  }, [user?.role, upgradeRequestsKey]); // Also refetch when key changes
 
   const handleUpgradeRequest = async (reason: string) => {
     await usersApi.createUpgradeRequest(reason);
-    setHasUpgradeRequests(true); // Update state after creating request
-  };
-
-  const handleUpgradeSuccess = () => {
-    // Increment key to force refetch/remount of UpgradeRequestStatus
-    setUpgradeRequestsKey((prev) => prev + 1);
   };
 
   if (!isAuthenticated) {
@@ -117,22 +94,14 @@ export function ProfilePage() {
         <StatsGrid stats={stats} />
         <QuickLinks />
         {user.role === "BIDDER" && (
-          <div className="mt-10 space-y-6">
-            {hasUpgradeRequests ? (
-              <UpgradeRequestStatus
-                key={upgradeRequestsKey}
-                onRequestAgain={() => setShowUpgradeModal(true)}
-              />
-            ) : (
-              <UpgradeBanner onUpgrade={() => setShowUpgradeModal(true)} />
-            )}
+          <div className="mt-10">
+            <UpgradeBanner onUpgrade={() => setShowUpgradeModal(true)} />
           </div>
         )}
         <UpgradeRequestModal
           isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
           onSubmit={handleUpgradeRequest}
-          onSuccess={handleUpgradeSuccess}
         />
       </div>
     </ProfileAuthGuard>

@@ -19,7 +19,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { RatingModal } from "@/components/shared/rating-modal";
 import { UpgradeRequestModal } from "@/components/shared/upgrade-request-modal";
 import { productsApi, usersApi, ratingsApi } from "@/lib";
-import { formatCurrency } from "@/lib/utils";
+import { formatUSD } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import type { ProductListResponse } from "@/lib/products-api";
 import type { Product } from "@/types";
@@ -341,11 +341,11 @@ export function SellerProductsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-medium text-text">
-                        {formatCurrency(product.currentPrice)}
+                        {formatUSD(product.currentPrice)}
                       </div>
                       {product.buyNowPrice && (
                         <div className="text-xs text-text-muted">
-                          Buy Now: {formatCurrency(product.buyNowPrice)}
+                          Buy Now: {formatUSD(product.buyNowPrice)}
                         </div>
                       )}
                     </td>
@@ -379,7 +379,7 @@ export function SellerProductsPage() {
                     <td className="px-6 py-4">
                       {filter === "sold" ? (
                         <div className="text-sm font-medium text-text">
-                          {formatCurrency(product.currentPrice)}
+                          {formatUSD(product.currentPrice)}
                         </div>
                       ) : (
                         <span className="text-sm text-text-muted">

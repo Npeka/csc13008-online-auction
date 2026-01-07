@@ -1,4 +1,4 @@
-import { AlertCircle, Calendar, CheckCircle, Clock } from "lucide-react";
+import { AlertCircle, Calendar, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { User } from "@/types";
 
@@ -7,28 +7,9 @@ interface SellerStatusBannerProps {
 }
 
 export function SellerStatusBanner({ user }: SellerStatusBannerProps) {
-  // Only show for sellers
-  if (user.role !== "SELLER") {
+  // Only show for sellers with temporary status (has expiration date)
+  if (user.role !== "SELLER" || !user.sellerExpiresAt) {
     return null;
-  }
-
-  // Permanent seller (no expiry date)
-  if (!user.sellerExpiresAt) {
-    return (
-      <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4">
-        <div className="flex items-start gap-3">
-          <CheckCircle className="h-5 w-5 shrink-0 text-primary" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-text">
-              Permanent Seller Account
-            </h3>
-            <p className="mt-1 text-sm text-text-muted">
-              You have permanent seller privileges. Create auctions anytime!
-            </p>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   // Temporary seller - calculate remaining time
