@@ -105,6 +105,51 @@ export class ProductsService {
       }
     }
 
+    // Special handling for most_bids - need to fetch all and sort in memory
+    if (sortBy === 'most_bids') {
+      const total = await this.productsRepository.count({ where });
+
+      // Fetch ALL matching products (no pagination yet)
+      const { products: allProducts } = await this.productsRepository.findAll(
+        where,
+        { createdAt: 'desc' },
+        1,
+        total, // Fetch all
+      );
+
+      const newThresholdMinutes = 60;
+      const newThreshold = new Date(
+        Date.now() - newThresholdMinutes * 60 * 1000,
+      );
+
+      const productsWithMeta = allProducts.map((product) => ({
+        ...product,
+        bidCount: product._count.bids,
+        highestBidder: product.bids[0]?.bidder,
+        isNew: product.createdAt > newThreshold,
+      }));
+
+      // Sort by bidCount DESC
+      productsWithMeta.sort((a, b) => b.bidCount - a.bidCount);
+
+      // Apply pagination manually
+      const startIndex = (page - 1) * limit;
+      const paginatedProducts = productsWithMeta.slice(
+        startIndex,
+        startIndex + limit,
+      );
+
+      return {
+        products: paginatedProducts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
     let orderBy: any = { createdAt: 'desc' };
     switch (sortBy) {
       case 'ending_asc':
@@ -118,9 +163,6 @@ export class ProductsService {
         break;
       case 'price_desc':
         orderBy = { currentPrice: 'desc' };
-        break;
-      case 'most_bids':
-        orderBy = { createdAt: 'desc' };
         break;
     }
 
@@ -141,10 +183,6 @@ export class ProductsService {
       highestBidder: product.bids[0]?.bidder,
       isNew: product.createdAt > newThreshold,
     }));
-
-    if (sortBy === 'most_bids') {
-      productsWithMeta.sort((a, b) => b.bidCount - a.bidCount);
-    }
 
     return {
       products: productsWithMeta,
