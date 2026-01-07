@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>New Bid Placed</title>
+    <title>Bid Confirmed</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -65,7 +65,7 @@
                     color: #ffffff;
                   "
                 >
-                  New Bid on Your Item
+                  Your Bid Was Placed Successfully
                 </h1>
               </td>
             </tr>
@@ -81,7 +81,7 @@
                     line-height: 1.6;
                   "
                 >
-                  Hi <strong>{{userName}}</strong>,
+                  Hi <strong>{{bidderName}}</strong>,
                 </p>
 
                 <p
@@ -92,7 +92,8 @@
                     line-height: 1.6;
                   "
                 >
-                  A bid has been placed on this auction item.
+                  Your automatic bid has been successfully placed. Our system
+                  will bid on your behalf up to your maximum amount.
                 </p>
 
                 <!-- Product Info Box -->
@@ -126,7 +127,7 @@
                             display: block;
                           "
                         >
-                          New Bid Amount
+                          Current Bid
                         </span>
                         <span
                           style="
@@ -136,7 +137,7 @@
                             font-family: 'Poppins', sans-serif;
                           "
                         >
-                          {{bidAmount}}
+                          {{currentBid}}
                         </span>
                       </td>
                     </tr>
@@ -149,7 +150,7 @@
                             display: block;
                           "
                         >
-                          Total Bids
+                          Your Maximum Bid
                         </span>
                         <span
                           style="
@@ -158,11 +159,35 @@
                             color: #475569;
                           "
                         >
-                          {{bidCount}}
+                          {{maxBid}}
                         </span>
                       </td>
                     </tr>
                   </table>
+                </div>
+
+                <!-- Info Box -->
+                <div
+                  style="
+                    background-color: #e0f2fe;
+                    border-left: 4px solid #0ea5e9;
+                    border-radius: 4px;
+                    padding: 16px 20px;
+                    margin: 24px 0;
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 14px;
+                      color: #0c4a6e;
+                      line-height: 1.5;
+                    "
+                  >
+                    <strong>How it works:</strong> Our system will automatically
+                    place bids on your behalf, incrementally, up to your maximum
+                    bid amount. You'll be notified if you're outbid.
+                  </p>
                 </div>
 
                 <!-- CTA Button -->
@@ -197,8 +222,8 @@
                     line-height: 1.6;
                   "
                 >
-                  Keep track of your auction activity and respond to any
-                  questions from potential bidders.
+                  Good luck with your bid! We'll keep you updated on the auction
+                  progress.
                 </p>
               </td>
             </tr>

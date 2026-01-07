@@ -113,24 +113,50 @@ export class EmailTemplates {
    * Bid Placed Email Template
    */
   static bidPlacedEmail(data: {
-    userName: string;
+    sellerName: string;
     productTitle: string;
     bidAmount: string;
-    currentPrice: string;
+    bidCount: string;
     productUrl: string;
   }): { subject: string; html: string } {
     const html = this.loadTemplate('bid-placed.html', {
-      userName: data.userName,
+      sellerName: data.sellerName,
       productTitle: data.productTitle,
       bidAmount: data.bidAmount,
-      currentPrice: data.currentPrice,
+      bidCount: data.bidCount,
       productUrl: data.productUrl,
       brandName: this.BRAND_NAME,
       currentYear: new Date().getFullYear().toString(),
     });
 
     return {
-      subject: `Bid Successful on "${data.productTitle}" - ${this.BRAND_NAME}`,
+      subject: `New Bid on "${data.productTitle}" - ${this.BRAND_NAME}`,
+      html,
+    };
+  }
+
+  /**
+   * Bidder Bid Confirmation Email Template
+   */
+  static bidderBidConfirmedEmail(data: {
+    bidderName: string;
+    productTitle: string;
+    currentBid: string;
+    maxBid: string;
+    productUrl: string;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('bidder-bid-confirmed.html', {
+      bidderName: data.bidderName,
+      productTitle: data.productTitle,
+      currentBid: data.currentBid,
+      maxBid: data.maxBid,
+      productUrl: data.productUrl,
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `Bid Confirmed on "${data.productTitle}" - ${this.BRAND_NAME}`,
       html,
     };
   }
