@@ -219,7 +219,11 @@ export class ProductsService {
             ratingCount: true,
           },
         },
-        _count: { select: { bids: true } },
+        _count: {
+          select: {
+            bids: { where: { isValid: true } },
+          },
+        },
       },
     });
 
@@ -245,7 +249,11 @@ export class ProductsService {
             ratingCount: true,
           },
         },
-        _count: { select: { bids: true } },
+        _count: {
+          select: {
+            bids: { where: { isValid: true } },
+          },
+        },
       },
     });
 
@@ -280,7 +288,11 @@ export class ProductsService {
             avatar: true,
           },
         },
-        _count: { select: { bids: true } },
+        _count: {
+          select: {
+            bids: { where: { isValid: true } },
+          },
+        },
       },
     });
 
@@ -392,7 +404,11 @@ ${dto.additionalDescription}`;
       orderBy: { createdAt: 'desc' },
       include: {
         category: true,
-        _count: { select: { bids: true } },
+        _count: {
+          select: {
+            bids: { where: { isValid: true } },
+          },
+        },
       },
     });
   }
@@ -428,7 +444,11 @@ ${dto.additionalDescription}`;
         skip: (page - 1) * limit,
         include: {
           category: true,
-          _count: { select: { bids: true } },
+          _count: {
+            select: {
+              bids: { where: { isValid: true } },
+            },
+          },
         },
       }),
       this.productsRepository.count({ where }),
@@ -475,7 +495,11 @@ ${dto.additionalDescription}`;
             },
           },
         },
-        _count: { select: { bids: true } },
+        _count: {
+          select: {
+            bids: { where: { isValid: true } },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

@@ -53,6 +53,7 @@ export class ProductsRepository {
             },
           },
           bids: {
+            where: { isValid: true },
             take: 1,
             orderBy: { amount: 'desc' },
             include: {
@@ -66,7 +67,9 @@ export class ProductsRepository {
             },
           },
           _count: {
-            select: { bids: true },
+            select: {
+              bids: { where: { isValid: true } },
+            },
           },
         },
       }),
@@ -95,7 +98,11 @@ export class ProductsRepository {
             ratingCount: true,
           },
         },
-        _count: { select: { bids: true } },
+        _count: {
+          select: {
+            bids: { where: { isValid: true } },
+          },
+        },
       },
     });
   }
@@ -110,7 +117,11 @@ export class ProductsRepository {
     return this.prisma.product.findMany({
       ...params,
       include: params.include || {
-        _count: { select: { bids: true } },
+        _count: {
+          select: {
+            bids: { where: { isValid: true } },
+          },
+        },
       },
     }); // Ensure count is included or handled by caller
   }
@@ -139,6 +150,7 @@ export class ProductsRepository {
           },
         },
         bids: {
+          where: { isValid: true },
           take: 1,
           orderBy: { amount: 'desc' },
           include: {
@@ -154,7 +166,10 @@ export class ProductsRepository {
           },
         },
         _count: {
-          select: { bids: true, watchlist: true },
+          select: {
+            bids: { where: { isValid: true } },
+            watchlist: true,
+          },
         },
       },
     });
