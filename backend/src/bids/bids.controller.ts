@@ -6,11 +6,14 @@ import {
   Body,
   Param,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { BidsService } from './bids.service';
 import { PlaceBidDto } from './dto/bid.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { Request } from 'express';
 
 @Controller('bids')
 @UseGuards(JwtAuthGuard)
@@ -27,8 +30,26 @@ export class BidsController {
   }
 
   @Get('products/:productId/history')
-  getBidHistory(@Param('productId') productId: string) {
-    return this.bidsService.getBidHistory(productId);
+  @UseGuards(OptionalJwtAuthGuard)
+  getBidHistory(@Param('productId') productId: string, @Req() req: Request) {
+    const isAuthenticated = !!req.user;
+    return this.bidsService.getBidHistory(productId, isAuthenticated);
+  }
+
+  @Get('products/:productId/my-auto-bid')
+  getUserAutoBid(
+    @Param('productId') productId: string,
+    @GetUser('id') userId: string,
+  ) {
+    return this.bidsService.getUserAutoBid(productId, userId);
+  }
+
+  @Get('products/:productId/my-participation')
+  checkMyParticipation(
+    @Param('productId') productId: string,
+    @GetUser('id') userId: string,
+  ) {
+    return this.bidsService.checkUserParticipation(productId, userId);
   }
 
   @Post('products/:productId/reject/:bidderId')

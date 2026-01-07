@@ -234,6 +234,7 @@ export class AutoBiddingService {
             productId,
             {
               currentPrice: newPrice,
+              highestBidderId: winningBidderId!,
             },
             tx,
           );

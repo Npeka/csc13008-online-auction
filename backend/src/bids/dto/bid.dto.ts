@@ -1,15 +1,10 @@
-import { IsNumber, IsPositive, IsOptional, Min } from 'class-validator';
+import { IsNumber, IsPositive, Min } from 'class-validator';
 
 export class PlaceBidDto {
   @IsNumber()
   @IsPositive()
   @Min(0.01)
-  amount: number;
-
-  @IsNumber()
-  @IsPositive()
-  @IsOptional()
-  maxAmount?: number; // For auto-bidding
+  maxAmount: number; // Maximum amount user is willing to bid (required for auto-bidding)
 }
 
 export class RejectBidderDto {

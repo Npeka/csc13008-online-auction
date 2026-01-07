@@ -103,6 +103,32 @@ export class BidsRepository {
     });
   }
 
+  async findProductById(id: string) {
+    return this.prisma.product.findUnique({
+      where: { id },
+      include: {
+        highestBidder: {
+          select: {
+            id: true,
+            name: true,
+            rating: true,
+            ratingCount: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
+  async countBids(productId: string) {
+    return this.prisma.bid.count({
+      where: {
+        productId,
+        isValid: true,
+      },
+    });
+  }
+
   async findProductWithValidBids(productId: string, bidderId: string) {
     return this.prisma.product.findUnique({
       where: { id: productId },
@@ -377,6 +403,33 @@ export class BidsRepository {
             email: true,
           },
         },
+      },
+    });
+  }
+
+  async findAutoBidByUserAndProduct(
+    userId: string,
+    productId: string,
+  ) {
+    return this.prisma.autoBid.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+    });
+  }
+
+  async findUserBidsForProduct(userId: string, productId: string) {
+    return this.prisma.bid.findMany({
+      where: {
+        bidderId: userId,
+        productId,
+        isValid: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }

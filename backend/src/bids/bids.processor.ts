@@ -19,12 +19,15 @@ export class BidsProcessor {
       return;
     }
     this.isProcessing = true;
-    this.logger.debug('Running Cron Job Auto Bids');
 
     try {
       const events = await this.bidsRepository.findPendingAuctionEvents(50); // Batch 50
 
       if (events.length > 0) {
+        this.logger.debug(
+          `Processing ${events.length} pending auction event(s)`,
+        );
+
         // Simple grouping to run different products in parallel?
         // For now, sequential to be safe.
 

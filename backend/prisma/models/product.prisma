@@ -43,6 +43,10 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
+  // Highest bidder tracking
+  highestBidderId String?
+  highestBidder   User?   @relation("HighestBidder", fields: [highestBidderId], references: [id])
+
   bids           Bid[]
   watchlist      Watchlist[]
   questions      Question[]

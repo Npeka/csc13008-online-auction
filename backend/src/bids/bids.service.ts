@@ -76,53 +76,47 @@ export class BidsService {
       }
     }
 
-    // Validate bid amount
+    // Validate max amount - must be at least minimum bid
     const minimumBid = product.currentPrice + product.bidStep;
-    if (dto.amount < minimumBid) {
+    if (dto.maxAmount < minimumBid) {
       throw new BadRequestException(
-        `Bid must be at least ${minimumBid} (current price + bid step)`,
+        `Maximum bid must be at least ${minimumBid} (current price + bid step)`,
       );
     }
 
-    // Validate max amount for auto-bidding
-    if (dto.maxAmount) {
-      if (dto.maxAmount < dto.amount) {
-        throw new BadRequestException(
-          'Max bid amount must be greater than or equal to your bid amount',
-        );
-      }
-    }
+    // Calculate the initial bid amount (cheapest possible to be highest bidder)
+    // This will be the minimum bid unless there are other auto-bidders
+    const initialBidAmount = minimumBid;
 
     // Create bid in transaction
     const result = await this.bidsRepository.transaction(async (tx) => {
-      // Create the bid
+      // Always set up auto-bid first
+      await this.bidsRepository.upsertAutoBid(
+        bidderId,
+        productId,
+        dto.maxAmount,
+        tx,
+      );
+
+      // Create the initial bid at minimum amount
       const bid = await this.bidsRepository.createBid(
         {
           productId,
           bidderId,
-          amount: dto.amount,
+          amount: initialBidAmount,
         },
         tx,
       );
 
-      // Update product current price
+      // Update product current price and highest bidder
       await this.bidsRepository.updateProduct(
         productId,
         {
-          currentPrice: dto.amount,
+          currentPrice: initialBidAmount,
+          highestBidderId: bidderId,
         },
         tx,
       );
-
-      // Handle Auto-Bidding Setup
-      if (dto.maxAmount) {
-        await this.bidsRepository.upsertAutoBid(
-          bidderId,
-          productId,
-          dto.maxAmount,
-          tx,
-        );
-      }
 
       // Create Event for Background Processing
       // This triggers the auto-bidding processor to check if any auto-bids need to fire
@@ -132,7 +126,7 @@ export class BidsService {
         tx,
       );
 
-      // 5. Check auto-extend
+      // Check auto-extend
       if (product.autoExtend) {
         const timeUntilEnd = product.endTime.getTime() - Date.now();
         const triggerMs = product.extensionTriggerTime * 60 * 1000;
@@ -156,8 +150,9 @@ export class BidsService {
     // Send email notifications in background (Fire and Forget)
     // We pass the ORIGINAL product state (before bid) which contains previous bidder info
     // And we pass the successful bid result
-    this.handleBidNotifications(product, bidderId, dto.amount).catch((err) =>
-      this.logger.error('Failed to handle background bid notifications', err),
+    this.handleBidNotifications(product, bidderId, initialBidAmount).catch(
+      (err) =>
+        this.logger.error('Failed to handle background bid notifications', err),
     );
 
     return result;
@@ -222,7 +217,32 @@ export class BidsService {
     }
   }
 
-  async getBidHistory(productId: string) {
+  async getBidHistory(productId: string, isAuthenticated: boolean = false) {
+    // For guests, only return highestBidder info
+    if (!isAuthenticated) {
+      const product = await this.bidsRepository.findProductById(productId);
+      
+      if (!product) {
+        throw new NotFoundException('Product not found');
+      }
+
+      if (!product.highestBidder) {
+        return { highestBidder: null, bidCount: 0 };
+      }
+
+      return {
+        highestBidder: {
+          id: product.highestBidder.id,
+          name: this.maskName(product.highestBidder.name),
+          rating: product.highestBidder.rating,
+          ratingCount: product.highestBidder.ratingCount,
+          avatar: product.highestBidder.avatar,
+        },
+        bidCount: await this.bidsRepository.countBids(productId),
+      };
+    }
+
+    // For authenticated users, return full bid history
     const bids = await this.bidsRepository.findManyBids({
       where: {
         productId,
@@ -241,6 +261,37 @@ export class BidsService {
         name: this.maskName(bid.bidder.name),
       },
     }));
+  }
+
+  async getUserAutoBid(
+    productId: string,
+    userId: string,
+  ): Promise<{ maxAmount: number } | null> {
+    const autoBid = await this.bidsRepository.findAutoBidByUserAndProduct(
+      userId,
+      productId,
+    );
+
+    if (!autoBid) {
+      return null;
+    }
+
+    return { maxAmount: autoBid.maxAmount };
+  }
+
+  async checkUserParticipation(productId: string, userId: string) {
+    const bids = await this.bidsRepository.findUserBidsForProduct(userId, productId);
+    const product = await this.bidsRepository.findProductById(productId);
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    return {
+      participated: bids.length > 0,
+      isWinner: product.highestBidderId === userId,
+      bidCount: bids.length,
+    };
   }
 
   async rejectBidder(productId: string, sellerId: string, bidderId: string) {
