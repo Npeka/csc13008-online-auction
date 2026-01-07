@@ -106,12 +106,12 @@ export class AutoBiddingService {
               // That's second bidder's max (they can't go higher)
               // So winner pays: second bidder's max (not their max + step)
               let calculatedPrice = secondStrongest.maxAmount;
-              
+
               // But we still need to maintain the bid step increment
               // So the actual price should be max(secondMax, currentPrice + step)
               // Actually no - in the sample, when #2 (10.8M) bids against #1 (11M)
               // The price becomes exactly 10.8M (not 10.9M)
-              
+
               // This means: price = second bidder's maximum
               // Cap at winner's max
               if (calculatedPrice > strongestAuto.maxAmount) {
@@ -145,7 +145,10 @@ export class AutoBiddingService {
               newPrice = Math.min(barrier + bidStep, strongestAuto.maxAmount);
             } else {
               // No other auto-bidders, just beat current price
-              newPrice = Math.min(currentPrice + bidStep, strongestAuto.maxAmount);
+              newPrice = Math.min(
+                currentPrice + bidStep,
+                strongestAuto.maxAmount,
+              );
             }
           }
         }
@@ -175,9 +178,7 @@ export class AutoBiddingService {
           );
 
           // Queue email notifications
-          const winner = autoBids.find(
-            (a) => a.userId === winningBidderId,
-          );
+          const winner = autoBids.find((a) => a.userId === winningBidderId);
           const previousWinner = product.bids[0]?.bidder;
 
           // 1. Send bid confirmation to winner (bidder)
