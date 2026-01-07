@@ -6,15 +6,15 @@ services:
     container_name: auction-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-auction}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-auction123}
-      POSTGRES_DB: ${POSTGRES_DB:-online_auction}
+      POSTGRES_USER: ${DATABASE_HOST:-auction}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-auction123}
+      POSTGRES_DB: ${DATABASE_DB:-online_auction}
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '${DATABASE_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-auction}']
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE_HOST:-auction}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,6 +28,11 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   backend:
     build:
@@ -37,12 +42,38 @@ services:
     container_name: auction-backend
     restart: unless-stopped
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://${POSTGRES_USER:-auction}:${POSTGRES_PASSWORD:-auction123}@postgres:5432/${POSTGRES_DB:-online_auction}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
+      # Application Configuration
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: ${PORT:-3000}
+      API_PREFIX: ${API_PREFIX:-api/v1}
+      
+      # Frontend URL
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      
+      # Database Configuration
+      DATABASE_URL: postgresql://${DATABASE_HOST:-auction}:${DATABASE_PASSWORD:-auction123}@postgres:5432/${DATABASE_DB:-online_auction}?schema=public&connection_limit=10&pool_timeout=20&connect_timeout=10
+      DATABASE_HOST: ${DATABASE_HOST:-auction}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-auction123}
+      DATABASE_DB: ${DATABASE_DB:-online_auction}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-jwt-key-change-this-in-production}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      
+      # Email Configuration (Brevo API)
+      BREVO_API_KEY: ${BREVO_API_KEY:-your-brevo-api-key-here}
+      BREVO_FROM_EMAIL: ${BREVO_FROM_EMAIL:-noreply@auction.com}
+      BREVO_FROM_NAME: ${BREVO_FROM_NAME:-Online Auction Platform}
+      
+      # Firebase (OAuth Authentication)
+      FIREBASE_SERVICE_ACCOUNT_PATH: ${FIREBASE_SERVICE_ACCOUNT_PATH:-./firebase-service-account.json}
+      
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - '${PORT:-3000}:3000'
     volumes:
@@ -50,6 +81,8 @@ services:
       - /app/node_modules
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     command: npm run start:dev
 
