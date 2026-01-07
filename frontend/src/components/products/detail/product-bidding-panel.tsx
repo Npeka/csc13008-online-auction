@@ -1,5 +1,4 @@
 import { memo } from "react";
-import { Link } from "react-router";
 import { Heart, Shield } from "lucide-react";
 import { Countdown } from "@/components/shared/countdown";
 import { Avatar } from "@/components/ui/avatar";
@@ -24,6 +23,9 @@ interface ProductBiddingPanelProps {
   inWatchlist: boolean;
   isSeller?: boolean; // New prop to check if current user is the seller
   bids?: any[]; // Bid history for seller view
+  isEnded?: boolean; // Is the auction ended
+  userParticipated?: boolean; // Did the user participate in the auction
+  isWinner?: boolean; // Is the current user the winner
   onPlaceBid: () => void;
   onBuyNow: () => void;
   onWatchlistToggle: () => void;
@@ -41,6 +43,9 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
   inWatchlist,
   isSeller = false,
   bids = [],
+  isEnded = false,
+  userParticipated = false,
+  isWinner = false,
   onPlaceBid,
   onBuyNow,
   onWatchlistToggle,
@@ -61,25 +66,22 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
       {/* Highest Bidder */}
       {highestBidder && (
         <div className="mb-4 flex items-center gap-2 rounded-lg bg-bg-secondary p-3">
-          <Link to={`/users/${highestBidder.id}`}>
-            <Avatar
-              src={highestBidder.avatar}
-              fallback={highestBidder.name}
-              size="sm"
-            />
-          </Link>
+          <Avatar
+            src={highestBidder.avatar}
+            fallback={highestBidder.name}
+            size="sm"
+          />
           <div className="flex-1">
             <p className="text-sm text-text-muted">Highest Bidder</p>
-            <Link
-              to={`/users/${highestBidder.id}`}
-              className="font-medium text-text hover:text-primary hover:underline"
-            >
+            <p className="font-medium text-text">
               {maskName(highestBidder.name)}
-            </Link>
-            {highestBidder.ratingCount && highestBidder.ratingCount > 0 && (
+            </p>
+            {highestBidder.ratingCount && highestBidder.ratingCount > 0 ? (
               <p className="text-xs text-text-muted">
-                {(((highestBidder.rating || 0) / 5) * 100).toFixed(0)}% positive
+                {((highestBidder.rating || 0) * 100).toFixed(0)}% positive
               </p>
+            ) : (
+              <p className="text-xs text-text-muted">No ratings yet</p>
             )}
           </div>
         </div>
@@ -100,12 +102,6 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
       {/* Action Buttons or Bid History */}
       {isSeller ? (
         <div className="space-y-4">
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
-            <p className="text-sm font-medium text-text">
-              This is your product
-            </p>
-          </div>
-
           {/* Bid History for Seller */}
           {bids.length > 0 ? (
             <div>
@@ -126,7 +122,25 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
             </div>
           )}
         </div>
+      ) : isEnded && isWinner ? (
+        // Winner sees payment button
+        <div className="space-y-3">
+          <Button onClick={onBuyNow} className="w-full" size="lg">
+            Proceed to Payment
+          </Button>
+        </div>
+      ) : isEnded && userParticipated ? (
+        // Losing bidder sees bid history
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-text">
+            Bid History ({bids.length})
+          </h3>
+          <div className="max-h-[400px] overflow-y-auto">
+            <BidHistoryTable bids={bids} isSeller={false} />
+          </div>
+        </div>
       ) : (
+        // Active auction - normal bid buttons
         <div className="space-y-3">
           <Button
             onClick={onPlaceBid}

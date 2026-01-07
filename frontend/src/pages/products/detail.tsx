@@ -13,8 +13,9 @@ import {
 import { BidInput } from "@/components/shared/bid-input";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Modal, ConfirmModal } from "@/components/ui/modal";
-import { bidsApi, productsApi, questionsApi } from "@/lib";
+import { bidsApi, ordersApi, productsApi, questionsApi } from "@/lib";
 import { formatUSD } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
@@ -56,12 +57,21 @@ export function ProductDetailPage() {
   const [bids, setBids] = useState<any[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [currentMaxBid, setCurrentMaxBid] = useState<number | undefined>();
+  const [participation, setParticipation] = useState<{
+    participated: boolean;
+    isWinner: boolean;
+    bidCount: number;
+  } | null>(null);
+  const [order, setOrder] = useState<any>(null);
+  const [orderLoading, setOrderLoading] = useState(false);
 
   const { user, isAuthenticated } = useAuthStore();
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } =
     useWatchlistStore();
 
   const isSeller = isAuthenticated && user?.id === product?.seller?.id;
+  const isEnded = product?.status === "ENDED";
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -79,12 +89,19 @@ export function ProductDetailPage() {
         setIsLoading(false);
 
         // Fetch questions and bid history in parallel (in background)
-        const [questionsResult, bidsResult] = await Promise.allSettled([
-          questionsApi.getQuestions(productData.id),
-          isAuthenticated
-            ? bidsApi.getBidHistory(productData.id)
-            : Promise.resolve([]),
-        ]);
+        const [questionsResult, bidsResult, autoBidResult, participationResult] =
+          await Promise.allSettled([
+            questionsApi.getQuestions(productData.id),
+            isAuthenticated
+              ? bidsApi.getBidHistory(productData.id)
+              : Promise.resolve([]),
+            isAuthenticated
+              ? bidsApi.getUserAutoBid(productData.id)
+              : Promise.resolve(null),
+            isAuthenticated && productData.status === "ENDED"
+              ? bidsApi.checkUserParticipation(productData.id)
+              : Promise.resolve(null),
+          ]);
 
         // Handle questions result
         if (questionsResult.status === "fulfilled") {
@@ -97,6 +114,38 @@ export function ProductDetailPage() {
         if (isAuthenticated && bidsResult.status === "fulfilled") {
           setBids(bidsResult.value);
         }
+
+        // Handle auto-bid result (only if authenticated)
+        if (isAuthenticated && autoBidResult.status === "fulfilled") {
+          setCurrentMaxBid(autoBidResult.value?.maxAmount);
+        }
+
+        // Handle participation result (only if authenticated and ended)
+        if (
+          isAuthenticated &&
+          productData.status === "ENDED" &&
+          participationResult.status === "fulfilled"
+        ) {
+          setParticipation(participationResult.value);
+
+          // Fetch order if user is seller or winner
+          const isWinner = participationResult.value?.isWinner || false;
+          const isSeller = user?.id === productData.seller?.id;
+
+          if (isSeller || isWinner) {
+            setOrderLoading(true);
+            try {
+              const orderData = await ordersApi.getOrderByProductId(
+                productData.id,
+              );
+              setOrder(orderData);
+            } catch (error) {
+              console.error("Failed to fetch order:", error);
+            } finally {
+              setOrderLoading(false);
+            }
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch product:", error);
         toast.error("Product not found");
@@ -108,7 +157,7 @@ export function ProductDetailPage() {
   }, [slug, isAuthenticated]);
 
   const handlePlaceBid = useCallback(
-    async (amount: number, maxAmount?: number) => {
+    async (maxAmount: number) => {
       if (!isAuthenticated) {
         navigate("/login");
         return;
@@ -117,22 +166,24 @@ export function ProductDetailPage() {
       try {
         setIsBidding(true);
         setIsBlocked(false); // Reset blocked state
-        await bidsApi.placeBid(product.id, amount, maxAmount);
+        await bidsApi.placeBid(product.id, maxAmount);
 
         toast.success(
-          maxAmount
-            ? `Auto-bid placed! We'll bid up to ${formatUSD(maxAmount)} for you.`
-            : `Bid of ${formatUSD(amount)} placed successfully!`,
+          `Auto-bid placed! We'll bid up to ${formatUSD(maxAmount)} for you.`,
         );
 
-        // Refresh product and bids
-        const [updatedProduct, updatedBids] = await Promise.all([
-          productsApi.getProductBySlug(slug!),
-          bidsApi.getBidHistory(product.id),
-        ]);
+        // Refresh product, bids, and auto-bid info
+        const [updatedProduct, updatedBids, updatedAutoBid] = await Promise.all(
+          [
+            productsApi.getProductBySlug(slug!),
+            bidsApi.getBidHistory(product.id),
+            bidsApi.getUserAutoBid(product.id),
+          ],
+        );
 
         setProduct(updatedProduct);
         setBids(updatedBids);
+        setCurrentMaxBid(updatedAutoBid?.maxAmount);
         setShowBidModal(false);
       } catch (error: any) {
         const errorMessage =
@@ -250,6 +301,81 @@ export function ProductDetailPage() {
     );
   }
 
+  // Access control for ended products
+  if (isEnded && isAuthenticated && !isSeller) {
+    // If participation data is loaded and user didn't participate, show access denied
+    if (participation && !participation.participated) {
+      return (
+        <div className="container-app py-20 text-center">
+          <h1 className="mb-4 text-2xl font-bold text-text">Access Denied</h1>
+          <p className="mb-8 text-text-muted">
+            This auction has ended. Only the seller and bidders who participated
+            can view this page.
+          </p>
+          <Link to="/">
+            <Button>Back to Home</Button>
+          </Link>
+        </div>
+      );
+    }
+  }
+
+  // Redirect non-authenticated users trying to view ended products
+  if (isEnded && !isAuthenticated) {
+    navigate("/login");
+    return null;
+  }
+
+  // For ended auctions, show order button for winner/seller
+  if (isEnded && isAuthenticated && participation) {
+    const isWinner = participation.isWinner || false;
+
+    if ((isSeller || isWinner) && order) {
+      return (
+        <div className="container-app py-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <Badge variant="info" className="mb-4">
+              Auction Ended
+            </Badge>
+            <h1 className="mb-2 text-3xl font-bold text-text">
+              {product.title}
+            </h1>
+            <p className="mb-6 text-xl font-bold text-primary">
+              Final Price: {formatUSD(product.currentPrice)}
+            </p>
+
+            <div className="mb-8 rounded-xl border border-border bg-bg-card p-6">
+              <p className="mb-4 text-text-muted">
+                {isSeller
+                  ? "You sold this product. Complete the order to finalize the transaction."
+                  : "Congratulations! You won this auction. Complete payment to proceed."}
+              </p>
+              <Button
+                onClick={() => navigate(`/orders/${order.id}`)}
+                size="lg"
+                className="w-full"
+              >
+                {isSeller ? "Manage Order" : "Complete Payment"}
+              </Button>
+            </div>
+
+            <Link to="/">
+              <Button variant="ghost">Back to Home</Button>
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    if ((isSeller || isWinner) && orderLoading) {
+      return (
+        <div className="container-app flex min-h-screen items-center justify-center py-20">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      );
+    }
+  }
+
   const inWatchlist = isInWatchlist(product.id);
   const minimumBid = product.currentPrice + product.bidStep;
 
@@ -310,6 +436,9 @@ export function ProductDetailPage() {
             inWatchlist={inWatchlist}
             isSeller={isSeller}
             bids={bids}
+            isEnded={isEnded}
+            userParticipated={participation?.participated || false}
+            isWinner={participation?.isWinner || false}
             onPlaceBid={() => {
               if (!isAuthenticated) {
                 navigate("/login");
@@ -378,7 +507,7 @@ export function ProductDetailPage() {
           <div className="border-destructive/20 bg-destructive/10 mb-4 rounded-lg border p-4">
             <div className="flex items-start gap-3">
               <svg
-                className="text-destructive h-5 w-5 flex-shrink-0"
+                className="text-destructive h-5 w-5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -412,6 +541,7 @@ export function ProductDetailPage() {
           isLoading={isBidding}
           userRating={getUserRatingForBid(user)}
           allowNewBidders={product.allowNewBidders ?? true}
+          currentMaxBid={currentMaxBid}
           disabled={isBlocked}
         />
       </Modal>

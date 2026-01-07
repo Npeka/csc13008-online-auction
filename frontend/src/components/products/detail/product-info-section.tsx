@@ -56,7 +56,7 @@ export const ProductInfoSection = memo(function ProductInfoSection({
       <div className="mt-6">
         <TabPanel value="description" activeTab={activeTab}>
           <div
-            className="prose prose-slate dark:prose-invert max-w-none break-words overflow-wrap-anywhere"
+            className="prose prose-slate dark:prose-invert overflow-wrap-anywhere max-w-none wrap-break-word"
             dangerouslySetInnerHTML={{ __html: description }}
           />
         </TabPanel>
