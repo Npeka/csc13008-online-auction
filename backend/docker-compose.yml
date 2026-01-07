@@ -69,6 +69,7 @@ services:
       BREVO_FROM_NAME: ${BREVO_FROM_NAME:-Online Auction Platform}
       
       # Firebase (OAuth Authentication)
+      # Can be file path OR JSON content (see FIREBASE_SETUP.md)
       FIREBASE_SERVICE_ACCOUNT_PATH: ${FIREBASE_SERVICE_ACCOUNT_PATH:-./firebase-service-account.json}
       
       # Redis Configuration
