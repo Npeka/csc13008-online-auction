@@ -27,6 +27,14 @@ export class OrdersController {
     return this.ordersService.getMyOrders(userId);
   }
 
+  @Get('product/:productId')
+  getOrderByProductId(
+    @Param('productId') productId: string,
+    @GetUser('id') userId: string,
+  ) {
+    return this.ordersService.getOrderByProductId(productId, userId);
+  }
+
   @Get(':id')
   getOrderById(@Param('id') orderId: string, @GetUser('id') userId: string) {
     return this.ordersService.getOrderById(orderId, userId);

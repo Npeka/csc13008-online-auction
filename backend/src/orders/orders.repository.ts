@@ -31,6 +31,31 @@ export class OrdersRepository {
     });
   }
 
+  async findByProductId(productId: string) {
+    return this.prisma.order.findUnique({
+      where: { productId },
+      include: {
+        product: true,
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+        buyer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
   async findUserOrders(userId: string) {
     return this.prisma.order.findMany({
       where: {

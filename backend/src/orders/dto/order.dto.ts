@@ -10,7 +10,11 @@ export class SubmitPaymentDto {
 
 export class ConfirmShippingDto {
   @IsString()
-  shippingReceipt: string; // Tracking number
+  shippingProof: string; // Seller's shipping receipt image URL (required)
+
+  @IsString()
+  @IsOptional()
+  trackingNumber?: string; // Optional tracking number text
 }
 
 export class CancelOrderDto {

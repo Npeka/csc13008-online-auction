@@ -4,6 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { OrdersRepository } from './orders.repository';
+import { RatingsRepository } from '../ratings/ratings.repository';
 import {
   SubmitPaymentDto,
   ConfirmShippingDto,
@@ -14,7 +15,10 @@ import { OrderStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
-  constructor(private ordersRepository: OrdersRepository) {}
+  constructor(
+    private ordersRepository: OrdersRepository,
+    private ratingsRepository: RatingsRepository,
+  ) {}
 
   async getMyOrders(userId: string) {
     return this.ordersRepository.findUserOrders(userId);
@@ -25,6 +29,21 @@ export class OrdersService {
 
     if (!order) {
       throw new NotFoundException('Order not found');
+    }
+
+    // Only buyer or seller can view
+    if (order.buyerId !== userId && order.sellerId !== userId) {
+      throw new ForbiddenException('You do not have access to this order');
+    }
+
+    return order;
+  }
+
+  async getOrderByProductId(productId: string, userId: string) {
+    const order = await this.ordersRepository.findByProductId(productId);
+
+    if (!order) {
+      throw new NotFoundException('Order not found for this product');
     }
 
     // Only buyer or seller can view
@@ -53,7 +72,8 @@ export class OrdersService {
     return this.ordersRepository.update(orderId, {
       paymentProof: dto.paymentProof,
       shippingAddress: dto.shippingAddress,
-      status: OrderStatus.PAYMENT_CONFIRMED,
+      status: OrderStatus.PAYMENT_SUBMITTED,
+      paidAt: new Date(),
     });
   }
 
@@ -72,13 +92,15 @@ export class OrdersService {
       throw new ForbiddenException('Only the seller can confirm shipping');
     }
 
-    if (order.status !== OrderStatus.PAYMENT_CONFIRMED) {
-      throw new ForbiddenException('Payment must be confirmed first');
+    if (order.status !== OrderStatus.PAYMENT_SUBMITTED) {
+      throw new ForbiddenException('Payment must be submitted first');
     }
 
     return this.ordersRepository.update(orderId, {
-      trackingNumber: dto.shippingReceipt, // Map DTO field to schema field
+      shippingProof: dto.shippingProof,
+      trackingNumber: dto.trackingNumber,
       status: OrderStatus.SHIPPED,
+      shippedAt: new Date(),
     });
   }
 
@@ -114,8 +136,28 @@ export class OrdersService {
       throw new ForbiddenException('Only the seller can cancel the order');
     }
 
-    // Cancel and auto -1 rating for buyer
-    // TODO: Create -1 rating for buyer with reason: "Buyer did not complete payment"
+    // Cannot cancel if already delivered or completed
+    if (
+      order.status === OrderStatus.DELIVERED ||
+      order.status === OrderStatus.COMPLETED ||
+      order.status === OrderStatus.CANCELLED
+    ) {
+      throw new ForbiddenException(
+        'Cannot cancel order in current status',
+      );
+    }
+
+    // Auto-create -1 rating for buyer
+    await this.ratingsRepository.create({
+      rating: -1,
+      comment: dto.reason || 'Buyer did not complete payment',
+      giverId: sellerId,
+      receiverId: order.buyerId,
+      orderId: orderId,
+    });
+
+    // Update buyer's aggregated rating
+    await this.ratingsRepository.updateUserRating(order.buyerId);
 
     return this.ordersRepository.update(orderId, {
       status: OrderStatus.CANCELLED,
