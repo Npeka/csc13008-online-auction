@@ -232,7 +232,7 @@ export class EmailService {
   }
 
   /**
-   * Send bid placed notification to bidder
+   * Send bid placed notification to seller
    */
   async sendBidPlacedEmail(data: {
     toEmail: string;
@@ -240,15 +240,15 @@ export class EmailService {
     productTitle: string;
     productSlug: string;
     bidAmount: number;
-    currentPrice: number;
+    bidCount: number;
   }): Promise<void> {
     try {
       const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/products/${data.productSlug}`;
       const { subject, html } = EmailTemplates.bidPlacedEmail({
-        userName: data.toName,
+        sellerName: data.toName,
         productTitle: data.productTitle,
         bidAmount: this.formatCurrency(data.bidAmount),
-        currentPrice: this.formatCurrency(data.currentPrice),
+        bidCount: data.bidCount.toString(),
         productUrl,
       });
 
@@ -263,11 +263,54 @@ export class EmailService {
 
       const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
       this.logger.log(
-        `Bid placed email sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+        `Bid placed email sent to seller ${data.toEmail} - Message ID: ${result.body.messageId}`,
       );
     } catch (error) {
       this.logger.error(
         `Failed to send bid placed email to ${data.toEmail}`,
+        error,
+      );
+      // Don't throw - notification email is not critical
+    }
+  }
+
+  /**
+   * Send bid confirmation to bidder
+   */
+  async sendBidderBidConfirmedEmail(data: {
+    toEmail: string;
+    toName: string;
+    productTitle: string;
+    productSlug: string;
+    currentBid: number;
+    maxBid: number;
+  }): Promise<void> {
+    try {
+      const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/products/${data.productSlug}`;
+      const { subject, html } = EmailTemplates.bidderBidConfirmedEmail({
+        bidderName: data.toName,
+        productTitle: data.productTitle,
+        currentBid: this.formatCurrency(data.currentBid),
+        maxBid: this.formatCurrency(data.maxBid),
+        productUrl,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [{ email: data.toEmail, name: data.toName }];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      this.logger.log(
+        `Bid confirmation email sent to bidder ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send bid confirmation email to ${data.toEmail}`,
         error,
       );
       // Don't throw - notification email is not critical

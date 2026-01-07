@@ -177,22 +177,24 @@ export class AutoBiddingService {
           // Queue email notifications
           const winner = autoBids.find(
             (a) => a.userId === winningBidderId,
-          )?.user;
+          );
           const previousWinner = product.bids[0]?.bidder;
 
-          if (winner) {
+          // 1. Send bid confirmation to winner (bidder)
+          if (winner?.user) {
             emailTasks.push(() =>
-              this.emailService.sendBidPlacedEmail({
-                toEmail: winner.email,
-                toName: winner.name,
+              this.emailService.sendBidderBidConfirmedEmail({
+                toEmail: winner.user.email,
+                toName: winner.user.name,
                 productTitle: product.title,
                 productSlug: product.slug,
-                bidAmount: newPrice,
-                currentPrice: newPrice,
+                currentBid: newPrice,
+                maxBid: winner.maxAmount,
               }),
             );
           }
 
+          // 2. Send outbid notification to previous winner
           if (previousWinner && previousWinner.id !== winningBidderId) {
             emailTasks.push(() =>
               this.emailService.sendBidderOutbidEmail({
@@ -206,8 +208,9 @@ export class AutoBiddingService {
             );
           }
 
-          // 3. Notify seller
+          // 3. Notify seller of new bid
           if (product.seller?.email && product.sellerId !== winningBidderId) {
+            const bidCount = product.bids.length + 1; // Current bids + this new one
             emailTasks.push(() =>
               this.emailService.sendBidPlacedEmail({
                 toEmail: product.seller.email,
@@ -215,7 +218,7 @@ export class AutoBiddingService {
                 productTitle: product.title,
                 productSlug: product.slug,
                 bidAmount: newPrice,
-                currentPrice: newPrice,
+                bidCount: bidCount,
               }),
             );
           }

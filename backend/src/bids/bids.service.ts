@@ -84,13 +84,17 @@ export class BidsService {
       );
     }
 
-    // Calculate the initial bid amount (cheapest possible to be highest bidder)
-    // This will be the minimum bid unless there are other auto-bidders
-    const initialBidAmount = minimumBid;
+    // Check if there's a current winner with a higher max bid
+    const currentWinnerAutoBid = product.bids[0]
+      ? await this.bidsRepository.findAutoBidByUserAndProduct(
+          product.bids[0].bidderId,
+          productId,
+        )
+      : null;
 
     // Create bid in transaction
     const result = await this.bidsRepository.transaction(async (tx) => {
-      // Always set up auto-bid first
+      // Always set up auto-bid for the new bidder
       await this.bidsRepository.upsertAutoBid(
         bidderId,
         productId,
@@ -98,33 +102,67 @@ export class BidsService {
         tx,
       );
 
-      // Create the initial bid at minimum amount
-      const bid = await this.bidsRepository.createBid(
-        {
-          productId,
-          bidderId,
-          amount: initialBidAmount,
-        },
-        tx,
-      );
+      let bid;
+      let newPrice;
+      let newWinner;
+
+      // Case 1: No current winner OR new bidder has higher max
+      if (
+        !currentWinnerAutoBid ||
+        dto.maxAmount > currentWinnerAutoBid.maxAmount
+      ) {
+        // New bidder can win
+        if (!currentWinnerAutoBid) {
+          // First bid - start at starting price
+          newPrice = product.startPrice;
+        } else {
+          // Beat current winner - price goes to their max + step (or our max if lower)
+          newPrice = Math.min(
+            currentWinnerAutoBid.maxAmount + product.bidStep,
+            dto.maxAmount,
+          );
+        }
+
+        newWinner = bidderId;
+
+        // Create bid for new winner
+        bid = await this.bidsRepository.createBid(
+          {
+            productId,
+            bidderId,
+            amount: newPrice,
+          },
+          tx,
+        );
+      } else {
+        // Case 2: Current winner has higher or equal max bid
+        // New bidder CANNOT win - don't create bid for them
+        // Just update price to new bidder's max (what they can afford)
+        newPrice = dto.maxAmount;
+        newWinner = product.bids[0].bidderId;
+
+        // Create bid for current winner at the new price
+        bid = await this.bidsRepository.createBid(
+          {
+            productId,
+            bidderId: newWinner,
+            amount: newPrice,
+          },
+          tx,
+        );
+      }
 
       // Update product current price and highest bidder
       await this.bidsRepository.updateProduct(
         productId,
         {
-          currentPrice: initialBidAmount,
-          highestBidderId: bidderId,
+          currentPrice: newPrice,
+          highestBidderId: newWinner,
         },
         tx,
       );
 
-      // Create Event for Background Processing
-      // This triggers the auto-bidding processor to check if any auto-bids need to fire
-      await this.bidsRepository.createAuctionEvent(
-        'PROCESS_AUTO_BID',
-        { productId },
-        tx,
-      );
+      // Don't create auto-bid event since we already processed it synchronously
 
       // Check auto-extend
       if (product.autoExtend) {
@@ -144,18 +182,22 @@ export class BidsService {
         }
       }
 
-      return bid;
+      return { bid, newWinner, isWinner: newWinner === bidderId };
     });
 
     // Send email notifications in background (Fire and Forget)
-    // We pass the ORIGINAL product state (before bid) which contains previous bidder info
-    // And we pass the successful bid result
-    this.handleBidNotifications(product, bidderId, initialBidAmount).catch(
-      (err) =>
-        this.logger.error('Failed to handle background bid notifications', err),
+    // Note: Send notification to the person who placed the bid (whether they won or not)
+    this.handleBidNotifications(
+      product,
+      bidderId,
+      result.bid.amount,
+      dto.maxAmount,
+      result.isWinner,
+    ).catch((err) =>
+      this.logger.error('Failed to handle background bid notifications', err),
     );
 
-    return result;
+    return result.bid;
   }
 
   /**
@@ -164,30 +206,31 @@ export class BidsService {
   private async handleBidNotifications(
     product: any,
     bidderId: string,
-    amount: number,
+    currentBid: number,
+    maxBid: number,
+    isWinner: boolean,
   ) {
     try {
-      // 1. Send confirmation to new bidder
+      // 1. Send confirmation to the bidder who placed the bid
       const bidderUser = await this.bidsRepository.findUser(bidderId);
       if (bidderUser?.email) {
-        await this.emailService.sendBidPlacedEmail({
+        await this.emailService.sendBidderBidConfirmedEmail({
           toEmail: bidderUser.email,
           toName: bidderUser.name,
           productTitle: product.title,
           productSlug: product.slug,
-          bidAmount: amount,
-          currentPrice: amount,
+          currentBid: currentBid,
+          maxBid: maxBid,
         });
       }
 
-      // 2. Send outbid notification to previous highest bidder
-      // product.bids is from BEFORE the new bid, so bids[0] is the person being outbid.
-      if (product.bids.length > 0 && product.bids[0].bidderId !== bidderId) {
-        const previousBidder = product.bids[0].bidder; // Included in findProductWithBids
-        // Note: My findProductWithBids includes bidder: { id, name, email }
-        // So I don't need to fetch User again if repo returns it!
-        // Step 786 line 13: includes `seller`, `bids` -> `bidder` (id, name, email).
-        // So I can use it directly.
+      // 2. Send outbid notification to previous highest bidder (only if new bidder won)
+      if (
+        isWinner &&
+        product.bids.length > 0 &&
+        product.bids[0].bidderId !== bidderId
+      ) {
+        const previousBidder = product.bids[0].bidder;
 
         if (previousBidder?.email) {
           await this.emailService.sendBidderOutbidEmail({
@@ -196,20 +239,21 @@ export class BidsService {
             productTitle: product.title,
             productSlug: product.slug,
             yourBid: product.bids[0].amount,
-            newHighestBid: amount,
+            newHighestBid: currentBid,
           });
         }
       }
 
-      // 3. Notify seller
+      // 3. Notify seller of new bid (always send, regardless of who wins)
       if (product.seller?.email && product.sellerId !== bidderId) {
+        const bidCount = product.bids.length + 1; // Current bids + this new one
         await this.emailService.sendBidPlacedEmail({
           toEmail: product.seller.email,
           toName: product.seller.name,
           productTitle: product.title,
           productSlug: product.slug,
-          bidAmount: amount,
-          currentPrice: amount,
+          bidAmount: currentBid,
+          bidCount: bidCount,
         });
       }
     } catch (error) {
@@ -221,7 +265,7 @@ export class BidsService {
     // For guests, only return highestBidder info
     if (!isAuthenticated) {
       const product = await this.bidsRepository.findProductById(productId);
-      
+
       if (!product) {
         throw new NotFoundException('Product not found');
       }
@@ -280,7 +324,10 @@ export class BidsService {
   }
 
   async checkUserParticipation(productId: string, userId: string) {
-    const bids = await this.bidsRepository.findUserBidsForProduct(userId, productId);
+    const bids = await this.bidsRepository.findUserBidsForProduct(
+      userId,
+      productId,
+    );
     const product = await this.bidsRepository.findProductById(productId);
 
     if (!product) {
