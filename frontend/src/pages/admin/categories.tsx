@@ -9,6 +9,7 @@ import { categoriesApi, type CreateCategoryData } from "@/lib";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types";
 
+// CategoriesManagement Page
 export function CategoriesManagement() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
