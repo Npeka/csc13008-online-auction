@@ -55,6 +55,34 @@ export class UsersService {
     return user;
   }
 
+  async getMaskedProfile(userId: string) {
+    const user = await this.usersRepository.findPublicProfile(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Mask the name
+    const maskedName = this.maskName(user.name);
+
+    return {
+      id: user.id,
+      name: maskedName,
+      avatar: user.avatar,
+      role: user.role,
+      rating: user.rating,
+      ratingCount: user.ratingCount,
+    };
+  }
+
+  private maskName(name: string): string {
+    if (name.length <= 4) {
+      return '****';
+    }
+    const lastPart = name.slice(-4);
+    return `****${lastPart}`;
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.usersRepository.update(userId, {
       ...(dto.name && { name: dto.name }),
@@ -86,6 +114,27 @@ export class UsersService {
         total: totalCount,
         percentage: Math.round(percentage),
       },
+    };
+  }
+
+  async getUserCounts(userId: string) {
+    const [productsCount, watchlistCount, biddingCount, wonCount] =
+      await Promise.all([
+        // My products count
+        this.usersRepository.countUserProducts(userId),
+        // Watchlist count
+        this.usersRepository.countUserWatchlist(userId),
+        // My bidding count
+        this.usersRepository.countUserBidding(userId),
+        // Won auctions count
+        this.usersRepository.countUserWonAuctions(userId),
+      ]);
+
+    return {
+      products: productsCount,
+      watchlist: watchlistCount,
+      bidding: biddingCount,
+      won: wonCount,
     };
   }
 

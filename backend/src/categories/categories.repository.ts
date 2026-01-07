@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProductStatus } from '@prisma/client';
 
 @Injectable()
 export class CategoriesRepository {
@@ -14,14 +14,22 @@ export class CategoriesRepository {
           include: {
             ...(includeProducts && {
               _count: {
-                select: { products: true },
+                select: {
+                  products: {
+                    where: { status: ProductStatus.ACTIVE },
+                  },
+                },
               },
             }),
           },
         },
         ...(includeProducts && {
           _count: {
-            select: { products: true },
+            select: {
+              products: {
+                where: { status: ProductStatus.ACTIVE },
+              },
+            },
           },
         }),
       },
@@ -36,7 +44,11 @@ export class CategoriesRepository {
         parent: true,
         children: true,
         _count: {
-          select: { products: true },
+          select: {
+            products: {
+              where: { status: ProductStatus.ACTIVE },
+            },
+          },
         },
       },
     });
@@ -52,7 +64,11 @@ export class CategoriesRepository {
         parent: true,
         children: true,
         _count: {
-          select: { products: true },
+          select: {
+            products: {
+              where: { status: ProductStatus.ACTIVE },
+            },
+          },
         },
       },
     });

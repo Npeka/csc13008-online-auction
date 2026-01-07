@@ -43,6 +43,7 @@ model User {
 
   // Relations
   products         Product[]
+  highestBidProducts Product[]      @relation("HighestBidder")
   bids             Bid[]
   watchlist        Watchlist[]
   questions        Question[]

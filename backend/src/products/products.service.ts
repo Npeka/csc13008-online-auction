@@ -66,6 +66,8 @@ export class ProductsService {
       search,
       sortBy = 'newest',
       status = 'active',
+      minPrice,
+      maxPrice,
       page = 1,
       limit = 20,
     } = filters;
@@ -90,6 +92,17 @@ export class ProductsService {
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ];
+    }
+
+    // Price range filtering
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.currentPrice = {};
+      if (minPrice !== undefined) {
+        where.currentPrice.gte = minPrice;
+      }
+      if (maxPrice !== undefined) {
+        where.currentPrice.lte = maxPrice;
+      }
     }
 
     let orderBy: any = { createdAt: 'desc' };

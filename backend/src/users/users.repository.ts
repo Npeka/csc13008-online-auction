@@ -80,6 +80,7 @@ export class UsersRepository {
         ratingCount: true,
         emailVerified: true,
         allowNewBidders: true,
+        sellerExpiresAt: true,
         avatar: true,
         password: true,
         createdAt: true,
@@ -104,6 +105,7 @@ export class UsersRepository {
         ratingCount: true,
         emailVerified: true,
         allowNewBidders: true,
+        sellerExpiresAt: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -154,6 +156,9 @@ export class UsersRepository {
         role: true,
         rating: true,
         ratingCount: true,
+        emailVerified: true,
+        allowNewBidders: true,
+        sellerExpiresAt: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -448,5 +453,41 @@ export class UsersRepository {
       downgraded: expiredSellers.length,
       users: expiredSellers,
     };
+  }
+
+  async countUserProducts(userId: string): Promise<number> {
+    return this.prisma.product.count({
+      where: { sellerId: userId },
+    });
+  }
+
+  async countUserWatchlist(userId: string): Promise<number> {
+    return this.prisma.watchlist.count({
+      where: { userId },
+    });
+  }
+
+  async countUserBidding(userId: string): Promise<number> {
+    // Count unique products user has bid on (excluding won)
+    const products = await this.prisma.bid.findMany({
+      where: {
+        bidderId: userId,
+        product: {
+          status: 'ACTIVE',
+        },
+      },
+      select: { productId: true },
+      distinct: ['productId'],
+    });
+    return products.length;
+  }
+
+  async countUserWonAuctions(userId: string): Promise<number> {
+    return this.prisma.product.count({
+      where: {
+        status: 'ENDED',
+        highestBidderId: userId,
+      },
+    });
   }
 }

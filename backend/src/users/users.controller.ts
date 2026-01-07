@@ -43,6 +43,11 @@ export class UsersController {
     return this.usersService.getRatings(userId);
   }
 
+  @Get('me/counts')
+  getUserCounts(@GetUser('id') userId: string) {
+    return this.usersService.getUserCounts(userId);
+  }
+
   @Get('me/upgrade-requests')
   getUserUpgradeRequests(
     @GetUser('id') userId: string,
@@ -136,5 +141,11 @@ export class UsersController {
   @Get(':id/public')
   getPublicProfile(@Param('id') userId: string) {
     return this.usersService.getPublicProfile(userId);
+  }
+
+  @Public()
+  @Get(':id/public-masked')
+  getMaskedProfile(@Param('id') userId: string) {
+    return this.usersService.getMaskedProfile(userId);
   }
 }
