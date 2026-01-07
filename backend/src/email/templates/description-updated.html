@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>You've Been Outbid</title>
+    <title>Product Description Updated</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -51,7 +51,7 @@
             <tr>
               <td
                 style="
-                  background: linear-gradient(135deg, #f59e0b, #f97316);
+                  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
                   padding: 40px 30px;
                   text-align: center;
                 "
@@ -65,7 +65,7 @@
                     color: #ffffff;
                   "
                 >
-                  You've Been Outbid
+                  Product Description Updated
                 </h1>
               </td>
             </tr>
@@ -81,7 +81,7 @@
                     line-height: 1.6;
                   "
                 >
-                  Hi <strong>{{userName}}</strong>,
+                  Hi <strong>{{bidderName}}</strong>,
                 </p>
 
                 <p
@@ -92,8 +92,9 @@
                     line-height: 1.6;
                   "
                 >
-                  Someone has placed a higher bid on an item you're interested
-                  in. Act fast to stay in the game!
+                  The seller has updated the description of an item you're
+                  currently the highest bidder on. Review the changes to stay
+                  informed.
                 </p>
 
                 <!-- Product Info Box -->
@@ -119,7 +120,7 @@
                   </h2>
                   <table role="presentation" style="width: 100%">
                     <tr>
-                      <td style="padding: 8px 0; width: 50%">
+                      <td style="padding: 8px 0">
                         <span
                           style="
                             font-size: 14px;
@@ -127,41 +128,45 @@
                             display: block;
                           "
                         >
-                          Your Bid
+                          Your Current Bid
                         </span>
                         <span
                           style="
-                            font-size: 20px;
-                            font-weight: 600;
-                            color: #475569;
-                          "
-                        >
-                          {{yourBid}}
-                        </span>
-                      </td>
-                      <td style="padding: 8px 0; width: 50%">
-                        <span
-                          style="
-                            font-size: 14px;
-                            color: #64748b;
-                            display: block;
-                          "
-                        >
-                          Current Highest Bid
-                        </span>
-                        <span
-                          style="
-                            font-size: 20px;
+                            font-size: 24px;
                             font-weight: 700;
-                            color: #f97316;
+                            color: #10b981;
                             font-family: 'Poppins', sans-serif;
                           "
                         >
-                          {{newHighestBid}}
+                          {{currentBid}}
                         </span>
                       </td>
                     </tr>
                   </table>
+                </div>
+
+                <!-- Info Box -->
+                <div
+                  style="
+                    background-color: #e0f2fe;
+                    border-left: 4px solid #0ea5e9;
+                    border-radius: 4px;
+                    padding: 16px 20px;
+                    margin: 24px 0;
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 14px;
+                      color: #0c4a6e;
+                      line-height: 1.5;
+                    "
+                  >
+                    <strong>Stay informed:</strong> The seller may have added
+                    important details, clarifications, or updates about the
+                    item's condition.
+                  </p>
                 </div>
 
                 <!-- CTA Button -->
@@ -182,7 +187,7 @@
                           font-family: 'Poppins', sans-serif;
                         "
                       >
-                        Place Higher Bid
+                        View Updated Description
                       </a>
                     </td>
                   </tr>
@@ -196,7 +201,7 @@
                     line-height: 1.6;
                   "
                 >
-                  Don't miss out on this opportunity! Place a higher bid before
+                  Make sure you're comfortable with all product details before
                   the auction ends.
                 </p>
               </td>

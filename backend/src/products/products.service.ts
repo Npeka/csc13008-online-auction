@@ -14,6 +14,7 @@ import {
 } from './dto/product.dto';
 import { ProductStatus } from '@prisma/client';
 import { SystemService } from '../system/system.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class ProductsService {
@@ -21,6 +22,7 @@ export class ProductsService {
     private productsRepository: ProductsRepository,
     private systemService: SystemService,
     private bidsRepository: BidsRepository,
+    private emailService: EmailService,
   ) {}
 
   private generateSlug(title: string): string {
@@ -372,9 +374,36 @@ export class ProductsService {
 
 ${dto.additionalDescription}`;
 
-    return this.productsRepository.update(productId, {
+    const updatedProduct = await this.productsRepository.update(productId, {
       description: appendedDescription,
     });
+
+    // Send email to highest bidder (if exists)
+    if (product.highestBidderId && product.status === ProductStatus.ACTIVE) {
+      const highestBidder = await this.bidsRepository.findUser(
+        product.highestBidderId,
+      );
+      const currentBid = await this.bidsRepository.findHighestBid(productId);
+
+      if (highestBidder?.email && currentBid) {
+        this.emailService
+          .sendDescriptionUpdatedEmail({
+            toEmail: highestBidder.email,
+            toName: highestBidder.name,
+            productTitle: product.title,
+            productSlug: product.slug,
+            currentBid: currentBid.amount,
+          })
+          .catch((err) =>
+            console.error(
+              'Failed to send description updated email to highest bidder',
+              err,
+            ),
+          );
+      }
+    }
+
+    return updatedProduct;
   }
 
   async remove(productId: string) {

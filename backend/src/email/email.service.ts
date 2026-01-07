@@ -360,6 +360,46 @@ export class EmailService {
   }
 
   /**
+   * Send description updated notification to highest bidder
+   */
+  async sendDescriptionUpdatedEmail(data: {
+    toEmail: string;
+    toName: string;
+    productTitle: string;
+    productSlug: string;
+    currentBid: number;
+  }): Promise<void> {
+    try {
+      const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/products/${data.productSlug}`;
+      const { subject, html } = EmailTemplates.descriptionUpdatedEmail({
+        bidderName: data.toName,
+        productTitle: data.productTitle,
+        currentBid: this.formatCurrency(data.currentBid),
+        productUrl,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [{ email: data.toEmail, name: data.toName }];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      this.logger.log(
+        `Description updated notification sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send description updated email to ${data.toEmail}`,
+        error,
+      );
+    }
+  }
+
+  /**
    * Send bidder rejected notification
    */
   async sendBidderRejectedEmail(data: {
@@ -473,6 +513,52 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send auction ended email to ${data.toEmail}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send auction ended notification to seller
+   */
+  async sendSellerAuctionEndedEmail(data: {
+    toEmail: string;
+    toName: string;
+    productTitle: string;
+    finalPrice: number;
+    winnerName: string;
+    bidCount: number;
+    orderId: string;
+    hasWinner: boolean;
+  }): Promise<void> {
+    try {
+      const orderUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/orders/${data.orderId}`;
+      const { subject, html } = EmailTemplates.sellerAuctionEndedEmail({
+        sellerName: data.toName,
+        productTitle: data.productTitle,
+        finalPrice: this.formatCurrency(data.finalPrice),
+        winnerName: data.winnerName,
+        bidCount: data.bidCount.toString(),
+        orderUrl,
+        hasWinner: data.hasWinner,
+      });
+
+      const sendSmtpEmail = new SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.sender = {
+        name: this.fromName,
+        email: this.fromEmail,
+      };
+      sendSmtpEmail.to = [{ email: data.toEmail, name: data.toName }];
+
+      const result = await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      this.logger.log(
+        `Seller auction ended email sent to ${data.toEmail} - Message ID: ${result.body.messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send seller auction ended email to ${data.toEmail}`,
         error,
       );
     }

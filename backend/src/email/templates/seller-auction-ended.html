@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>You've Been Outbid</title>
+    <title>Your Auction Has Ended</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -51,7 +51,7 @@
             <tr>
               <td
                 style="
-                  background: linear-gradient(135deg, #f59e0b, #f97316);
+                  background: linear-gradient(135deg, #10b981, #3b82f6);
                   padding: 40px 30px;
                   text-align: center;
                 "
@@ -65,7 +65,7 @@
                     color: #ffffff;
                   "
                 >
-                  You've Been Outbid
+                  {{title}}
                 </h1>
               </td>
             </tr>
@@ -81,7 +81,7 @@
                     line-height: 1.6;
                   "
                 >
-                  Hi <strong>{{userName}}</strong>,
+                  Hi <strong>{{sellerName}}</strong>,
                 </p>
 
                 <p
@@ -92,8 +92,7 @@
                     line-height: 1.6;
                   "
                 >
-                  Someone has placed a higher bid on an item you're interested
-                  in. Act fast to stay in the game!
+                  {{message}}
                 </p>
 
                 <!-- Product Info Box -->
@@ -119,7 +118,7 @@
                   </h2>
                   <table role="presentation" style="width: 100%">
                     <tr>
-                      <td style="padding: 8px 0; width: 50%">
+                      <td style="padding: 8px 0">
                         <span
                           style="
                             font-size: 14px;
@@ -127,19 +126,44 @@
                             display: block;
                           "
                         >
-                          Your Bid
+                          Final Sale Price
                         </span>
                         <span
                           style="
-                            font-size: 20px;
+                            font-size: 24px;
+                            font-weight: 700;
+                            color: #10b981;
+                            font-family: 'Poppins', sans-serif;
+                          "
+                        >
+                          {{finalPrice}}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0">
+                        <span
+                          style="
+                            font-size: 14px;
+                            color: #64748b;
+                            display: block;
+                          "
+                        >
+                          Winner
+                        </span>
+                        <span
+                          style="
+                            font-size: 18px;
                             font-weight: 600;
                             color: #475569;
                           "
                         >
-                          {{yourBid}}
+                          {{winnerName}}
                         </span>
                       </td>
-                      <td style="padding: 8px 0; width: 50%">
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0">
                         <span
                           style="
                             font-size: 14px;
@@ -147,21 +171,44 @@
                             display: block;
                           "
                         >
-                          Current Highest Bid
+                          Total Bids Received
                         </span>
                         <span
                           style="
-                            font-size: 20px;
-                            font-weight: 700;
-                            color: #f97316;
-                            font-family: 'Poppins', sans-serif;
+                            font-size: 18px;
+                            font-weight: 600;
+                            color: #475569;
                           "
                         >
-                          {{newHighestBid}}
+                          {{bidCount}}
                         </span>
                       </td>
                     </tr>
                   </table>
+                </div>
+
+                <!-- Next Steps Box -->
+                <div
+                  style="
+                    background-color: #dbeafe;
+                    border-left: 4px solid #3b82f6;
+                    border-radius: 4px;
+                    padding: 16px 20px;
+                    margin: 24px 0;
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 14px;
+                      color: #1e3a8a;
+                      line-height: 1.5;
+                    "
+                  >
+                    <strong>Next Steps:</strong> The buyer will submit payment
+                    proof. Once received, you'll need to ship the item and upload
+                    shipping confirmation.
+                  </p>
                 </div>
 
                 <!-- CTA Button -->
@@ -169,7 +216,7 @@
                   <tr>
                     <td align="center">
                       <a
-                        href="{{productUrl}}"
+                        href="{{orderUrl}}"
                         style="
                           display: inline-block;
                           background-color: #f97316;
@@ -182,7 +229,7 @@
                           font-family: 'Poppins', sans-serif;
                         "
                       >
-                        Place Higher Bid
+                        Manage Order
                       </a>
                     </td>
                   </tr>
@@ -196,8 +243,8 @@
                     line-height: 1.6;
                   "
                 >
-                  Don't miss out on this opportunity! Place a higher bid before
-                  the auction ends.
+                  Congratulations on your successful sale! We'll notify you when
+                  the buyer submits payment.
                 </p>
               </td>
             </tr>

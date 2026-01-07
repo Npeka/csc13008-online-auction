@@ -456,4 +456,16 @@ export class BidsRepository {
       },
     });
   }
+
+  async findHighestBid(productId: string) {
+    return this.prisma.bid.findFirst({
+      where: {
+        productId,
+        isValid: true,
+      },
+      orderBy: {
+        amount: 'desc',
+      },
+    });
+  }
 }

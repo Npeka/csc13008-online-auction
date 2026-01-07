@@ -188,6 +188,30 @@ export class EmailTemplates {
   }
 
   /**
+   * Description Updated Notification Email Template
+   */
+  static descriptionUpdatedEmail(data: {
+    bidderName: string;
+    productTitle: string;
+    currentBid: string;
+    productUrl: string;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('description-updated.html', {
+      bidderName: data.bidderName,
+      productTitle: data.productTitle,
+      currentBid: data.currentBid,
+      productUrl: data.productUrl,
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: `Description updated for "${data.productTitle}" - ${this.BRAND_NAME}`,
+      html,
+    };
+  }
+
+  /**
    * Bidder Rejected Email Template
    */
   static bidderRejectedEmail(data: {
@@ -284,6 +308,43 @@ export class EmailTemplates {
 
     return {
       subject: `Your ${this.BRAND_NAME} Password Has Been Reset`,
+      html,
+    };
+  }
+
+  /**
+   * Seller Auction Ended Email Template
+   */
+  static sellerAuctionEndedEmail(data: {
+    sellerName: string;
+    productTitle: string;
+    finalPrice: string;
+    winnerName: string;
+    bidCount: string;
+    orderUrl: string;
+    hasWinner: boolean;
+  }): { subject: string; html: string } {
+    const html = this.loadTemplate('seller-auction-ended.html', {
+      sellerName: data.sellerName,
+      productTitle: data.productTitle,
+      finalPrice: data.finalPrice,
+      winnerName: data.winnerName,
+      bidCount: data.bidCount,
+      orderUrl: data.orderUrl,
+      title: data.hasWinner
+        ? '🎉 Your Auction Sold Successfully!'
+        : 'Your Auction Has Ended',
+      message: data.hasWinner
+        ? `Congratulations! Your auction for "${data.productTitle}" has ended with a winning bid of ${data.finalPrice}.`
+        : `Your auction for "${data.productTitle}" has ended without any bids. You can relist this item if you'd like.`,
+      brandName: this.BRAND_NAME,
+      currentYear: new Date().getFullYear().toString(),
+    });
+
+    return {
+      subject: data.hasWinner
+        ? `🎉 Auction Sold: "${data.productTitle}" - ${this.BRAND_NAME}`
+        : `Auction Ended: "${data.productTitle}" - ${this.BRAND_NAME}`,
       html,
     };
   }
