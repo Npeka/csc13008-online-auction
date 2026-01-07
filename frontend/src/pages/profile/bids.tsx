@@ -26,10 +26,10 @@ export function BidsPage() {
         const data = await bidsApi.getMyBiddingProducts();
         // Show active auctions AND ended auctions where user lost (not winning)
         const filteredBids = data.filter(
-          (product: BiddingProduct) =>
+          (product) =>
             product.status === "ACTIVE" ||
             (product.status === "ENDED" && !product.isHighestBidder),
-        );
+        ) as BiddingProduct[];
         setActiveBids(filteredBids);
       } catch (error) {
         console.error("Failed to fetch bids:", error);

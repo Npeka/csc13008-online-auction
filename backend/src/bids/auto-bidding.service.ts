@@ -71,150 +71,81 @@ export class AutoBiddingService {
           return;
         }
 
-        // 3. Resolution Algorithm
+        // 3. Resolution Algorithm - Proxy Bidding
+        // Rule: Bid the minimum amount needed to win, up to your maximum
         const currentPrice = product.currentPrice;
         const bidStep = product.bidStep;
+        const startPrice = product.startPrice;
         const highestBid = product.bids[0]; // Current highest bid
         const highestBidderId = highestBid?.bidderId;
-
-        // Filter valid competitors
-        // A competitor is an AutoBid that is NOT the current highest bidder
-        // OR the current highest bidder if they are being outbid by manual? No.
-        // We just look at who WANTS to bid.
-
-        // Sort autoBids by maxAmount DESC
-        // autoBids is already sorted by query
-
-        // Scenario:
-        // 1. Manual User A bids 100.
-        // 2. Auto User B (Max 200) sees this.
-        // 3. System bids 110 for B.
-
-        // Scenario:
-        // 1. Auto User A (Max 150) is winning at 100.
-        // 2. Auto User B (Max 200) joins.
-        // 3. System sees A(150) vs B(200).
-        // 4. B should win at 150 + step = 160.
-
-        // Let's identify the effective candidates.
-        // Candidates include:
-        // - The current winner (could be Manual or Auto)
-        // - All AutoBidders
-
-        // We primarily iterate through AutoBidders to see if anyone can beat the current price/winner.
 
         let winningBidderId = highestBidderId;
         let newPrice = currentPrice;
         let madeBid = false;
 
-        // Iterate through auto-bids to find the highest valid proxy
-        // Since they are sorted desc, the first one is the strongest.
-        // If strongest is already winning, check if we need to bump price against 2nd strongest.
+        // Sort auto-bids by maxAmount DESC, then by createdAt ASC (tie-breaking)
+        // Already sorted by query in DESC order
 
         const strongestAuto = autoBids[0];
 
-        if (strongestAuto.userId === highestBidderId) {
-          // Strongest is already winning.
-          // Check if there is a 2nd strongest auto-bid that forces the price up?
+        // Case 1: This is the FIRST bid (no one is winning yet)
+        if (!highestBidderId) {
+          // First autobid should start at the starting price
+          winningBidderId = strongestAuto.userId;
+          newPrice = startPrice;
+          madeBid = true;
+        }
+        // Case 2: Strongest is already winning
+        else if (strongestAuto.userId === highestBidderId) {
+          // Check if there is a 2nd strongest auto-bid that forces the price up
           if (autoBids.length > 1) {
             const secondStrongest = autoBids[1];
-            // If 2nd strongest max > current price, we must bump current price to outbid them.
-            if (secondStrongest.maxAmount >= currentPrice) {
-              // Price should be 2nd Max + Step, capped at 1st Max.
-              let calculatedPrice = secondStrongest.maxAmount + bidStep;
+            // If 2nd strongest max > current price, we must bump price
+            if (secondStrongest.maxAmount > currentPrice) {
+              // In proxy bidding, price goes to just enough to beat second bidder
+              // That's second bidder's max (they can't go higher)
+              // So winner pays: second bidder's max (not their max + step)
+              let calculatedPrice = secondStrongest.maxAmount;
+              
+              // But we still need to maintain the bid step increment
+              // So the actual price should be max(secondMax, currentPrice + step)
+              // Actually no - in the sample, when #2 (10.8M) bids against #1 (11M)
+              // The price becomes exactly 10.8M (not 10.9M)
+              
+              // This means: price = second bidder's maximum
+              // Cap at winner's max
               if (calculatedPrice > strongestAuto.maxAmount) {
                 calculatedPrice = strongestAuto.maxAmount;
               }
 
               if (calculatedPrice > currentPrice) {
                 newPrice = calculatedPrice;
-                madeBid = true; // Updates price but winner stays same
+                madeBid = true;
               }
             }
-          } else {
-            // Strongest is winning and no other auto-bids.
-            // But what if current price is lower than a previous manual competing bid (unlikely if logic works)
           }
-        } else {
-          // Strongest is NOT winning.
-          // Can they beat the current price?
-
-          // Need to calculate strict minimum to beat current env.
-          // Current Price + Step.
+        }
+        // Case 3: Strongest is NOT winning (someone else is winning)
+        else {
+          // Calculate minimum needed to win
           const minToWin = currentPrice + bidStep;
 
           if (strongestAuto.maxAmount >= minToWin) {
-            // Yes, they can bid.
             winningBidderId = strongestAuto.userId;
-            newPrice = minToWin;
             madeBid = true;
 
-            // NOW, check if the previous winner (if existing) was ALSO an auto-bidder?
-            // Or if there is a 2nd strongest auto-bidder.
-
-            // If previous winner was Manual, their limit is `currentPrice`. We beat them.
-            // If previous winner was Auto (but lower max), we need to jump to their max + step.
-
-            // Let's verify against the field.
-            // Find highest max among OTHERS (including previous winner if they had auto).
-            // But `autoBids` list contains ALL auto bids.
-
+            // Find the highest competing bid
+            // This could be the current winner OR the 2nd strongest auto-bidder
             const secondStrongest = autoBids.length > 1 ? autoBids[1] : null;
 
             if (secondStrongest) {
-              // The price is determined by the 2nd highest limit.
-              // Price = 2ndMax + Step.
-              let calculatedPrice = secondStrongest.maxAmount + bidStep;
-
-              // But maybe `currentPrice` (from manual bid) is higher than `2ndMax`?
-              // E.g. TopAuto=500. 2ndAuto=200. Manual=300.
-              // Price must beat Manual=300. So 310.
-              // Math.max(currentPrice, secondStrongest.maxAmount) + step?
-              // Wait, if Manual is 300, and 2ndAuto is 200. 2ndAuto is irrelevant.
-
-              // So "Competitor Barrier" = Math.max(currentPrice, secondStrongest.maxAmount).
-              // Actually, if TopAuto is NOT winning, then currentPrice IS the barrier from the current winner.
-              // And `secondStrongest` is another barrier.
-
+              // The barrier is the higher of: current price OR second auto-bidder's max
               const barrier = Math.max(currentPrice, secondStrongest.maxAmount);
-
-              // Wait, if currentPrice comes from TopAuto (logic error above), but here TopAuto is NOT winning.
-              // So `currentPrice` is set by someone else.
-
-              // If `secondStrongest` is the current winner?
-              // Then barrier is `secondStrongest.maxAmount`.
-
-              // Logic:
-              // Bidder = StrongestAuto.
-              // Price = Max(CurrentPrice, SecondStrongest?.maxAmount || 0) + Step.
-              // Cap at StrongestAuto.maxAmount.
-
-              let proposedPrice =
-                Math.max(currentPrice, secondStrongest.maxAmount) + bidStep;
-
-              // Corner case: If CurrentPrice == SecondStrongest.maxAmount (e.g. system jumped there previously),
-              // then we add step. Correct.
-
-              // But wait, if CurrentPrice is 100. SecondAuto is 200. Strongest is 500.
-              // We shouldn't bid 110. We should bid 210.
-              // Because SecondAuto would handle 100->110...200.
-              // So we jump straight to 210.
-
-              if (proposedPrice <= strongestAuto.maxAmount) {
-                newPrice = proposedPrice;
-              } else {
-                // Cannot beat the barrier + step?
-                // Can we match the barrier? or bid max?
-                // If max < barrier + step, we bid max.
-                newPrice = strongestAuto.maxAmount;
-              }
+              // Price = barrier + step (to beat them), capped at winner's max
+              newPrice = Math.min(barrier + bidStep, strongestAuto.maxAmount);
             } else {
-              // No other auto bidders.
-              // Just beat current price.
-              newPrice = currentPrice + bidStep;
-              if (newPrice > strongestAuto.maxAmount) {
-                newPrice = strongestAuto.maxAmount; // Should not happen if check passed
-              }
+              // No other auto-bidders, just beat current price
+              newPrice = Math.min(currentPrice + bidStep, strongestAuto.maxAmount);
             }
           }
         }
