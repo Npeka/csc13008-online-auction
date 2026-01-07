@@ -261,6 +261,32 @@ export class BidsRepository {
     });
   }
 
+  async findUserBidsForProducts(userId: string, productIds: string[]) {
+    return this.prisma.bid.findMany({
+      where: {
+        bidderId: userId,
+        productId: { in: productIds },
+        isValid: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: productIds.length, // One bid per product
+      distinct: ['productId'],
+    });
+  }
+
+  async findUserAutoBidsForProducts(userId: string, productIds: string[]) {
+    return this.prisma.autoBid.findMany({
+      where: {
+        userId,
+        productId: { in: productIds },
+      },
+      select: {
+        productId: true,
+        maxAmount: true,
+      },
+    });
+  }
+
   async findUserWonProducts(userId: string) {
     // Note: Complex filtering logic originally in service is better kept in service
     // Repository just fetches the candidates
@@ -407,10 +433,7 @@ export class BidsRepository {
     });
   }
 
-  async findAutoBidByUserAndProduct(
-    userId: string,
-    productId: string,
-  ) {
+  async findAutoBidByUserAndProduct(userId: string, productId: string) {
     return this.prisma.autoBid.findUnique({
       where: {
         userId_productId: {

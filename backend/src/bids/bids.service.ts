@@ -408,13 +408,25 @@ export class BidsService {
     const productIds =
       await this.bidsRepository.findUserBiddingProductIds(userId);
 
-    const products = await this.bidsRepository.findProductsByIds(productIds);
+    const [products, userBids, userAutoBids] = await Promise.all([
+      this.bidsRepository.findProductsByIds(productIds),
+      this.bidsRepository.findUserBidsForProducts(userId, productIds),
+      this.bidsRepository.findUserAutoBidsForProducts(userId, productIds),
+    ]);
+
+    // Create maps for quick lookup
+    const userBidMap = new Map(userBids.map((b) => [b.productId, b.amount]));
+    const userAutoBidMap = new Map(
+      userAutoBids.map((ab) => [ab.productId, ab.maxAmount]),
+    );
 
     return products.map((p) => ({
       ...p,
       bidCount: p._count.bids,
       isHighestBidder: p.bids[0]?.bidder.id === userId,
       currentBid: p.bids[0]?.amount,
+      userBid: userBidMap.get(p.id) || null,
+      userMaxBid: userAutoBidMap.get(p.id) || null,
     }));
   }
 

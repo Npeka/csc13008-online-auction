@@ -11,6 +11,8 @@ import type { Product } from "@/types";
 interface BiddingProduct extends Product {
   isHighestBidder: boolean;
   currentBid: number;
+  userBid: number | null;
+  userMaxBid: number | null;
 }
 
 export function BidsPage() {
@@ -141,14 +143,14 @@ export function BidsPage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-text-muted">Your Bid</p>
+                      <p className="text-xs text-text-muted">Your Max Bid</p>
                       <p
                         className={cn(
                           "text-lg font-bold",
                           isActive && isWinning ? "text-success" : "text-text",
                         )}
                       >
-                        {formatUSD(product.currentBid)}
+                        {formatUSD(product.userMaxBid || product.userBid || 0)}
                       </p>
                     </div>
                   </div>
