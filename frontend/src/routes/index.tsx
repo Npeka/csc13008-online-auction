@@ -10,13 +10,7 @@ import {
 } from "@/pages/auth";
 import { HomePage } from "@/pages/home";
 import { ProductDetailPage, ProductListingPage } from "@/pages/products";
-import {
-  BidsPage,
-  ProfilePage,
-  RatingsPage,
-  WatchlistPage,
-  WonPage,
-} from "@/pages/profile";
+import { BidsPage, ProfilePage, WatchlistPage, WonPage } from "@/pages/profile";
 
 const router = createBrowserRouter([
   // Main Layout
@@ -43,13 +37,11 @@ const router = createBrowserRouter([
       { path: "profile/watchlist", Component: WatchlistPage },
       { path: "profile/bids", Component: BidsPage },
       { path: "profile/won", Component: WonPage },
-      { path: "profile/ratings", Component: RatingsPage },
       {
-        path: "profile/ratings-received",
+        path: "profile/ratings",
         async lazy() {
-          const { RatingsReceivedPage } = await import(
-            "@/pages/profile/ratings-received"
-          );
+          const { RatingsReceivedPage } =
+            await import("@/pages/profile/ratings-received");
           return { Component: RatingsReceivedPage };
         },
       },

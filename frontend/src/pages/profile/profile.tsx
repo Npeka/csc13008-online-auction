@@ -12,12 +12,14 @@ import { StatsGrid } from "@/components/profile/StatsGrid";
 import { UpgradeBanner } from "@/components/profile/UpgradeBanner";
 import { UpgradeRequestModal } from "@/components/shared/upgrade-request-modal";
 import { useAuthStore } from "@/stores/auth-store";
+import { useCountsStore } from "@/stores/counts-store";
 import { usersApi } from "@/lib/users-api";
 import { useProfile } from "@/hooks/use-profile";
 
 export function ProfilePage() {
   const { isAuthenticated } = useAuthStore();
   const { data: user, isLoading, error } = useProfile();
+  const { bidding, won, watchlist } = useCountsStore();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const handleUpgradeRequest = async (reason: string) => {
@@ -50,19 +52,19 @@ export function ProfilePage() {
   const stats = [
     {
       label: "Active Bids",
-      value: 5,
+      value: bidding,
       icon: <Gavel className="h-5 w-5" />,
       href: "/profile/bids",
     },
     {
       label: "Won Auctions",
-      value: 12,
+      value: won,
       icon: <Trophy className="h-5 w-5" />,
       href: "/profile/won",
     },
     {
       label: "Watchlist",
-      value: 8,
+      value: watchlist,
       icon: <Heart className="h-5 w-5" />,
       href: "/profile/watchlist",
     },

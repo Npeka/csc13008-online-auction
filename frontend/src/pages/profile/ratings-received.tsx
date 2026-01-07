@@ -4,7 +4,6 @@ import { Star, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { ratingsApi, type Rating, type RatingSummary } from "@/lib/ratings-api";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -51,14 +50,9 @@ export function RatingsReceivedPage() {
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/profile")}
-            className="mb-4"
-          >
-            ← Back to Profile
-          </Button>
-          <h1 className="text-3xl font-bold text-text">Ratings I've Received</h1>
+          <h1 className="text-3xl font-bold text-text">
+            Ratings I've Received
+          </h1>
           <p className="mt-2 text-text-muted">
             See what others have said about their experience with you
           </p>
@@ -71,7 +65,9 @@ export function RatingsReceivedPage() {
               <div className="mb-2 flex items-center justify-center">
                 <Star className="h-6 w-6 fill-warning text-warning" />
               </div>
-              <p className="text-3xl font-bold text-text">{summary.percentage}%</p>
+              <p className="text-3xl font-bold text-text">
+                {summary.percentage}%
+              </p>
               <p className="text-sm text-text-muted">Positive Rating</p>
             </div>
             <div className="text-center">
@@ -85,14 +81,18 @@ export function RatingsReceivedPage() {
               <div className="mb-2 flex items-center justify-center">
                 <ThumbsUp className="h-6 w-6 text-success" />
               </div>
-              <p className="text-3xl font-bold text-success">{summary.positive}</p>
+              <p className="text-3xl font-bold text-success">
+                {summary.positive}
+              </p>
               <p className="text-sm text-text-muted">Positive</p>
             </div>
             <div className="text-center">
               <div className="mb-2 flex items-center justify-center">
                 <ThumbsDown className="h-6 w-6 text-error" />
               </div>
-              <p className="text-3xl font-bold text-error">{summary.negative}</p>
+              <p className="text-3xl font-bold text-error">
+                {summary.negative}
+              </p>
               <p className="text-sm text-text-muted">Negative</p>
             </div>
           </div>
@@ -139,12 +139,16 @@ export function RatingsReceivedPage() {
                         {rating.rating === 1 ? (
                           <div className="flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-success">
                             <ThumbsUp className="h-4 w-4" />
-                            <span className="text-sm font-medium">Positive</span>
+                            <span className="text-sm font-medium">
+                              Positive
+                            </span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1 rounded-full bg-error/10 px-3 py-1 text-error">
                             <ThumbsDown className="h-4 w-4" />
-                            <span className="text-sm font-medium">Negative</span>
+                            <span className="text-sm font-medium">
+                              Negative
+                            </span>
                           </div>
                         )}
                       </div>
@@ -166,4 +170,3 @@ export function RatingsReceivedPage() {
     </div>
   );
 }
-
