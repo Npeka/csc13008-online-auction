@@ -7,6 +7,11 @@ export const ordersApi = {
     return await apiClient.get(`/orders/${orderId}`);
   },
 
+  // Get order by product ID
+  getOrderByProductId: async (productId: string): Promise<Order> => {
+    return await apiClient.get(`/orders/product/${productId}`);
+  },
+
   // Get my orders
   getMyOrders: async (): Promise<Order[]> => {
     return await apiClient.get("/orders/my-orders");
@@ -15,7 +20,7 @@ export const ordersApi = {
   // Submit payment (Buyer)
   submitPayment: async (
     orderId: string,
-    data: { paymentProof?: string; shippingAddress: string },
+    data: { paymentProof: string; shippingAddress: string },
   ): Promise<Order> => {
     return await apiClient.patch(`/orders/${orderId}/payment`, data);
   },
@@ -23,7 +28,7 @@ export const ordersApi = {
   // Confirm shipping (Seller)
   confirmShipping: async (
     orderId: string,
-    data: { shippingReceipt: string },
+    data: { shippingProof: string; trackingNumber?: string },
   ): Promise<Order> => {
     return await apiClient.patch(`/orders/${orderId}/shipping`, data);
   },

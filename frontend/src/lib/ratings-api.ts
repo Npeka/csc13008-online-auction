@@ -38,6 +38,16 @@ export const ratingsApi = {
   },
 
   /**
+   * Update an existing rating
+   */
+  async updateRating(
+    ratingId: string,
+    data: { rating: number; comment?: string },
+  ): Promise<Rating> {
+    return await apiClient.patch(`/ratings/${ratingId}`, data);
+  },
+
+  /**
    * Get ratings for a specific user
    */
   async getUserRatings(userId: string): Promise<{
@@ -52,5 +62,15 @@ export const ratingsApi = {
    */
   async getMyRatingSummary(): Promise<RatingSummary> {
     return await apiClient.get("/ratings/me/summary");
+  },
+
+  /**
+   * Get ratings received by me
+   */
+  async getMyReceivedRatings(): Promise<{
+    ratings: Rating[];
+    summary: RatingSummary;
+  }> {
+    return await apiClient.get("/ratings/me/received");
   },
 };

@@ -48,3 +48,48 @@ export async function uploadImage(file: File): Promise<string> {
 export async function uploadImages(files: File[]): Promise<string[]> {
   return Promise.all(files.map(uploadImage));
 }
+
+/**
+ * Upload order-related images (payment proof or shipping receipt)
+ */
+export async function uploadOrderImage(
+  file: File,
+  type: "payment" | "shipping",
+): Promise<string> {
+  // 1. Validate file type
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Invalid file type. Please upload an image.");
+  }
+
+  // 2. Validate file size (e.g. 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("File size too large. Max 5MB.");
+  }
+
+  // 3. Generate unique filename with type prefix
+  const extension = file.name.split(".").pop();
+  const filename = `${type}-${Date.now()}-${generateId()}.${extension}`;
+  const filePath = `${filename}`;
+
+  // 4. Upload to orders bucket in Supabase Storage
+  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/orders/${filePath}`;
+
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": file.type,
+      "x-upsert": "true",
+    },
+    body: file,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to upload image");
+  }
+
+  // 5. Return public URL
+  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/orders/${filePath}`;
+  return publicUrl;
+}
