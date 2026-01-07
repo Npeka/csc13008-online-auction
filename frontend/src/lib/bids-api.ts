@@ -12,15 +12,31 @@ export interface MaskedBid extends Omit<Bid, "bidder"> {
 
 export const bidsApi = {
   // Place a bid
-  placeBid: async (
-    productId: string,
-    amount: number,
-    maxAmount?: number,
-  ): Promise<Bid> => {
+  placeBid: async (productId: string, maxAmount: number): Promise<Bid> => {
     return await apiClient.post(`/bids/products/${productId}`, {
-      amount,
       maxAmount,
     });
+  },
+
+  getUserAutoBid: async (
+    productId: string,
+  ): Promise<{ maxAmount: number } | null> => {
+    try {
+      return await apiClient.get(`/bids/products/${productId}/my-auto-bid`);
+    } catch (error) {
+      // If 404 or error, user doesn't have an auto-bid
+      return null;
+    }
+  },
+
+  checkUserParticipation: async (
+    productId: string,
+  ): Promise<{
+    participated: boolean;
+    isWinner: boolean;
+    bidCount: number;
+  }> => {
+    return await apiClient.get(`/bids/products/${productId}/my-participation`);
   },
 
   // Get bid history (with masked names)

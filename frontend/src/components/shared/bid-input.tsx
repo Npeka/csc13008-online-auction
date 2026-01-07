@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle, Minus, Plus } from "lucide-react";
+import { AlertTriangle, CheckCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn, formatUSD, hasGoodRating } from "@/lib/utils";
 
@@ -10,11 +8,12 @@ export interface BidInputProps {
   currentPrice: number;
   bidStep: number;
   minimumBid: number;
-  onPlaceBid: (amount: number, maxAmount?: number) => void;
+  onPlaceBid: (maxAmount: number) => void;
   isLoading?: boolean;
   disabled?: boolean;
   userRating?: { positive: number; total: number };
   allowNewBidders?: boolean;
+  currentMaxBid?: number; // User's current max bid if they already have one
   className?: string;
 }
 
@@ -27,12 +26,15 @@ export function BidInput({
   disabled = false,
   userRating,
   allowNewBidders = true,
+  currentMaxBid,
   className,
 }: BidInputProps) {
-  const [bidAmount, setBidAmount] = useState(minimumBid);
-  const [isAutoBid, setIsAutoBid] = useState(false);
-  const [maxBidAmount, setMaxBidAmount] = useState(minimumBid + bidStep * 5); // Default to reasonable start
+  const [maxBidAmount, setMaxBidAmount] = useState(
+    currentMaxBid || minimumBid + bidStep * 5,
+  );
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showIncreaseModal, setShowIncreaseModal] = useState(false);
+  const [increaseAmount, setIncreaseAmount] = useState(bidStep * 5);
 
   const hasNoRatings = !userRating || userRating.total === 0;
   const hasGoodRatingScore = userRating
@@ -41,31 +43,94 @@ export function BidInput({
 
   // Check if user can bid based on rating and allowNewBidders
   const canBidRating = hasNoRatings ? allowNewBidders : hasGoodRatingScore;
-  const isValidBid = bidAmount >= minimumBid;
-  const isValidMaxBid = !isAutoBid || maxBidAmount >= bidAmount;
-
-  const handleIncrement = () => {
-    setBidAmount((prev) => prev + bidStep);
-  };
-
-  const handleDecrement = () => {
-    setBidAmount((prev) => Math.max(minimumBid, prev - bidStep));
-  };
+  const isValidMaxBid = maxBidAmount >= minimumBid;
 
   const handleSubmit = () => {
-    if (isValidBid && isValidMaxBid && canBidRating) {
+    if (isValidMaxBid && canBidRating) {
       setShowConfirmation(true);
     }
   };
 
   const handleConfirm = () => {
     setShowConfirmation(false);
-    onPlaceBid(bidAmount, isAutoBid ? maxBidAmount : undefined);
+    onPlaceBid(maxBidAmount);
   };
 
   const handleCancel = () => {
     setShowConfirmation(false);
   };
+
+  const handleIncreaseMax = () => {
+    if (currentMaxBid) {
+      setShowIncreaseModal(true);
+    }
+  };
+
+  const handleConfirmIncrease = () => {
+    const newMaxBid = (currentMaxBid || 0) + increaseAmount;
+    setMaxBidAmount(newMaxBid);
+    setShowIncreaseModal(false);
+    onPlaceBid(newMaxBid);
+  };
+
+  // Increase max bid modal
+  if (showIncreaseModal) {
+    return (
+      <div className={cn("space-y-4", className)}>
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <h3 className="mb-2 font-semibold text-text">Increase Your Max Bid</h3>
+          <p className="mb-1 text-sm text-text-muted">Current Max Bid:</p>
+          <p className="mb-3 text-2xl font-bold text-text">
+            {formatUSD(currentMaxBid || 0)}
+          </p>
+
+          <div className="mb-3">
+            <label className="mb-1 block text-sm text-text-muted">
+              Increase Amount
+            </label>
+            <div className="relative">
+              <span className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted">
+                $
+              </span>
+              <Input
+                type="number"
+                value={increaseAmount}
+                onChange={(e) => setIncreaseAmount(Number(e.target.value))}
+                min={bidStep}
+                step={bidStep}
+                className="pl-8 text-lg font-semibold"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-bg-secondary p-3">
+            <p className="text-sm text-text-muted">New Max Bid:</p>
+            <p className="text-xl font-bold text-primary">
+              {formatUSD((currentMaxBid || 0) + increaseAmount)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowIncreaseModal(false)}
+            className="flex-1"
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmIncrease}
+            className="flex-1"
+            isLoading={isLoading}
+          >
+            Confirm Increase
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Confirmation view
   if (showConfirmation) {
@@ -73,26 +138,25 @@ export function BidInput({
       <div className={cn("space-y-4", className)}>
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-center">
           <CheckCircle className="mx-auto mb-2 h-8 w-8 text-primary" />
-          <h3 className="mb-1 font-semibold text-text">Confirm Your Bid</h3>
+          <h3 className="mb-1 font-semibold text-text">Confirm Your Max Bid</h3>
           <p className="text-sm text-text-muted">
-            You are about to place a bid of
+            Your maximum bid amount will be
           </p>
           <p className="my-2 text-2xl font-bold text-primary">
-            {formatUSD(bidAmount)}
+            {formatUSD(maxBidAmount)}
           </p>
 
-          {isAutoBid && (
-            <div className="mt-2 text-sm">
-              <p className="text-text-muted">with an Auto-Bid Limit of</p>
-              <p className="text-lg font-semibold text-primary">
-                {formatUSD(maxBidAmount)}
-              </p>
-            </div>
-          )}
+          <div className="mt-3 rounded-lg bg-bg-secondary p-3 text-left text-sm">
+            <p className="font-medium text-text">How it works:</p>
+            <ul className="mt-2 space-y-1 text-text-muted">
+              <li>• We'll bid the minimum amount needed to make you the highest bidder</li>
+              <li>• If someone outbids you, we'll automatically bid again up to your max</li>
+              <li>• You'll only pay the final winning amount, not your max bid</li>
+            </ul>
+          </div>
 
-          <p className="mt-2 text-xs text-text-muted">
-            This action cannot be undone. By confirming, you agree to purchase
-            this item if you win.
+          <p className="mt-3 text-xs text-text-muted">
+            By confirming, you agree to purchase this item if you win.
           </p>
         </div>
 
@@ -117,6 +181,56 @@ export function BidInput({
     );
   }
 
+  // If user already has a max bid, show it with increase option
+  if (currentMaxBid && currentMaxBid >= minimumBid) {
+    return (
+      <div className={cn("space-y-4", className)}>
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm font-medium text-text">Your Current Max Bid</p>
+            <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-white">
+              Active
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-bold text-primary">
+              {formatUSD(currentMaxBid)}
+            </p>
+            <Button
+              onClick={handleIncreaseMax}
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              disabled={disabled || isLoading}
+            >
+              <Plus className="h-4 w-4" />
+              Increase
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-text-muted">
+            {currentMaxBid > currentPrice
+              ? "Your auto-bid is active and will continue bidding up to this amount."
+              : "Your max bid is below the current price. Increase it to stay in the auction."}
+          </p>
+        </div>
+
+        <div className="rounded-lg bg-bg-secondary p-3 text-sm">
+          <p className="font-medium text-text">Current Status:</p>
+          <div className="mt-2 space-y-1 text-text-muted">
+            <p>Current Bid: {formatUSD(currentPrice)}</p>
+            <p>Your Max: {formatUSD(currentMaxBid)}</p>
+            {currentMaxBid > currentPrice && (
+              <p className="text-primary">
+                ✓ You're still in the running!
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // New bid form
   return (
     <div className={cn("space-y-4", className)}>
       {/* Current bid info */}
@@ -144,176 +258,63 @@ export function BidInput({
         </div>
       )}
 
-      {/* Bid input */}
+      {/* Max Bid Input */}
       <div className="space-y-4">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-text">
-            Your Bid
-          </label>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDecrement}
-              disabled={disabled || bidAmount <= minimumBid}
-              className={cn(
-                "cursor-pointer rounded-lg border border-border p-2 transition-colors",
-                "hover:bg-bg-secondary disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-            >
-              <Minus className="h-5 w-5" />
-            </button>
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <div className="mb-3">
+            <h3 className="mb-1 font-semibold text-text">Automatic Bidding</h3>
+            <p className="text-xs text-text-muted">
+              Enter your maximum bid and we'll automatically bid for you to get the best price
+            </p>
+          </div>
 
-            <div className="relative flex-1">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-text">
+              Your Maximum Bid
+            </label>
+            <div className="relative">
               <span className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted">
                 $
               </span>
-              <input
+              <Input
                 type="number"
-                value={bidAmount}
-                onChange={(e) =>
-                  setBidAmount(Math.max(minimumBid, Number(e.target.value)))
-                }
+                value={maxBidAmount}
+                onChange={(e) => setMaxBidAmount(Number(e.target.value))}
                 disabled={disabled}
                 min={minimumBid}
                 step={bidStep}
                 className={cn(
-                  "w-full rounded-lg py-3 pr-4 pl-8 text-center text-lg font-bold",
-                  "border border-border bg-bg-card text-text",
-                  "focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                  !isValidBid && "border-error",
+                  "pl-8 text-lg font-semibold",
+                  !isValidMaxBid && "border-error focus:ring-error",
                 )}
               />
             </div>
-
-            <button
-              onClick={handleIncrement}
-              disabled={disabled}
-              className={cn(
-                "cursor-pointer rounded-lg border border-border p-2 transition-colors",
-                "hover:bg-bg-secondary disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-            >
-              <Plus className="h-5 w-5" />
-            </button>
-          </div>
-          {/* Minimum bid hint */}
-          <p className="mt-1 text-xs text-text-muted">
-            Minimum bid: {formatUSD(minimumBid)}
-          </p>
-        </div>
-
-        {/* Auto Bid Toggle */}
-        <div className="space-y-3 rounded-lg border border-border bg-bg-secondary/20 p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="auto-bid-mode"
-                checked={isAutoBid}
-                onCheckedChange={setIsAutoBid}
-                disabled={disabled}
-              />
-              <Label
-                htmlFor="auto-bid-mode"
-                className="cursor-pointer font-medium"
-              >
-                Place Automatic Bid
-              </Label>
-            </div>
-            {isAutoBid && (
-              <span className="animate-pulse text-xs font-medium text-primary">
-                Active
-              </span>
-            )}
+            <p className="mt-1 text-xs text-text-muted">
+              Minimum: {formatUSD(minimumBid)}
+            </p>
           </div>
 
-          {isAutoBid && (
-            <div className="animate-in slide-in-from-top-2 duration-200">
-              <label className="mb-1 block text-sm text-text-muted">
-                Max Bid Limit
-              </label>
-              <div className="relative">
-                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted">
-                  $
-                </span>
-                <Input
-                  type="number"
-                  value={maxBidAmount}
-                  onChange={(e) => setMaxBidAmount(Number(e.target.value))}
-                  min={bidAmount}
-                  step={bidStep}
-                  className={cn(
-                    "pl-8 text-lg font-semibold",
-                    !isValidMaxBid && "border-error focus:ring-error",
-                  )}
-                />
-              </div>
-              {!isValidMaxBid && (
-                <p className="mt-1 text-xs text-error">
-                  Max bid must be greater than or equal to your bid amount.
-                </p>
-              )}
-              <p className="mt-2 text-xs text-text-muted">
-                We will automatically bid for you up to this amount.
-              </p>
-            </div>
-          )}
+          <div className="mt-3 rounded-lg bg-bg-card p-3 text-xs text-text-muted">
+            <p className="font-medium text-text">How it works:</p>
+            <ul className="mt-1 space-y-0.5">
+              <li>• We place the minimum bid needed to make you the highest bidder</li>
+              <li>• If outbid, we automatically bid again (up to your max)</li>
+              <li>• You only pay the final amount, not your max bid</li>
+            </ul>
+          </div>
         </div>
       </div>
 
       {/* Place bid button */}
       <Button
         onClick={handleSubmit}
-        disabled={
-          disabled ||
-          !isValidBid ||
-          !isValidMaxBid ||
-          !canBidRating ||
-          isLoading
-        }
+        disabled={disabled || !isValidMaxBid || !canBidRating || isLoading}
         isLoading={isLoading}
         className="w-full"
         size="lg"
       >
-        Place Bid {formatUSD(bidAmount)}
+        Place Automatic Bid
       </Button>
-    </div>
-  );
-}
-
-// Quick Bid Buttons
-export function QuickBidButtons({
-  minimumBid,
-  bidStep,
-  onSelectAmount,
-  className,
-}: {
-  minimumBid: number;
-  bidStep: number;
-  onSelectAmount: (amount: number) => void;
-  className?: string;
-}) {
-  const quickAmounts = [
-    minimumBid,
-    minimumBid + bidStep,
-    minimumBid + bidStep * 2,
-    minimumBid + bidStep * 5,
-  ];
-
-  return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
-      {quickAmounts.map((amount) => (
-        <button
-          key={amount}
-          onClick={() => onSelectAmount(amount)}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-sm font-medium",
-            "border border-border hover:border-primary hover:text-primary",
-            "cursor-pointer transition-colors",
-          )}
-        >
-          {formatUSD(amount)}
-        </button>
-      ))}
     </div>
   );
 }
