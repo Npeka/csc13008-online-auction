@@ -127,6 +127,26 @@ export class AuctionScheduler {
         );
       }
 
+      // Send email to seller
+      try {
+        await this.emailService.sendSellerAuctionEndedEmail({
+          toEmail: product.seller.email,
+          toName: product.seller.name,
+          productTitle: product.title,
+          finalPrice: highestBid.amount,
+          winnerName: this.maskName(winner.name),
+          bidCount: product.bids.length,
+          orderId: order.id,
+          hasWinner: true,
+        });
+        this.logger.log(`Seller notification sent to ${product.seller.email}`);
+      } catch (emailError) {
+        this.logger.error(
+          `Failed to send seller email to ${product.seller.email}`,
+          emailError,
+        );
+      }
+
       // Send emails to non-winners (all other bidders)
       const nonWinners = product.bids.slice(1); // Skip first (winner)
 
@@ -155,10 +175,32 @@ export class AuctionScheduler {
         `Auction ${product.id} (${product.title}) ended - Winner: ${winner.name} - Final Price: $${highestBid.amount} - Notified ${nonWinners.length} non-winners`,
       );
     } else {
-      // No bids - just mark as ended
+      // No bids - just mark as ended and notify seller
       this.logger.log(
         `Auction ${product.id} (${product.title}) ended with no bids`,
       );
+
+      // Notify seller that auction ended without bids
+      try {
+        await this.emailService.sendSellerAuctionEndedEmail({
+          toEmail: product.seller.email,
+          toName: product.seller.name,
+          productTitle: product.title,
+          finalPrice: 0,
+          winnerName: 'No Winner',
+          bidCount: 0,
+          orderId: '', // No order created
+          hasWinner: false,
+        });
+        this.logger.log(
+          `Seller notification (no bids) sent to ${product.seller.email}`,
+        );
+      } catch (emailError) {
+        this.logger.error(
+          `Failed to send seller email to ${product.seller.email}`,
+          emailError,
+        );
+      }
     }
   }
 
