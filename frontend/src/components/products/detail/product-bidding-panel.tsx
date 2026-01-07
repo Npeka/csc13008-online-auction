@@ -26,10 +26,13 @@ interface ProductBiddingPanelProps {
   isEnded?: boolean; // Is the auction ended
   userParticipated?: boolean; // Did the user participate in the auction
   isWinner?: boolean; // Is the current user the winner
+  order?: any; // Order data for ended auctions
+  orderLoading?: boolean; // Loading state for order data
   onPlaceBid: () => void;
   onBuyNow: () => void;
   onWatchlistToggle: () => void;
   onRejectBidder?: (bidderId: string) => void;
+  onNavigateToOrder?: () => void; // Navigate to order page
 }
 
 export const ProductBiddingPanel = memo(function ProductBiddingPanel({
@@ -46,10 +49,13 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
   isEnded = false,
   userParticipated = false,
   isWinner = false,
+  order,
+  orderLoading = false,
   onPlaceBid,
   onBuyNow,
   onWatchlistToggle,
   onRejectBidder,
+  onNavigateToOrder,
 }: ProductBiddingPanelProps) {
   return (
     <div className="mb-6 rounded-xl border border-border bg-bg-card p-6">
@@ -102,6 +108,22 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
       {/* Action Buttons or Bid History */}
       {isSeller ? (
         <div className="space-y-4">
+          {/* Order button for seller if auction ended */}
+          {isEnded && order && (
+            <Button
+              onClick={onNavigateToOrder}
+              className="w-full"
+              size="lg"
+              variant="default"
+            >
+              Manage Order
+            </Button>
+          )}
+          {isEnded && orderLoading && (
+            <div className="flex items-center justify-center py-4">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          )}
           {/* Bid History for Seller */}
           {bids.length > 0 ? (
             <div>
@@ -122,16 +144,40 @@ export const ProductBiddingPanel = memo(function ProductBiddingPanel({
             </div>
           )}
         </div>
-      ) : isEnded && isWinner ? (
-        // Winner sees payment button
+      ) : isEnded && (isWinner || orderLoading) ? (
+        // Winner sees payment button or loading state
         <div className="space-y-3">
-          <Button onClick={onBuyNow} className="w-full" size="lg">
-            Proceed to Payment
-          </Button>
+          {orderLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : order ? (
+            <>
+              <div className="mb-4 rounded-lg border border-success-light bg-success-light p-4 text-center">
+                <p className="text-sm font-medium text-success">
+                  🎉 Congratulations! You won this auction
+                </p>
+              </div>
+              <Button onClick={onNavigateToOrder} className="w-full" size="lg">
+                Proceed to Payment
+              </Button>
+            </>
+          ) : (
+            <div className="rounded-lg border border-border bg-bg-secondary p-4 text-center">
+              <p className="text-sm text-text-muted">
+                Order is being created...
+              </p>
+            </div>
+          )}
         </div>
       ) : isEnded && userParticipated ? (
         // Losing bidder sees bid history
         <div>
+          <div className="mb-4 rounded-lg border border-warning-light bg-warning-light p-4 text-center">
+            <p className="text-sm font-medium text-warning">
+              This auction has ended
+            </p>
+          </div>
           <h3 className="mb-3 text-sm font-semibold text-text">
             Bid History ({bids.length})
           </h3>

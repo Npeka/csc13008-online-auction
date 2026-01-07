@@ -13,7 +13,6 @@ import {
 import { BidInput } from "@/components/shared/bid-input";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Modal, ConfirmModal } from "@/components/ui/modal";
 import { bidsApi, ordersApi, productsApi, questionsApi } from "@/lib";
 import { formatUSD } from "@/lib/utils";
@@ -89,19 +88,23 @@ export function ProductDetailPage() {
         setIsLoading(false);
 
         // Fetch questions and bid history in parallel (in background)
-        const [questionsResult, bidsResult, autoBidResult, participationResult] =
-          await Promise.allSettled([
-            questionsApi.getQuestions(productData.id),
-            isAuthenticated
-              ? bidsApi.getBidHistory(productData.id)
-              : Promise.resolve([]),
-            isAuthenticated
-              ? bidsApi.getUserAutoBid(productData.id)
-              : Promise.resolve(null),
-            isAuthenticated && productData.status === "ENDED"
-              ? bidsApi.checkUserParticipation(productData.id)
-              : Promise.resolve(null),
-          ]);
+        const [
+          questionsResult,
+          bidsResult,
+          autoBidResult,
+          participationResult,
+        ] = await Promise.allSettled([
+          questionsApi.getQuestions(productData.id),
+          isAuthenticated
+            ? bidsApi.getBidHistory(productData.id)
+            : Promise.resolve([]),
+          isAuthenticated
+            ? bidsApi.getUserAutoBid(productData.id)
+            : Promise.resolve(null),
+          isAuthenticated && productData.status === "ENDED"
+            ? bidsApi.checkUserParticipation(productData.id)
+            : Promise.resolve(null),
+        ]);
 
         // Handle questions result
         if (questionsResult.status === "fulfilled") {
@@ -326,56 +329,6 @@ export function ProductDetailPage() {
     return null;
   }
 
-  // For ended auctions, show order button for winner/seller
-  if (isEnded && isAuthenticated && participation) {
-    const isWinner = participation.isWinner || false;
-
-    if ((isSeller || isWinner) && order) {
-      return (
-        <div className="container-app py-20">
-          <div className="mx-auto max-w-2xl text-center">
-            <Badge variant="info" className="mb-4">
-              Auction Ended
-            </Badge>
-            <h1 className="mb-2 text-3xl font-bold text-text">
-              {product.title}
-            </h1>
-            <p className="mb-6 text-xl font-bold text-primary">
-              Final Price: {formatUSD(product.currentPrice)}
-            </p>
-
-            <div className="mb-8 rounded-xl border border-border bg-bg-card p-6">
-              <p className="mb-4 text-text-muted">
-                {isSeller
-                  ? "You sold this product. Complete the order to finalize the transaction."
-                  : "Congratulations! You won this auction. Complete payment to proceed."}
-              </p>
-              <Button
-                onClick={() => navigate(`/orders/${order.id}`)}
-                size="lg"
-                className="w-full"
-              >
-                {isSeller ? "Manage Order" : "Complete Payment"}
-              </Button>
-            </div>
-
-            <Link to="/">
-              <Button variant="ghost">Back to Home</Button>
-            </Link>
-          </div>
-        </div>
-      );
-    }
-
-    if ((isSeller || isWinner) && orderLoading) {
-      return (
-        <div className="container-app flex min-h-screen items-center justify-center py-20">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      );
-    }
-  }
-
   const inWatchlist = isInWatchlist(product.id);
   const minimumBid = product.currentPrice + product.bidStep;
 
@@ -439,6 +392,8 @@ export function ProductDetailPage() {
             isEnded={isEnded}
             userParticipated={participation?.participated || false}
             isWinner={participation?.isWinner || false}
+            order={order}
+            orderLoading={orderLoading}
             onPlaceBid={() => {
               if (!isAuthenticated) {
                 navigate("/login");
@@ -449,6 +404,7 @@ export function ProductDetailPage() {
             onBuyNow={handleBuyNow}
             onWatchlistToggle={handleWatchlistToggle}
             onRejectBidder={handleRejectBidder}
+            onNavigateToOrder={() => order && navigate(`/orders/${order.id}`)}
           />
 
           {/* Seller Info */}

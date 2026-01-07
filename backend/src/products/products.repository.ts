@@ -207,6 +207,14 @@ export class ProductsRepository {
     });
   }
 
+  async hasOrder(productId: string): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({
+      where: { productId },
+      select: { id: true },
+    });
+    return !!order;
+  }
+
   async countBid(where: Prisma.BidWhereInput) {
     return this.prisma.bid.count({ where });
   }

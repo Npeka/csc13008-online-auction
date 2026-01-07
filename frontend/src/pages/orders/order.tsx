@@ -127,8 +127,7 @@ export function OrderPage() {
 
   const currentStepIndex = STEPS.findIndex((s) => s.status === order?.status);
   const isOrderActive =
-    order?.status !== "COMPLETED" &&
-    order?.status !== "CANCELLED";
+    order?.status !== "COMPLETED" && order?.status !== "CANCELLED";
 
   // Step 1: Submit Payment
   const handlePaymentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -304,11 +303,6 @@ export function OrderPage() {
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <Link to="/profile">
-            <Button variant="ghost" className="mb-4">
-              ← Back
-            </Button>
-          </Link>
           <div className="flex items-start justify-between">
             <div>
               <h1 className="mb-2 text-2xl font-bold text-text">
@@ -335,38 +329,63 @@ export function OrderPage() {
 
         {/* Progress Steps */}
         {order.status !== "CANCELLED" && (
-          <div className="mb-8 rounded-xl border border-border bg-bg-card p-6">
-            <div className="flex items-center justify-between">
+          <div className="mb-10">
+            <div className="relative flex items-center justify-between">
               {STEPS.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = index === currentStepIndex;
                 const isCompleted = index < currentStepIndex;
 
                 return (
-                  <div key={step.status} className="flex flex-1 items-center">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={cn(
-                          "flex h-12 w-12 items-center justify-center rounded-full",
-                          isActive && "bg-primary text-white",
-                          isCompleted && "bg-success text-white",
-                          !isActive && !isCompleted && "bg-bg-tertiary text-text-muted",
-                        )}
-                      >
-                        {isCompleted ? <Check className="h-6 w-6" /> : <Icon className="h-6 w-6" />}
-                      </div>
-                      <p className="mt-2 text-center text-sm font-medium text-text">
-                        {step.label}
-                      </p>
-                    </div>
+                  <div
+                    key={step.status}
+                    className="relative flex flex-1 flex-col items-center"
+                  >
+                    {/* Connector line */}
                     {index < STEPS.length - 1 && (
                       <div
                         className={cn(
-                          "mx-2 h-0.5 flex-1",
+                          "absolute top-6 left-1/2 h-1 w-full",
                           index < currentStepIndex ? "bg-success" : "bg-border",
                         )}
+                        style={{ zIndex: 0 }}
                       />
                     )}
+
+                    {/* Step circle */}
+                    <div
+                      className={cn(
+                        "relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-4 transition-all duration-300",
+                        isActive &&
+                          "border-primary bg-primary shadow-lg shadow-primary/30",
+                        isCompleted &&
+                          "border-success bg-success shadow-lg shadow-success/30",
+                        !isActive && !isCompleted && "border-border bg-bg-card",
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-7 w-7 text-white" />
+                      ) : (
+                        <Icon
+                          className={cn(
+                            "h-6 w-6",
+                            isActive ? "text-white" : "text-text-muted",
+                          )}
+                        />
+                      )}
+                    </div>
+
+                    {/* Step label */}
+                    <p
+                      className={cn(
+                        "mt-3 text-center text-sm font-semibold",
+                        isActive || isCompleted
+                          ? "text-text"
+                          : "text-text-muted",
+                      )}
+                    >
+                      {step.label}
+                    </p>
                   </div>
                 );
               })}
@@ -379,70 +398,98 @@ export function OrderPage() {
           {/* Cancelled Status */}
           {order.status === "CANCELLED" && (
             <div className="rounded-xl border border-error bg-error/10 p-8 text-center">
-              <h2 className="mb-2 text-xl font-semibold text-error">Order Cancelled</h2>
+              <h2 className="mb-2 text-xl font-semibold text-error">
+                Order Cancelled
+              </h2>
               <p className="text-text-muted">
-                {order.cancellationReason || "This order has been cancelled by the seller"}
+                {order.cancellationReason ||
+                  "This order has been cancelled by the seller"}
               </p>
             </div>
           )}
 
           {/* Step 1: Payment Proof */}
           {order.status === "PENDING_PAYMENT" && (
-            <div className="rounded-xl border border-border bg-bg-card p-8">
-              <div className="mb-6 text-center">
-                <CreditCard className="mx-auto mb-4 h-16 w-16 text-primary" />
-                <h2 className="mb-2 text-xl font-semibold text-text">
-                  {isBuyer ? "Submit Payment Proof" : "Waiting for Buyer"}
+            <div className="rounded-2xl border border-border bg-bg-card p-8 shadow-sm">
+              <div className="mb-8 text-center">
+                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                  <CreditCard className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="mb-2 text-2xl font-bold text-text">
+                  Submit Payment Proof
                 </h2>
                 <p className="text-text-muted">
-                  {isBuyer
-                    ? "Upload your payment proof and provide shipping address"
-                    : "The buyer needs to submit payment proof"}
+                  Upload your payment proof and provide shipping address
                 </p>
               </div>
 
               {isBuyer ? (
-                <form onSubmit={handleSubmitPayment} className="mx-auto max-w-md space-y-6">
+                <form
+                  onSubmit={handleSubmitPayment}
+                  className="mx-auto space-y-6"
+                >
+                  {/* Payment Proof Upload */}
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-text">
-                      Payment Proof *
+                    <label className="mb-2 block text-sm font-semibold text-text">
+                      Payment Proof <span className="text-error">*</span>
                     </label>
-                    <div className="flex items-center gap-3">
-                      <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-bg-secondary p-4 transition-colors hover:border-primary hover:bg-bg-tertiary">
-                        <Upload className="h-5 w-5" />
-                        <span className="text-sm">
-                          {paymentFile ? paymentFile.name : "Choose image file"}
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePaymentFileChange}
-                          className="hidden"
-                        />
-                      </label>
-                      {paymentFile && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setPaymentFile(null)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    <label className="group relative block cursor-pointer overflow-hidden rounded-xl border-2 border-dashed border-border bg-bg-secondary transition-all hover:border-primary hover:bg-primary/5">
+                      <div className="flex flex-col items-center justify-center p-8 text-center">
+                        {paymentFile ? (
+                          <>
+                            <Check className="mb-3 h-12 w-12 text-success" />
+                            <p className="font-medium text-text">
+                              {paymentFile.name}
+                            </p>
+                            <p className="mt-1 text-xs text-text-muted">
+                              {(paymentFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mb-3 h-12 w-12 text-text-muted transition-colors group-hover:text-primary" />
+                            <p className="font-medium text-text">
+                              Choose image file
+                            </p>
+                            <p className="mt-1 text-xs text-text-muted">
+                              PNG, JPG, GIF up to 10MB
+                            </p>
+                          </>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePaymentFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                    {paymentFile && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPaymentFile(null)}
+                        className="mt-2 w-full"
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Remove file
+                      </Button>
+                    )}
                   </div>
 
+                  {/* Shipping Address */}
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-text">
-                      Shipping Address *
+                    <label className="mb-2 block text-sm font-semibold text-text">
+                      Shipping Address <span className="text-error">*</span>
                     </label>
                     <Textarea
                       value={shippingAddress}
                       onChange={(e) => setShippingAddress(e.target.value)}
-                      placeholder="Enter your full shipping address..."
-                      rows={4}
+                      placeholder="Enter your full shipping address...&#10;Include street, city, state, and postal code"
+                      rows={5}
                       required
+                      className="resize-none"
                     />
                   </div>
 
@@ -457,8 +504,9 @@ export function OrderPage() {
                   </Button>
                 </form>
               ) : (
-                <div className="mx-auto max-w-md text-center">
-                  <div className="rounded-lg bg-bg-secondary p-6">
+                <div className="mx-auto text-center">
+                  <div className="rounded-xl border border-border bg-bg-secondary p-8">
+                    <div className="mx-auto mb-4 h-16 w-16 animate-pulse rounded-full bg-primary/20" />
                     <p className="text-text-muted">
                       Waiting for {order.buyer.name} to submit payment proof...
                     </p>
@@ -470,59 +518,89 @@ export function OrderPage() {
 
           {/* Step 2: Shipping Confirmation */}
           {order.status === "PAYMENT_SUBMITTED" && (
-            <div className="rounded-xl border border-border bg-bg-card p-8">
-              <div className="mb-6 text-center">
-                <Package className="mx-auto mb-4 h-16 w-16 text-primary" />
-                <h2 className="mb-2 text-xl font-semibold text-text">
+            <div className="rounded-2xl border border-border bg-bg-card p-8 shadow-sm">
+              <div className="mb-8 text-center">
+                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                  <Package className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="mb-2 text-2xl font-bold text-text">
                   {isSeller ? "Confirm Shipping" : "Payment Submitted"}
                 </h2>
                 <p className="text-text-muted">
                   {isSeller
-                    ? "Upload shipping receipt to confirm you've shipped the item"
-                    : "Your payment proof has been submitted. Waiting for seller to ship."}
+                    ? "Upload shipping receipt and tracking number"
+                    : "Your payment proof has been submitted"}
                 </p>
               </div>
 
               {isSeller ? (
-                <form onSubmit={handleConfirmShipping} className="mx-auto max-w-md space-y-6">
+                <form
+                  onSubmit={handleConfirmShipping}
+                  className="mx-auto space-y-6"
+                >
+                  {/* Shipping Receipt Upload */}
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-text">
-                      Shipping Receipt *
+                    <label className="mb-2 block text-sm font-semibold text-text">
+                      Shipping Receipt <span className="text-error">*</span>
                     </label>
-                    <div className="flex items-center gap-3">
-                      <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-bg-secondary p-4 transition-colors hover:border-primary hover:bg-bg-tertiary">
-                        <Upload className="h-5 w-5" />
-                        <span className="text-sm">
-                          {shippingFile ? shippingFile.name : "Choose image file"}
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleShippingFileChange}
-                          className="hidden"
-                        />
-                      </label>
-                      {shippingFile && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShippingFile(null)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    <label className="group relative block cursor-pointer overflow-hidden rounded-xl border-2 border-dashed border-border bg-bg-secondary transition-all hover:border-primary hover:bg-primary/5">
+                      <div className="flex flex-col items-center justify-center p-8 text-center">
+                        {shippingFile ? (
+                          <>
+                            <Check className="mb-3 h-12 w-12 text-success" />
+                            <p className="font-medium text-text">
+                              {shippingFile.name}
+                            </p>
+                            <p className="mt-1 text-xs text-text-muted">
+                              {(shippingFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mb-3 h-12 w-12 text-text-muted transition-colors group-hover:text-primary" />
+                            <p className="font-medium text-text">
+                              Choose image file
+                            </p>
+                            <p className="mt-1 text-xs text-text-muted">
+                              PNG, JPG, GIF up to 10MB
+                            </p>
+                          </>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleShippingFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                    {shippingFile && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShippingFile(null)}
+                        className="mt-2 w-full"
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Remove file
+                      </Button>
+                    )}
                   </div>
 
+                  {/* Tracking Number */}
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-text">
-                      Tracking Number (Optional)
+                    <label className="mb-2 block text-sm font-semibold text-text">
+                      Tracking Number{" "}
+                      <span className="text-xs text-text-muted">
+                        (Optional)
+                      </span>
                     </label>
                     <Input
                       value={trackingNumber}
                       onChange={(e) => setTrackingNumber(e.target.value)}
-                      placeholder="Enter tracking number..."
+                      placeholder="Enter tracking number if available..."
+                      className="h-12"
                     />
                   </div>
 
@@ -537,20 +615,21 @@ export function OrderPage() {
                   </Button>
                 </form>
               ) : (
-                <div className="mx-auto max-w-md space-y-4">
+                <div className="mx-auto space-y-6">
                   {order.paymentProof && (
-                    <div className="rounded-lg border border-border p-4">
-                      <p className="mb-2 text-sm font-medium text-text">
+                    <div className="overflow-hidden rounded-xl border border-border bg-bg-secondary p-6">
+                      <p className="mb-4 text-sm font-semibold text-text">
                         Your Payment Proof:
                       </p>
                       <img
                         src={order.paymentProof}
                         alt="Payment Proof"
-                        className="rounded-lg"
+                        className="w-full rounded-lg shadow-md"
                       />
                     </div>
                   )}
-                  <div className="rounded-lg bg-bg-secondary p-6 text-center">
+                  <div className="rounded-xl border border-border bg-bg-secondary p-8 text-center">
+                    <div className="mx-auto mb-4 h-16 w-16 animate-pulse rounded-full bg-primary/20" />
                     <p className="text-text-muted">
                       Waiting for {order.seller.name} to ship the item...
                     </p>
@@ -575,7 +654,7 @@ export function OrderPage() {
                 </p>
               </div>
 
-              <div className="mx-auto max-w-md space-y-4">
+              <div className="mx-auto space-y-4">
                 {order.shippingProof && (
                   <div className="rounded-lg border border-border p-4">
                     <p className="mb-2 text-sm font-medium text-text">
@@ -588,7 +667,8 @@ export function OrderPage() {
                     />
                     {order.trackingNumber && (
                       <p className="mt-3 text-sm">
-                        <span className="font-medium">Tracking:</span> {order.trackingNumber}
+                        <span className="font-medium">Tracking:</span>{" "}
+                        {order.trackingNumber}
                       </p>
                     )}
                   </div>
@@ -618,24 +698,33 @@ export function OrderPage() {
             <div className="rounded-xl border border-border bg-bg-card p-8">
               <div className="mb-6 text-center">
                 <Check className="mx-auto mb-4 h-16 w-16 text-success" />
-                <h2 className="mb-2 text-xl font-semibold text-text">Order Complete!</h2>
+                <h2 className="mb-2 text-xl font-semibold text-text">
+                  Order Complete!
+                </h2>
                 <p className="text-text-muted">
-                  Please rate your experience with {isBuyer ? "the seller" : "the buyer"}
+                  Please rate your experience with{" "}
+                  {isBuyer ? "the seller" : "the buyer"}
                 </p>
               </div>
 
-              <div className="mx-auto max-w-md space-y-4">
+              <div className="mx-auto space-y-4">
                 {existingRating ? (
                   <div className="rounded-lg border border-success bg-success/5 p-6">
                     <div className="mb-3 flex items-center justify-center gap-2">
                       <Check className="h-5 w-5 text-success" />
-                      <p className="font-medium text-text">You've rated this order</p>
+                      <p className="font-medium text-text">
+                        You've rated this order
+                      </p>
                     </div>
                     <div className="flex items-center justify-center gap-2">
                       <Badge
-                        variant={existingRating.rating === 1 ? "success" : "error"}
+                        variant={
+                          existingRating.rating === 1 ? "success" : "error"
+                        }
                       >
-                        {existingRating.rating === 1 ? "+1 Positive" : "-1 Negative"}
+                        {existingRating.rating === 1
+                          ? "+1 Positive"
+                          : "-1 Negative"}
                       </Badge>
                     </div>
                     {existingRating.comment && (
@@ -694,7 +783,9 @@ export function OrderPage() {
                         <div
                           className={cn(
                             "max-w-[70%] rounded-lg p-3",
-                            isMe ? "bg-primary text-white" : "bg-bg-card text-text",
+                            isMe
+                              ? "bg-primary text-white"
+                              : "bg-bg-card text-text",
                           )}
                         >
                           <p className="text-sm">{msg.content}</p>
@@ -761,8 +852,8 @@ export function OrderPage() {
         message={
           <div className="space-y-4">
             <p className="text-sm text-text-muted">
-              Are you sure you want to cancel this order? The buyer will receive a -1
-              rating automatically.
+              Are you sure you want to cancel this order? The buyer will receive
+              a -1 rating automatically.
             </p>
             <div>
               <label className="mb-2 block text-sm font-medium text-text">

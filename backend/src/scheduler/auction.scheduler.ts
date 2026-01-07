@@ -83,6 +83,18 @@ export class AuctionScheduler {
     if (highestBid) {
       const winner = highestBid.bidder;
 
+      // Check if order already exists (prevents duplicate orders if cron runs multiple times)
+      const existingOrder = await this.prisma.order.findUnique({
+        where: { productId: product.id },
+      });
+
+      if (existingOrder) {
+        this.logger.warn(
+          `Order already exists for auction ${product.id}, skipping order creation`,
+        );
+        return;
+      }
+
       // Create order for winner
       const order = await this.prisma.order.create({
         data: {

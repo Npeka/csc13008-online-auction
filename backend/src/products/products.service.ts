@@ -386,6 +386,14 @@ ${dto.additionalDescription}`;
       throw new NotFoundException('Product not found');
     }
 
+    // Check if product has an associated order
+    const hasOrder = await this.productsRepository.hasOrder(productId);
+    if (hasOrder) {
+      throw new BadRequestException(
+        'Cannot delete this product because it has an associated order. Products with orders must be preserved for transaction history.',
+      );
+    }
+
     await this.productsRepository.delete(productId);
 
     return { message: 'Product removed successfully' };
