@@ -168,8 +168,8 @@ const mockRatings = [
   },
 ];
 
-// Generate bids for a product (min 5 bids per requirement 8.2)
-function generateBidsForProduct(
+// Generate auto-bids for a product (automatic bidding system)
+function generateAutoBidsForProduct(
   productId: string,
   startPrice: number,
   currentPrice: number,
@@ -178,43 +178,48 @@ function generateBidsForProduct(
 ): Array<{
   productId: string;
   bidderId: string;
-  amount: number;
+  maxAmount: number;
+  currentAmount: number;
   createdAt: Date;
 }> {
-  const bids: Array<{
+  const autoBids: Array<{
     productId: string;
     bidderId: string;
-    amount: number;
+    maxAmount: number;
+    currentAmount: number;
     createdAt: Date;
   }> = [];
 
-  // Generate 5-8 bids per product
-  const numBids = Math.floor(Math.random() * 4) + 5; // 5-8 bids
+  // Generate 3-5 auto-bids per product
+  const numBidders = Math.floor(Math.random() * 3) + 3; // 3-5 bidders
   let currentBidAmount = startPrice;
 
-  for (let i = 0; i < numBids; i++) {
-    // Select random bidder
-    const bidderId = bidderIds[Math.floor(Math.random() * bidderIds.length)];
+  // Shuffle bidders to get random selection
+  const shuffledBidders = [...bidderIds].sort(() => Math.random() - 0.5);
+  const selectedBidders = shuffledBidders.slice(0, numBidders);
 
-    // Increase bid amount
-    currentBidAmount += bidStep;
+  for (let i = 0; i < selectedBidders.length; i++) {
+    const bidderId = selectedBidders[i];
 
-    // Don't exceed current price (last bid should be currentPrice)
-    if (i === numBids - 1) {
-      currentBidAmount = currentPrice;
-    } else if (currentBidAmount >= currentPrice) {
-      currentBidAmount = currentPrice - bidStep * (numBids - 1 - i);
-    }
+    // Each bidder sets a max amount higher than current
+    const maxAmount = currentPrice + bidStep * (numBidders - i) * 2;
 
-    bids.push({
+    // Current amount is what they're actually bidding now
+    currentBidAmount =
+      i === selectedBidders.length - 1
+        ? currentPrice
+        : startPrice + bidStep * (i + 1);
+
+    autoBids.push({
       productId,
       bidderId,
-      amount: Math.max(startPrice, currentBidAmount),
-      createdAt: getPastDate((numBids - i) * 0.5), // Spread bids over time
+      maxAmount,
+      currentAmount: currentBidAmount,
+      createdAt: getPastDate((numBidders - i) * 0.3),
     });
   }
 
-  return bids;
+  return autoBids;
 }
 
 // --- SEED EXECUTION ---
@@ -306,7 +311,7 @@ async function main() {
   // 4. Seed Products from MorphMarket data
   console.log('📦 Creating products from MorphMarket data...');
   let productsCreated = 0;
-  let bidsCreated = 0;
+  let autoBidsCreated = 0;
 
   for (const prod of morphMarketProducts) {
     const categoryId = categoryMap.get(prod.categorySlug);
@@ -319,6 +324,20 @@ async function main() {
     }
 
     try {
+      // Generate auto-bids first to determine highest bidder
+      const autoBids = generateAutoBidsForProduct(
+        'temp', // Will update after product creation
+        prod.startPrice,
+        prod.currentPrice,
+        prod.bidStep,
+        bidderIds,
+      );
+
+      // Highest bidder is the one with currentAmount = currentPrice
+      const highestBidder = autoBids.find(
+        (ab) => ab.currentAmount === prod.currentPrice,
+      );
+
       const createdProd = await prisma.product.create({
         data: {
           title: prod.title,
@@ -340,31 +359,24 @@ async function main() {
           status: 'ACTIVE',
           isActive: true,
           allowNewBidders: true,
+          highestBidderId: highestBidder?.bidderId,
         },
       });
 
       productIds.push(createdProd.id);
       productsCreated++;
 
-      // Generate bids for this product (min 5 per requirement)
-      const bids = generateBidsForProduct(
-        createdProd.id,
-        prod.startPrice,
-        prod.currentPrice,
-        prod.bidStep,
-        bidderIds,
-      );
-
-      for (const bid of bids) {
-        await prisma.bid.create({
+      // Create auto-bids for this product
+      for (const autoBid of autoBids) {
+        await prisma.autoBid.create({
           data: {
-            productId: bid.productId,
-            bidderId: bid.bidderId,
-            amount: bid.amount,
-            createdAt: bid.createdAt,
+            productId: createdProd.id,
+            userId: autoBid.bidderId,
+            maxAmount: autoBid.maxAmount,
+            createdAt: autoBid.createdAt,
           },
         });
-        bidsCreated++;
+        autoBidsCreated++;
       }
     } catch (error: any) {
       console.warn(`Error creating product ${prod.slug}: ${error.message}`);
@@ -403,8 +415,21 @@ async function main() {
     }
   }
 
-  // 6. Seed Ratings
-  console.log('⭐ Creating ratings...');
+  // 6. Seed System Config
+  console.log('⚙️ Seeding System Config...');
+  await prisma.systemConfig.upsert({
+    where: { key: 'AUCTION_EXTENSION_TRIGGER_MINUTES' },
+    update: {},
+    create: { key: 'AUCTION_EXTENSION_TRIGGER_MINUTES', value: '5' },
+  });
+  await prisma.systemConfig.upsert({
+    where: { key: 'AUCTION_EXTENSION_DURATION_MINUTES' },
+    update: {},
+    create: { key: 'AUCTION_EXTENSION_DURATION_MINUTES', value: '10' },
+  });
+
+  // 7. Seed Ratings (additional standalone ratings)
+  console.log('⭐ Creating additional ratings...');
   for (const r of mockRatings) {
     const fromId = userMap.get(r.fromUserId);
     const toId = userMap.get(r.toUserId);
@@ -427,10 +452,11 @@ async function main() {
   🎉 **Created:**
   - ${mockUsers.length} users (including ${bidderIds.length} bidders)
   - ${mockCategories.length} main categories + subcategories
-  - ${productsCreated} products from MorphMarket
-  - ${bidsCreated} bids (5-8 per product)
+  - ${productsCreated} active products from MorphMarket
+  - ${autoBidsCreated} auto-bids (3-5 per product)
   - ${mockQuestions.length} Q&As
-  - ${mockRatings.length} ratings
+  - ${mockRatings.length} standalone ratings
+  - System configuration initialized
   `);
 }
 
