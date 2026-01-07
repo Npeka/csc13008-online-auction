@@ -85,6 +85,15 @@ export const usersApi = {
     return await apiClient.get("/users/me/ratings");
   },
 
+  getUserCounts: async (): Promise<{
+    products: number;
+    watchlist: number;
+    bidding: number;
+    won: number;
+  }> => {
+    return await apiClient.get("/users/me/counts");
+  },
+
   createUpgradeRequest: async (reason?: string): Promise<UpgradeRequest> => {
     return await apiClient.post("/users/upgrade-request", { reason });
   },

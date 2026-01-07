@@ -1,35 +1,38 @@
 import { useEffect, useState } from "react";
 import { Clock, DollarSign, TrendingUp } from "lucide-react";
 import { CTASection, HeroSection, ProductSection } from "@/components/home";
-import { categoriesApi, productsApi } from "@/lib";
-import type { Category, Product } from "@/types";
+import { productsApi } from "@/lib";
+import { useCategoryStore } from "@/stores/category-store";
+import type { Product } from "@/types";
 
 export function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [endingSoon, setEndingSoon] = useState<Product[]>([]);
   const [mostBid, setMostBid] = useState<Product[]>([]);
   const [highestPrice, setHighestPrice] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const { categories, fetchCategories } = useCategoryStore();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
 
-        // Fetch all data in parallel
-        const [endingSoonData, mostBidData, highestPriceData, categoriesData] =
+        // Fetch categories (will use cache if already loaded)
+        await fetchCategories();
+
+        // Fetch all product data in parallel
+        const [endingSoonData, mostBidData, highestPriceData] =
           await Promise.all([
             productsApi.getEndingSoon(5),
             productsApi.getMostBids(5),
             productsApi.getHighestPrice(5),
-            categoriesApi.getCategories(),
           ]);
 
         setEndingSoon(endingSoonData);
         setMostBid(mostBidData);
         setHighestPrice(highestPriceData);
-        setCategories(categoriesData.filter((c) => !c.parentId)); // Only top-level categories
 
         // Use highest price products as featured
         setFeaturedProducts(highestPriceData.slice(0, 3));
@@ -41,7 +44,7 @@ export function HomePage() {
     };
 
     fetchData();
-  }, []);
+  }, [fetchCategories]);
 
   if (isLoading) {
     return (

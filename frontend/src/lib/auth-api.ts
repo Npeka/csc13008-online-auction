@@ -48,6 +48,8 @@ const transformUser = (backendUser: any): User => {
       total: backendUser.ratingCount || 0,
     },
     isVerified: backendUser.emailVerified,
+    allowNewBidders: backendUser.allowNewBidders ?? true,
+    sellerExpiresAt: backendUser.sellerExpiresAt,
   };
 };
 

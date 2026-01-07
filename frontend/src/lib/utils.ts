@@ -40,6 +40,19 @@ export function formatUSD(amount: number): string {
 }
 
 /**
+ * Format date to readable string
+ */
+export function formatDate(date: string | Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(date));
+}
+
+/**
  * Calculate time remaining from now to end time
  */
 export function getTimeRemaining(endTime: string | Date): {

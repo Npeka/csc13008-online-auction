@@ -8,10 +8,11 @@ import type { User } from "@/types";
 // Helper to extract rating info from both old and new structures
 function getRatingInfo(user: User): { positive: number; total: number } {
   if (typeof user.rating === "number") {
-    // New structure: rating is a number (0-5), use ratingCount
+    // New structure: rating is a decimal (0-1) representing percentage
+    // ratingCount is the total number of ratings
     const ratingCount = user.ratingCount || 0;
-    const positive =
-      ratingCount > 0 ? Math.round((user.rating / 5) * ratingCount) : 0;
+    const percentage = user.rating * 100; // Convert 0-1 to 0-100
+    const positive = ratingCount > 0 ? Math.round((percentage / 100) * ratingCount) : 0;
     return { positive, total: ratingCount };
   }
   // Old structure: rating is an object
@@ -176,7 +177,7 @@ export function SellerInfoCard({
           </Link>
           {totalRatings > 0 ? (
             <p className="text-sm text-text-muted">
-              {seller.rating?.toFixed(1)}/5 ({totalRatings}{" "}
+              {((seller.rating || 0) * 100).toFixed(0)}% positive ({totalRatings}{" "}
               {totalRatings === 1 ? "rating" : "ratings"})
             </p>
           ) : (
