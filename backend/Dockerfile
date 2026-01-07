@@ -55,6 +55,7 @@ RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/src/email/templates ./src/email/templates
 
 RUN npx prisma generate
 
