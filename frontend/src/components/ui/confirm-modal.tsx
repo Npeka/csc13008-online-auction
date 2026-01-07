@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { AlertTriangle, CheckCircle, Info, XCircle } from "lucide-react";
 import { Button } from "./button";
 import { Modal } from "./modal";
@@ -7,10 +8,17 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message: string | ReactNode;
   confirmText?: string;
   cancelText?: string;
   variant?: "danger" | "warning" | "info" | "success";
+  confirmButtonVariant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
   isLoading?: boolean;
 }
 
@@ -69,7 +77,7 @@ export function ConfirmModal({
         </div>
 
         {/* Message */}
-        <p className="text-center text-text-muted">{message}</p>
+        <div className="text-center text-text-muted">{message}</div>
 
         {/* Actions */}
         <div className="flex gap-3 pt-4">

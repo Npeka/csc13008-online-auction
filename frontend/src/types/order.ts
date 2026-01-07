@@ -5,7 +5,7 @@ import type { ChatMessage } from "./chat-message";
 
 export type OrderStatus =
   | "PENDING_PAYMENT"
-  | "PAYMENT_CONFIRMED"
+  | "PAYMENT_SUBMITTED"
   | "SHIPPED"
   | "DELIVERED"
   | "COMPLETED"
@@ -22,9 +22,9 @@ export interface Order {
   finalPrice: number;
   status: OrderStatus;
 
-  // Shipping
   // Shipping & Payment
   paymentProof?: string;
+  shippingProof?: string;
   shippingAddress?: string;
   trackingNumber?: string;
   cancellationReason?: string;
@@ -36,9 +36,9 @@ export interface Order {
   deliveredAt?: string;
   completedAt?: string;
 
-  // Ratings
   // Chat and ratings
   messages?: ChatMessage[];
+  ratings?: Rating[];
   buyerRating?: Rating;
   sellerRating?: Rating;
 }
