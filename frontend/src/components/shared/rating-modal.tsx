@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Star, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -13,6 +13,11 @@ export interface RatingModalProps {
   targetUser: User;
   product: Product;
   type?: "seller" | "buyer";
+  existingRating?: {
+    id: string;
+    score: 1 | -1;
+    comment?: string;
+  };
   onSubmit?: (rating: { score: 1 | -1; comment: string }) => Promise<void>;
 }
 
@@ -22,11 +27,20 @@ export function RatingModal({
   targetUser,
   product,
   type = "seller",
+  existingRating,
   onSubmit,
 }: RatingModalProps) {
-  const [score, setScore] = useState<1 | -1 | null>(null);
-  const [comment, setComment] = useState("");
+  const [score, setScore] = useState<1 | -1 | null>(existingRating?.score || null);
+  const [comment, setComment] = useState(existingRating?.comment || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update form when existingRating changes
+  useEffect(() => {
+    if (existingRating) {
+      setScore(existingRating.score);
+      setComment(existingRating.comment || "");
+    }
+  }, [existingRating]);
 
   const handleSubmit = async () => {
     if (score === null) {
@@ -66,7 +80,7 @@ export function RatingModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={`Rate ${type === "seller" ? "Seller" : "Buyer"}`}
+      title={`${existingRating ? "Update" : "Rate"} ${type === "seller" ? "Seller" : "Buyer"}`}
       description={`How was your experience with ${targetUser.fullName}?`}
       size="md"
     >
@@ -164,8 +178,12 @@ export function RatingModal({
             placeholder={`Share your experience with this ${type === "seller" ? "seller" : "buyer"}...`}
             className="w-full resize-none rounded-lg border border-border bg-bg-secondary px-4 py-2.5 text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
             rows={3}
+            maxLength={500}
             disabled={isSubmitting}
           />
+          <p className="mt-1 text-xs text-text-muted">
+            {comment.length}/500 characters
+          </p>
         </div>
 
         {/* Actions */}
@@ -178,7 +196,7 @@ export function RatingModal({
             isLoading={isSubmitting}
             disabled={score === null}
           >
-            Submit Rating
+            {existingRating ? "Update Rating" : "Submit Rating"}
           </Button>
         </div>
       </div>
