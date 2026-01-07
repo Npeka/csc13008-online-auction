@@ -1,6 +1,6 @@
-import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { RatingsService } from './ratings.service';
-import { CreateRatingDto } from './dto/rating.dto';
+import { CreateRatingDto, UpdateRatingDto } from './dto/rating.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 
@@ -14,6 +14,15 @@ export class RatingsController {
     return this.ratingsService.createRating(userId, dto);
   }
 
+  @Patch(':id')
+  updateRating(
+    @Param('id') ratingId: string,
+    @GetUser('id') userId: string,
+    @Body() dto: UpdateRatingDto,
+  ) {
+    return this.ratingsService.updateRating(ratingId, userId, dto);
+  }
+
   @Get('users/:userId')
   getUserRatings(@Param('userId') userId: string) {
     return this.ratingsService.getUserRatings(userId);
@@ -22,5 +31,10 @@ export class RatingsController {
   @Get('me/summary')
   getMyRatingSummary(@GetUser('id') userId: string) {
     return this.ratingsService.getRatingSummary(userId);
+  }
+
+  @Get('me/received')
+  getMyReceivedRatings(@GetUser('id') userId: string) {
+    return this.ratingsService.getUserRatings(userId);
   }
 }

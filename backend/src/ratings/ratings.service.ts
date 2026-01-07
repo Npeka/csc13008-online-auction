@@ -5,11 +5,15 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { RatingsRepository } from './ratings.repository';
-import { CreateRatingDto } from './dto/rating.dto';
+import { OrdersRepository } from '../orders/orders.repository';
+import { CreateRatingDto, UpdateRatingDto } from './dto/rating.dto';
 
 @Injectable()
 export class RatingsService {
-  constructor(private ratingsRepository: RatingsRepository) {}
+  constructor(
+    private ratingsRepository: RatingsRepository,
+    private ordersRepository: OrdersRepository,
+  ) {}
 
   async createRating(giverId: string, dto: CreateRatingDto) {
     // Validate rating value
@@ -35,6 +39,32 @@ export class RatingsService {
       );
     }
 
+    // NEW: Verify order exists and user is authorized
+    if (dto.orderId) {
+      const order = await this.ordersRepository.findById(dto.orderId);
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
+
+      // Can only rate if:
+      // 1. You're the seller and rating the buyer (winner)
+      // 2. You're the buyer (winner) and rating the seller
+      const isSeller = order.product.sellerId === giverId;
+      const isBuyer = order.buyerId === giverId;
+
+      if (!isSeller && !isBuyer) {
+        throw new ForbiddenException('You are not part of this transaction');
+      }
+
+      if (isSeller && dto.receiverId !== order.buyerId) {
+        throw new ForbiddenException('Seller can only rate the winner');
+      }
+
+      if (isBuyer && dto.receiverId !== order.product.sellerId) {
+        throw new ForbiddenException('Winner can only rate the seller');
+      }
+    }
+
     // Create rating
     const rating = await this.ratingsRepository.create({
       rating: dto.rating,
@@ -58,6 +88,29 @@ export class RatingsService {
       ratings,
       summary,
     };
+  }
+
+  async updateRating(ratingId: string, userId: string, dto: UpdateRatingDto) {
+    const rating = await this.ratingsRepository.findById(ratingId);
+
+    if (!rating) {
+      throw new NotFoundException('Rating not found');
+    }
+
+    if (rating.giverId !== userId) {
+      throw new ForbiddenException('You can only update your own ratings');
+    }
+
+    // Update rating
+    const updated = await this.ratingsRepository.update(ratingId, {
+      rating: dto.rating,
+      comment: dto.comment,
+    });
+
+    // Recalculate receiver's aggregated rating
+    await this.ratingsRepository.updateUserRating(rating.receiverId);
+
+    return updated;
   }
 
   async getRatingSummary(userId: string) {

@@ -1,13 +1,13 @@
-import { IsString, IsInt, Min, Max, IsOptional } from 'class-validator';
+import { IsString, IsInt, Min, Max, IsOptional, MaxLength, IsIn } from 'class-validator';
 
 export class CreateRatingDto {
   @IsInt()
-  @Min(-1)
-  @Max(1)
+  @IsIn([1, -1])
   rating: number; // +1 or -1
 
   @IsString()
   @IsOptional()
+  @MaxLength(500)
   comment?: string;
 
   @IsString()
@@ -16,6 +16,17 @@ export class CreateRatingDto {
   @IsString()
   @IsOptional()
   orderId?: string;
+}
+
+export class UpdateRatingDto {
+  @IsInt()
+  @IsIn([1, -1])
+  rating: number; // +1 or -1
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  comment?: string;
 }
 
 export class RatingSummaryDto {

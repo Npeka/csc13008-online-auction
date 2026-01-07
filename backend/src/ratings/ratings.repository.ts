@@ -28,6 +28,51 @@ export class RatingsRepository {
     });
   }
 
+  async findById(id: string) {
+    return this.prisma.rating.findUnique({
+      where: { id },
+      include: {
+        giver: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
+  async update(id: string, data: Prisma.RatingUpdateInput) {
+    return this.prisma.rating.update({
+      where: { id },
+      data,
+      include: {
+        giver: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
   async findByReceiver(receiverId: string) {
     return this.prisma.rating.findMany({
       where: { receiverId },
