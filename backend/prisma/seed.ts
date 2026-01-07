@@ -224,15 +224,15 @@ function generateAutoBidsForProduct(
 
 // Placeholder images from Unsplash (reptile/nature themed)
 const PLACEHOLDER_IMAGES = [
-  'https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?w=800&h=600&fit=crop', // Snake 1
-  'https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?w=800&h=600&fit=crop&q=80', // Snake 2
-  'https://images.unsplash.com/photo-1612363148951-23e36c2c3f6f?w=800&h=600&fit=crop', // Reptile 1
-  'https://images.unsplash.com/photo-1612363148951-23e36c2c3f6f?w=800&h=600&fit=crop&q=80', // Reptile 2
-  'https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=800&h=600&fit=crop', // Lizard 1
-  'https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=800&h=600&fit=crop&q=80', // Lizard 2
-  'https://images.unsplash.com/photo-1602528874687-84366f8c25e6?w=800&h=600&fit=crop', // Boa 1
-  'https://images.unsplash.com/photo-1602528874687-84366f8c25e6?w=800&h=600&fit=crop&q=80', // Boa 2
-  'https://images.unsplash.com/photo-1551616381-5dfc17e20db8?w=800&h=600&fit=crop', // Python 1
+  'https://images.unsplash.com/photo-1513039763578-cf2c1c5f8750?q=80&w=788&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Snake 1
+  'https://media.istockphoto.com/id/1481995188/photo/common-indian-color-changing-lizard-in-close-up.webp?a=1&s=612x612&w=0&k=20&c=NMEibUd9MQ26a_5WX9bc_QUQPjQitS6yejgaxHqAMlA=', // Snake 2
+  'https://media.istockphoto.com/id/2252556809/photo/exotic-reptiles-in-terrarium-close-up-portraits.webp?a=1&s=612x612&w=0&k=20&c=96MMYDRRIxdqikMEN374PLX_R6JLXybECVyC5xuNdLk=', // Reptile 1
+  'https://media.istockphoto.com/id/1459292558/photo/vertical-closeup-shot-of-a-plumed-basilisk-on-a-blurred-background.webp?a=1&s=612x612&w=0&k=20&c=iB2WzY92zp4ZhQzMeLRbOJLsnALWi-WYJ4OKS2duRLA=', // Reptile 2
+  'https://images.unsplash.com/photo-1654751894619-1a1100af4b5e?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDV8fHxlbnwwfHx8fHw%3D', // Lizard 1
+  'https://images.unsplash.com/photo-1615443593287-42c34cecd53d?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDE0fHx8ZW58MHx8fHx8', // Lizard 2
+  'https://images.unsplash.com/photo-1718537299306-def3114d5ae9?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDIyfHx8ZW58MHx8fHx8', // Boa 1
+  'https://images.unsplash.com/photo-1713871820252-61f309c64628?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDI1fHx8ZW58MHx8fHx8', // Boa 2
+  'https://images.unsplash.com/photo-1697054405957-ae0cfc3194be?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDE1fHx8ZW58MHx8fHx8', // Python 1
 ];
 
 // Ensure product has exactly 3 images
@@ -345,6 +345,7 @@ async function main() {
   console.log('📦 Creating products from MorphMarket data...');
   let productsCreated = 0;
   let autoBidsCreated = 0;
+  let bidsCreated = 0;
 
   for (const prod of morphMarketProducts) {
     const categoryId = categoryMap.get(prod.categorySlug);
@@ -410,6 +411,109 @@ async function main() {
           },
         });
         autoBidsCreated++;
+      }
+
+      // Create actual bid history by simulating proxy bidding progression
+      // Sort auto-bids chronologically (order they were placed)
+      const sortedAutoBids = [...autoBids].sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      );
+
+      let currentLeader: {
+        bidderId: string;
+        maxAmount: number;
+        currentBid: number;
+      } | null = null;
+
+      for (const autoBid of sortedAutoBids) {
+        if (!currentLeader) {
+          // First bidder - bid at start price
+          await prisma.bid.create({
+            data: {
+              productId: createdProd.id,
+              bidderId: autoBid.bidderId,
+              amount: prod.startPrice,
+              isValid: true,
+              createdAt: autoBid.createdAt,
+            },
+          });
+          bidsCreated++;
+
+          currentLeader = {
+            bidderId: autoBid.bidderId,
+            maxAmount: autoBid.maxAmount,
+            currentBid: prod.startPrice,
+          };
+        } else {
+          // New challenger enters
+          const minToWin = currentLeader.currentBid + prod.bidStep;
+
+          if (autoBid.maxAmount >= minToWin) {
+            // Challenger can compete
+            if (autoBid.maxAmount > currentLeader.maxAmount) {
+              // Challenger has higher max - they win
+              // Price goes to current leader's max (or just above it)
+              const newPrice = Math.min(
+                currentLeader.maxAmount + prod.bidStep,
+                autoBid.maxAmount,
+              );
+
+              await prisma.bid.create({
+                data: {
+                  productId: createdProd.id,
+                  bidderId: autoBid.bidderId,
+                  amount: newPrice,
+                  isValid: true,
+                  createdAt: autoBid.createdAt,
+                },
+              });
+              bidsCreated++;
+
+              currentLeader = {
+                bidderId: autoBid.bidderId,
+                maxAmount: autoBid.maxAmount,
+                currentBid: newPrice,
+              };
+            } else if (autoBid.maxAmount < currentLeader.maxAmount) {
+              // Challenger has lower max - current leader defends
+              // Price goes to challenger's max (or slightly above)
+              const newPrice = Math.min(
+                autoBid.maxAmount + prod.bidStep,
+                currentLeader.maxAmount,
+              );
+
+              await prisma.bid.create({
+                data: {
+                  productId: createdProd.id,
+                  bidderId: currentLeader.bidderId,
+                  amount: newPrice,
+                  isValid: true,
+                  createdAt: autoBid.createdAt,
+                },
+              });
+              bidsCreated++;
+
+              currentLeader.currentBid = newPrice;
+            } else {
+              // Tie - first bidder (by timestamp) wins
+              const newPrice = autoBid.maxAmount;
+
+              await prisma.bid.create({
+                data: {
+                  productId: createdProd.id,
+                  bidderId: currentLeader.bidderId,
+                  amount: newPrice,
+                  isValid: true,
+                  createdAt: autoBid.createdAt,
+                },
+              });
+              bidsCreated++;
+
+              currentLeader.currentBid = newPrice;
+            }
+          }
+          // If challenger's max is too low, they don't create a bid at all
+        }
       }
     } catch (error: any) {
       console.warn(`Error creating product ${prod.slug}: ${error.message}`);
@@ -487,6 +591,7 @@ async function main() {
   - ${mockCategories.length} main categories + subcategories
   - ${productsCreated} active products from MorphMarket
   - ${autoBidsCreated} auto-bids (3-5 per product)
+  - ${bidsCreated} actual bids (bid history)
   - ${mockQuestions.length} Q&As
   - ${mockRatings.length} standalone ratings
   - System configuration initialized
