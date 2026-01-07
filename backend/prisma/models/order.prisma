@@ -1,11 +1,10 @@
 enum OrderStatus {
-  PENDING_PAYMENT
-  PAYMENT_SUBMITTED
-  PAYMENT_CONFIRMED
-  SHIPPED
-  DELIVERED
-  COMPLETED
-  CANCELLED
+  PENDING_PAYMENT      // Order created, waiting for buyer payment proof
+  PAYMENT_SUBMITTED    // Buyer submitted payment proof, waiting for seller
+  SHIPPED              // Seller confirmed and uploaded shipping receipt
+  DELIVERED            // Buyer confirmed delivery
+  COMPLETED            // Rating phase done
+  CANCELLED            // Seller cancelled the order
 }
 
 // Order/Transaction management after auction ends
@@ -15,9 +14,10 @@ model Order {
   status     OrderStatus @default(PENDING_PAYMENT)
 
   // Payment & Shipping information
-  paymentProof      String? // Payment proof URL or reference
+  paymentProof      String? // Buyer's payment proof image URL
+  shippingProof     String? // Seller's shipping receipt image URL
   shippingAddress   String?
-  trackingNumber    String? // Shipping tracking number
+  trackingNumber    String? // Optional shipping tracking number
   cancellationReason String? // Reason if cancelled
 
   // Relations
