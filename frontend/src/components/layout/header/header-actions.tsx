@@ -2,15 +2,13 @@ import { Link } from "react-router";
 import { Gavel, Heart, Moon, Package, Sun, Trophy } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useThemeStore } from "@/stores/theme-store";
-import { useWatchlistCount } from "@/stores/watchlist-store";
-import { useMyProductsCount } from "@/hooks/use-my-products-count";
+import { useCountsStore } from "@/stores/counts-store";
 import { UserMenu } from "./user-menu";
 
 export function HeaderActions() {
   const { resolvedTheme, toggleTheme } = useThemeStore();
   const { isAuthenticated } = useAuthStore();
-  const watchlistCount = useWatchlistCount();
-  const myProductsCount = useMyProductsCount();
+  const { watchlist, products, bidding, won } = useCountsStore();
 
   return (
     <div className="flex items-center gap-2">
@@ -34,9 +32,9 @@ export function HeaderActions() {
         title="Watchlist"
       >
         <Heart className="h-5 w-5" />
-        {watchlistCount > 0 && (
+        {watchlist > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cta text-xs font-bold text-white">
-            {watchlistCount > 9 ? "9+" : watchlistCount}
+            {watchlist > 9 ? "9+" : watchlist}
           </span>
         )}
       </Link>
@@ -49,9 +47,9 @@ export function HeaderActions() {
           title="My Products"
         >
           <Package className="h-5 w-5" />
-          {myProductsCount > 0 && (
+          {products > 0 && (
             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cta text-xs font-bold text-white">
-              {myProductsCount > 9 ? "9+" : myProductsCount}
+              {products > 9 ? "9+" : products}
             </span>
           )}
         </Link>
@@ -61,10 +59,15 @@ export function HeaderActions() {
       {isAuthenticated && (
         <Link
           to="/profile/bids"
-          className="rounded-lg p-2 transition-colors hover:bg-bg-secondary"
+          className="relative rounded-lg p-2 transition-colors hover:bg-bg-secondary"
           title="My Bids"
         >
           <Gavel className="h-5 w-5" />
+          {bidding > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cta text-xs font-bold text-white">
+              {bidding > 9 ? "9+" : bidding}
+            </span>
+          )}
         </Link>
       )}
 
@@ -72,10 +75,15 @@ export function HeaderActions() {
       {isAuthenticated && (
         <Link
           to="/profile/won"
-          className="rounded-lg p-2 transition-colors hover:bg-bg-secondary"
+          className="relative rounded-lg p-2 transition-colors hover:bg-bg-secondary"
           title="Won Auctions"
         >
           <Trophy className="h-5 w-5" />
+          {won > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cta text-xs font-bold text-white">
+              {won > 9 ? "9+" : won}
+            </span>
+          )}
         </Link>
       )}
 

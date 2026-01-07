@@ -4,6 +4,7 @@ import { authApi, usersApi } from "@/lib";
 import type { User } from "@/types";
 import { queryClient } from "@/lib/query-client";
 import { PROFILE_QUERY_KEY } from "@/hooks/use-profile";
+import { useCountsStore } from "./counts-store";
 
 interface AuthState {
   user: User | null;
@@ -88,6 +89,9 @@ export const useAuthStore = create<AuthState>()(
           // Sync with React Query cache
           queryClient.setQueryData(PROFILE_QUERY_KEY, user);
 
+          // Fetch counts after successful verification
+          useCountsStore.getState().fetchCounts();
+
           return true;
         } catch (error) {
           set({ isLoading: false });
@@ -127,6 +131,9 @@ export const useAuthStore = create<AuthState>()(
 
           // Sync with React Query cache
           queryClient.setQueryData(PROFILE_QUERY_KEY, response.user);
+
+          // Fetch counts after successful login
+          useCountsStore.getState().fetchCounts();
 
           return true;
         } catch (error: any) {
@@ -169,6 +176,10 @@ export const useAuthStore = create<AuthState>()(
 
         // Clear React Query cache
         queryClient.removeQueries({ queryKey: PROFILE_QUERY_KEY });
+
+        // Reset all stores
+        useCountsStore.getState().resetCounts();
+        set({ user: null, isAuthenticated: false });
       },
 
       googleLogin: async (firebaseToken: string) => {
@@ -186,6 +197,9 @@ export const useAuthStore = create<AuthState>()(
 
           // Sync with React Query cache
           queryClient.setQueryData(PROFILE_QUERY_KEY, response.user);
+
+          // Fetch counts after successful login
+          useCountsStore.getState().fetchCounts();
 
           return true;
         } catch (error: any) {

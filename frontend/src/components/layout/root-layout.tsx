@@ -1,10 +1,29 @@
+import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Outlet } from "react-router";
 import { ScrollRestoration } from "@/components/shared/scroll-restoration";
+import { useAuthStore } from "@/stores/auth-store";
+import { useCountsStore } from "@/stores/counts-store";
+import { useCategoryStore } from "@/stores/category-store";
 import { Footer } from "./footer";
 import { Header } from "./header";
 
 export function RootLayout() {
+  const { isAuthenticated } = useAuthStore();
+  const { isLoaded, fetchCounts } = useCountsStore();
+  const { fetchCategories } = useCategoryStore();
+
+  // Fetch counts on mount if authenticated and not already loaded
+  useEffect(() => {
+    if (isAuthenticated && !isLoaded) {
+      fetchCounts();
+    }
+  }, [isAuthenticated, isLoaded, fetchCounts]);
+
+  // Fetch categories on mount (will use cache if already loaded)
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
   return (
     <div className="flex min-h-screen flex-col bg-bg">
       <ScrollRestoration />
