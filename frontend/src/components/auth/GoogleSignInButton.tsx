@@ -21,7 +21,7 @@ export function GoogleSignInButton({
     setIsGoogleLoading(true);
 
     try {
-      // Sign in with Google via Firebase
+      // Sign in with Google via Firebase.
       const result = await signInWithPopup(auth, googleProvider);
 
       // Get Firebase ID token
